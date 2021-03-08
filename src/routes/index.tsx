@@ -6,6 +6,8 @@ import { useKeycloak } from '@react-keycloak/web'
 import Dashboard from '../pages/Dashboard'
 import HomePage from '../pages/Home'
 
+import { PrivateRoute } from './utils'
+
 export const AppRouter = () => {
   const { initialized } = useKeycloak()
 
@@ -16,7 +18,7 @@ export const AppRouter = () => {
   return (
     <Router>
       <Route path="/" component={HomePage} />
-      <Route path="/home" component={Dashboard} />
+      <PrivateRoute path="/home" component={Dashboard} />
     </Router>
   )
 }
