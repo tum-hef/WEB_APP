@@ -4,7 +4,7 @@ import { BrowserRouter as Router, Redirect, Route } from 'react-router-dom'
 import { useKeycloak } from '@react-keycloak/web'
 
 import Dashboard from '../pages/Dashboard'
-import LoginPage from '../pages/Login'
+import HomePage from '../pages/Home'
 
 export const AppRouter = () => {
   const { initialized } = useKeycloak()
@@ -15,9 +15,8 @@ export const AppRouter = () => {
 
   return (
     <Router>
-      <Redirect from="/" to="/home" />
+      <Route path="/" component={HomePage} />
       <Route path="/home" component={Dashboard} />
-      <Route path="/login" component={LoginPage} />
     </Router>
   )
 }
