@@ -3,8 +3,10 @@ import { BrowserRouter as Router, Redirect, Route } from 'react-router-dom'
 
 import { useKeycloak } from '@react-keycloak/web'
 
-import Dashboard from '../pages/Dashboard'
 import HomePage from '../pages/Home'
+import Dashboard from '../pages/Dashboard'
+import ServerList from '../pages/ServerList'
+import ServerDisplay from '../pages/ServerDisplay'
 
 import { PrivateRoute } from './utils'
 
@@ -17,8 +19,10 @@ export const AppRouter = () => {
 
   return (
     <Router>
-      <Route path="/" component={HomePage} />
-      <PrivateRoute path="/home" component={Dashboard} />
-    </Router>
+      <Route exact path="/" component={HomePage} />
+      <PrivateRoute exact path="/dashboard" component={Dashboard} />
+      <PrivateRoute exact path="/servers" component={ServerList} />
+      <PrivateRoute exact path="/servers/:id" component={ServerDisplay} />
+    </Router> 
   )
 }
