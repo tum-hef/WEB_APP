@@ -6,11 +6,7 @@ const Dashboard = () => {
 
     return (
         <div>
-            {!!keycloak?.authenticated && (
-                <button type="button" onClick={() => keycloak.logout()}>
-                    Logout
-                </button>
-            )}
+            <MainMenu />
         </div>
     )
 }

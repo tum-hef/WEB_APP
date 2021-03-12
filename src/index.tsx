@@ -1,10 +1,8 @@
 import * as React from 'react'
 import ReactDOM from 'react-dom'
-
 import { ReactKeycloakProvider } from '@react-keycloak/web'
-
 import keycloak from './keycloak'
-import { AppRouter } from './routes'
+import AppRouter from './routes/index'
 
 const eventLogger = (event: unknown, error: unknown) => {
   console.log('onKeycloakEvent', event, error)
