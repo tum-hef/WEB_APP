@@ -34,9 +34,7 @@ const MainMenu = (props: any) => {
     const { classes } = props;
     const { keycloak } = useKeycloak()
     const userInfo = keycloak.idTokenParsed as IUserInfo
-    const dasboard = "Dashboard" as string
-    const dashboardRoute = "/dashboard" as string
-
+    
     return (
         <div className={classes.mainContainer}>
             <div className={classes.descriptionContainer}>
