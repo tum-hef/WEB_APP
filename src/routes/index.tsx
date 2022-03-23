@@ -11,8 +11,9 @@ import PropTypes from 'prop-types'
 
 const styles = {
   container: {
-    height: '1000px',
-    width: '1000px'
+    height: '100%',
+    width: '100%',
+    fontFamily: 'Helvetica'
   }
 }
 

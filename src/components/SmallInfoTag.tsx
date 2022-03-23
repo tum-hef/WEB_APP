@@ -1,22 +1,26 @@
-import { withStyles } from '@material-ui/core/styles'
-import PropTypes from 'prop-types'
+import React, { Component } from 'react'
+import { runInThisContext } from 'vm'
+import { Wrapper, InfoContainer } from '../styles/SmallInfoTag.styles'
 
-const styles = {
-
+type SmallInfoTagProps = {
+    name: string
+    link: string
+    icon: string
 }
 
-const SmallInfoTag = (props: any) => {
-    const { classes } = props;
 
-    return (
-        <div>
-            <h1>Test</h1>
-        </div>
-    )
+class SmallInfoTag extends Component<SmallInfoTagProps> {
+
+    render() {
+        return (
+            <Wrapper>
+                <InfoContainer>
+                    <p>{this.props.name}</p>
+                </InfoContainer>
+            </Wrapper>
+        )
+    }
 }
 
-SmallInfoTag.propTypes = {
-    classes: PropTypes.object.isRequired,
-  };
 
-export default withStyles(styles)(SmallInfoTag)
+export default SmallInfoTag

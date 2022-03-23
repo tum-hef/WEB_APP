@@ -2,38 +2,22 @@ import MainMenu from '../components/MainMenu'
 import SmallInfoTag from '../components/SmallInfoTag'
 
 import { useKeycloak } from '@react-keycloak/web'
-import { withStyles } from '@material-ui/core/styles'
 import PropTypes from 'prop-types'
-
-
-const styles = {
-    mainContainer: {
-        height: '100%',
-        width: '100%',
-        display: 'flex'
-    },
-    mainMenuContainer: {
-        width: '40%',
-        marginRight: '20px'
-    },
-    mainControlContainer: {
-        width: '70%'
-    }
-}
+import { MainContainer, MainMenuContainer, TagContainer } from '../styles/Dashboard.styles'
 
 const Dashboard = (props: any) => {
     const { keycloak } = useKeycloak()
-    const { classes } = props
 
     return (
-        <div className={classes.mainContainer}>
-            <div className={classes.mainMenuContainer}>
+        <MainContainer>
+            <MainMenuContainer>
                 <MainMenu />
-            </div>
-            <div className={classes.mainControlContainer}>
-                <SmallInfoTag />
-            </div>
-        </div>
+            </MainMenuContainer>
+                <SmallInfoTag name="Devices" link="/devices" icon="BsFillMusicPlayerFill"/>
+                <SmallInfoTag name="Server" link="/servers" icon="BsFillInboxesFill"/>
+                <SmallInfoTag name="Notifications" link="/notifications" icon="BsFillChatRightDotsFill"/>
+                <SmallInfoTag name="Reports" link="/reports" icon="BsFillExclamationTriangleFill"/>
+        </MainContainer>
     )
 }
 
@@ -41,4 +25,4 @@ Dashboard.propTypes = {
     classes: PropTypes.object.isRequired,
   };
 
-export default withStyles(styles)(Dashboard);
+export default Dashboard;

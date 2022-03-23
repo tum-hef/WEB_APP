@@ -1,13 +1,18 @@
+import React, { Component} from 'react'
 import { useKeycloak } from '@react-keycloak/web'
+import { MainContainer } from '../styles/ServerList.styles'
+import MainMenu from '../components/MainMenu'
 
-const ServerList = () => {
-    const { keycloak } = useKeycloak()
 
-    return (
-        <div>
-            <h1>Lists all Servers</h1>
-        </div>
-    )
+class ServerList extends React.Component {
+    render() {
+        return (
+            <MainContainer>
+                <MainMenu/>
+                
+            </MainContainer>
+        )
+    }
 }
 
 export default ServerList

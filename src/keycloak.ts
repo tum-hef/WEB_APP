@@ -4,8 +4,8 @@ import Keycloak from 'keycloak-js';
 // Pass initialization options as required or leave blank to load from 'keycloak.json'
 const keycloak = Keycloak({
   url: 'http://localhost:8080/auth',
-  realm: 'Test',
-  clientId: 'react-test',
+  realm: 'local_dev',
+  clientId: 'react_test',
 });
 
 export default keycloak;
