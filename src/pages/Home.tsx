@@ -3,6 +3,8 @@ import { Redirect, useLocation } from 'react-router-dom'
 
 import { useKeycloak } from '@react-keycloak/web'
 
+import { Wrapper, LoginContainer, LogoContainer } from '../styles/Home.styles'
+
 const HomePage = () => {
     const location = useLocation<{ [key: string]: unknown }>()
     const currentLocationState = location.state || {
@@ -19,12 +21,16 @@ const HomePage = () => {
     return <Redirect to={currentLocationState?.from as string} />
 
     return (
-        <div>
-            <h1>Home Page</h1>
-            <button type="button" onClick={login}>
-                Login
-            </button>
-        </div>
+        <Wrapper>
+            <LoginContainer>
+                <h1>Home</h1>
+            </LoginContainer>
+            <LoginContainer>
+                <button type="button" onClick={login}>
+                    Login
+                </button>
+            </LoginContainer>
+        </Wrapper>
     )
 }
 

@@ -1,7 +1,7 @@
 import styled from "styled-components";
 import { Colors } from "./Colors";
 
-const MainContainer = styled.div`
+const Wrapper = styled.div`
     height: 2000px;
     width: 100%;
     display: flex;
@@ -12,11 +12,6 @@ const MainContainer = styled.div`
 
 const MainContentContainer = styled.div`
     width: 100%;
-`
-
-const CardContainer = styled.div`
-    width: 100%;
-    margin-left: 4%;
 `;
 
-export { MainContainer, MainContentContainer, CardContainer }
+export { Wrapper, MainContentContainer }
