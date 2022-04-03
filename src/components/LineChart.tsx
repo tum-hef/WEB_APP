@@ -7,6 +7,7 @@ import {
   LineSeries,
 } from '@devexpress/dx-react-chart-material-ui';
 
+// Fake data for teting purpose only
 const data = [
   { argument: 1, value: 10 },
   { argument: 2, value: 20 },
@@ -19,7 +20,11 @@ type LineChartProps = {
 
 class LineChart extends Component<LineChartProps> {
   getDatastreams(){
-    
+    // A function that retrives all datastreams of the given server
+  }
+
+  getObservations(datastream: string){
+    // A function that GETs all observations for a given datastream
   }
 
   render(){

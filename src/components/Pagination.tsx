@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import { Wrapper }  from '../styles/Pagination.styles'
-
+//TODO: A simple Pagination component for listing servers or devices
 type PaginationProps = {
 
 }

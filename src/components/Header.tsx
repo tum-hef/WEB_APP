@@ -3,6 +3,7 @@ import { Wrapper, SearchContainer, MenuContainer } from '../styles/Header.styles
 import Search from './Search'
 import UserMenu from './UserMenu'
 
+// Needed for future logic
 type HeaderProps = {
 
 }

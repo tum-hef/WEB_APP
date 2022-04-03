@@ -11,6 +11,7 @@ class FrostServerCard extends Component<FrostServerCardProps> {
         return(
             <a href={"/servers/" + this.props.name}>
                 <Wrapper>
+                    {/*This picture is hardcoded and should come from keycloak in the future */}
                     <InfoContainer img={require("../resources/ServerRoom.jpg")}>
                     </InfoContainer>
                 <   Header>
