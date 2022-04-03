@@ -1,5 +1,6 @@
 import { useCallback } from 'react'
 import { Redirect, useLocation } from 'react-router-dom'
+import Button from '@mui/material/Button'
 
 import { useKeycloak } from '@react-keycloak/web'
 
@@ -22,13 +23,12 @@ const HomePage = () => {
 
     return (
         <Wrapper>
+            <LogoContainer>
+                <img src={require('../resources/tum.png')} alt="" />
+                <p>Hans Eisenmann Forum für Agrarwissenschaften</p>
+            </LogoContainer>
             <LoginContainer>
-                <h1>Home</h1>
-            </LoginContainer>
-            <LoginContainer>
-                <button type="button" onClick={login}>
-                    Login
-                </button>
+                <Button variant="contained" onClick={login}>Login</Button>
             </LoginContainer>
         </Wrapper>
     )

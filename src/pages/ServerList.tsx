@@ -7,6 +7,9 @@ import PageHeader from '../components/PageHeader'
 
 
 class ServerList extends React.Component {
+    // Server Information is hardcoded for the moment.
+    // Get data from keycloak once servers are listed as clients
+
     render() {
         return (
             <MainContainer>
@@ -15,7 +18,7 @@ class ServerList extends React.Component {
                     <Header />
                     <PageHeader name="Lists all Servers" description="Welcome back kjbaumann."/>
                     <CardContainer>
-                        <FrostServerCard name={"Berlin Stations"} description={"Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum."}/>
+                        <FrostServerCard name={"Berlin Stations"} description={"A beta FROST Server for testing purposes."}/>
                     </CardContainer>
                 </MainContentContainer>
             </MainContainer>

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useCallback } from 'react'
 import IconButton from '@mui/material/IconButton';
 import Menu from '@mui/material/Menu';
 import Avatar from '@mui/material/Avatar';
@@ -6,12 +6,17 @@ import MenuItem from '@mui/material/MenuItem';
 import Box from '@mui/material/Box';
 import Tooltip from '@mui/material/Tooltip';
 import { Typography } from '@mui/material';
+import { useKeycloak } from '@react-keycloak/web'
 
-
-const settings = ['Profile', 'Logout']
 
 const UserMenu = () => {
     const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(null);
+
+    const { keycloak } = useKeycloak()
+
+    const logout = useCallback(() => {
+        keycloak?.logout()
+    }, [keycloak])
 
     const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
         setAnchorElUser(event.currentTarget);
@@ -44,11 +49,14 @@ const UserMenu = () => {
                 open={Boolean(anchorElUser)}
                 onClose={handleCloseUserMenu}
             >
-                {settings.map((setting) => (
-                    <MenuItem key={setting} onClick={handleCloseUserMenu}>
-                        <Typography textAlign="center">{setting}</Typography>
+                
+                    <MenuItem key={'settings'} onClick={handleCloseUserMenu}>
+                        <Typography textAlign="center">settings</Typography>
                     </MenuItem>
-                ))}
+                    <MenuItem key={'logout'} onClick={logout}>
+                        <Typography textAlign="center">logout</Typography>
+                    </MenuItem>
+            
             </Menu>
         </Box>
     )

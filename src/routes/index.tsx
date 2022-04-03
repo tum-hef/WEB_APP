@@ -13,7 +13,9 @@ const styles = {
   container: {
     height: '100%',
     width: '100%',
-    fontFamily: 'Helvetica'
+    fontFamily: 'Helvetica',
+    margin: '0px',
+    padding: '0px'
   }
 }
 

@@ -14,4 +14,10 @@ const MainContentContainer = styled.div`
     width: 100%;
 `;
 
-export { Wrapper, MainContentContainer }
+const ChartContainer = styled.div`
+    width: 60%;
+    margin-top: 5%;
+    margin-left: 5%;
+`;
+
+export { Wrapper, MainContentContainer, ChartContainer }

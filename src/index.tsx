@@ -19,7 +19,9 @@ ReactDOM.render(
       onEvent={eventLogger}
       onTokens={tokenLogger}
     >
-      <AppRouter />
+      <div style={{margin: '0px', padding: '0px', width: '100%', height: '100%'}}>
+        <AppRouter />
+      </div>
     </ReactKeycloakProvider>
   </React.StrictMode>,
   document.getElementById('root')
