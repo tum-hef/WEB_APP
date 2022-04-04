@@ -16,7 +16,7 @@ https://github.com/kjbaumann/Keycloak-on-Frost-Server-Introduction
 ### Styled Components
 Every Component has its own css file which can be found at the [styles folder](src/styles) in the directory. The naming convention for said files is **ComponentName.styles.ts**. For a detailed documentetion check out https://styled-components.com/docs. When working with Visual Studio Code it is also recommended to use the styled components plugin for code highlighting as well as completion. https://marketplace.visualstudio.com/items?itemName=diegolincoln.vscode-styled-components
 ### Axios 
-All api-calls are done with axios as it offers an official typescript support. Check out the documentation for more information. https://axios-http.com/docs/intro
+All api-calls are done with axios as it offers official typescript support. Check out the documentation for more information. https://axios-http.com/docs/intro
 ### Typescript
 The Typescript configuration can be found at [tsconfig.json](/tsconfig.json). As there have not been any changes to the standard configuration there is no need to touch this file as of now.
 ### Coding-Conventions
