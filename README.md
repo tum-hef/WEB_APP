@@ -76,4 +76,4 @@ This folder contains basic configuration files for the apperance of the Web Appl
 ### package.json
 This file contains all plugins used in the application.
 ### tsconfig.json
-This file contains the Typescript configuration as mentioned in the section ``` Typescript 
+This file contains the Typescript configuration as mentioned in the section ``` Typescript ``` .
