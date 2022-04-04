@@ -26,5 +26,5 @@ The Typescript configuration can be found at [tsconfig.json](/tsconfig.json). As
 - All typescript logic should be obeyed and keywords that override this logic should only be used in very specific cases.
 ## Routes and Keyloak
 - All routing should follow the given configuration already present in the repository.
-- The keyloak configuration file can be found here: [keyloak.ts](src/keycloak)
+- The keyloak configuration file can be found here:  [keyloak.ts](src/keycloak.ts)
 - Check out the the keycloak documentation for more information https://www.keycloak.org/documentation
