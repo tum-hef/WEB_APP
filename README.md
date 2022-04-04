@@ -8,7 +8,7 @@ To run the App locally for developing and debugging you have to start the Web Ap
 To start the Development Server of the Web App run ``` npm start ``` from the root directory.
 ### Set Up Keycloak Instance
 1. To set up the Keycloak server first start the docker container with ``` docker-compose up ``` while beeing in the same directory as the docker-compose file. [Docker-Compose file for the Keycloak Server](documentation/docker-compose.yaml)
-2. The Web App is configured to run on a specific Realm and Client. If you wish to change that setup you can use [this file in the Repository](./keycloak.ts) to do so and set your keycloak settings accordingly. However, **it is recommended** to use the [original configuration](documentation/realm-export.yaml) and import it to your local Keycloak instance. Check out this site for a detailed tutorial for importing and exporting realm data in keycloak https://keepgrowing.in/tools/keycloak-in-docker-2-how-to-import-a-keycloak-realm/.
+2. The Web App is configured to run on a specific Realm and Client. If you wish to change that setup you can use [this file in the Repository](src/keycloak.ts) to do so and set your keycloak settings accordingly. However, **it is recommended** to use the [original configuration](documentation/realm-export.json) and import it to your local Keycloak instance. Check out this site for a detailed tutorial for importing and exporting realm data in keycloak https://keepgrowing.in/tools/keycloak-in-docker-2-how-to-import-a-keycloak-realm/.
 ### Set Up Frost Server(s)
 As sample data csn be helful in debugging, check out this repository on how to create local Frost Servers and how to link them to a keycloak instance.
 https://github.com/kjbaumann/Keycloak-on-Frost-Server-Introduction
