@@ -7,6 +7,9 @@ const Wrapper = styled.div`
     color: white;
     border-bottom: 1px solid white;
     width: 90%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 `;
 
 export { Wrapper }
