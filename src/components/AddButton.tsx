@@ -3,10 +3,10 @@ import Button from '@mui/material/Button'
 import AddIcon from '@mui/icons-material/Add'
 
 type AddButtonProps = {
-
 }
 
 class AddButton extends Component<AddButtonProps> {
+    
     render() {
         return(
             <div>

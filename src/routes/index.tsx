@@ -5,6 +5,7 @@ import HomePage from '../pages/Home'
 import Dashboard from '../pages/Dashboard'
 import ServerList from '../pages/ServerList'
 import ServerDisplay from '../pages/ServerDisplay'
+import AddTTNDeviceForm from '../pages/AddTTNDeviceForm'
 import { PrivateRoute } from './utils'
 import { withStyles } from '@material-ui/core/styles'
 import PropTypes from 'prop-types'
@@ -34,6 +35,7 @@ const AppRouter = (props: any) => {
         <PrivateRoute exact path="/dashboard" component={Dashboard} />
         < PrivateRoute exact path="/servers" component={ServerList} />
         <PrivateRoute exact path="/servers/:id" component={ServerDisplay} />
+        <PrivateRoute exact path="/servers/:id/add" component={AddTTNDeviceForm} />
       </Router> 
     </div>
   )
