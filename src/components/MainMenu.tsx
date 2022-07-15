@@ -3,7 +3,7 @@ import IUserInfo from '../models/keycloak/UserInfo'
 import { Link } from 'react-router-dom'
 import { MainContainer, DescriptionContainer, LinkContainer, StyledLink, SectionContainer, UserNameContainer } from '../styles/MainMenu.styles'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faSliders, faServer, faUser } from '@fortawesome/free-solid-svg-icons'
+import { faSliders, faServer, faUser,faPeopleGroup } from '@fortawesome/free-solid-svg-icons'
 import { Button } from '@mui/material'
 const MainMenu = (props: any) => {
     const { keycloak } = useKeycloak()
@@ -39,6 +39,13 @@ const MainMenu = (props: any) => {
                     </div>
                     <div>
                         <Link to='/servers'>Server</Link>
+                    </div>
+                </StyledLink>    <StyledLink>
+                    <div>
+                        <FontAwesomeIcon icon={faPeopleGroup} />
+                    </div>
+                    <div>
+                        <Link to='/groups'>Group</Link>
                     </div>
                 </StyledLink>
                    <StyledLink>

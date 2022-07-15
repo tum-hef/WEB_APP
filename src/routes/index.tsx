@@ -9,6 +9,7 @@ import AddTTNDeviceForm from '../pages/AddTTNDeviceForm'
 import { PrivateRoute } from './utils'
 import { withStyles } from '@material-ui/core/styles'
 import PropTypes from 'prop-types'
+import Groups from '../pages/Groups'
 
 const styles = {
   container: {
@@ -36,6 +37,7 @@ const AppRouter = (props: any) => {
         < PrivateRoute exact path="/servers" component={ServerList} />
         <PrivateRoute exact path="/servers/:id" component={ServerDisplay} />
         <PrivateRoute exact path="/servers/:id/add" component={AddTTNDeviceForm} />
+        <PrivateRoute exact path="/groups" component={Groups} />
       </Router> 
     </div>
   )
