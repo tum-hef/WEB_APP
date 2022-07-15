@@ -1,28 +1,33 @@
-import MainMenu from '../components/MainMenu'
-import SmallInfoTag from '../components/SmallInfoTag'
+import ContentBar from "../components/ContentBar";
 
-import { useKeycloak } from '@react-keycloak/web'
-import PropTypes from 'prop-types'
-import { MainContainer, MainMenuContainer, TagContainer } from '../styles/Dashboard.styles'
+import { Grid } from "@mui/material";
+import ListAltIcon from "@mui/icons-material/ListAlt";
+import NotificationsNoneIcon from "@mui/icons-material/NotificationsNone";
+import StorageIcon from "@mui/icons-material/Storage";
+import TabletAndroidIcon from "@mui/icons-material/TabletAndroid";
+import { CardWidget } from "../components/CardWidget";
 
-const Dashboard = (props: any) => {
-    const { keycloak } = useKeycloak()
-
-    return (
-        <MainContainer>
-            <MainMenuContainer>
-                <MainMenu />
-            </MainMenuContainer>
-                <SmallInfoTag name="Devices" link="/devices" icon="BsFillMusicPlayerFill"/>
-                <SmallInfoTag name="Server" link="/servers" icon="BsFillInboxesFill"/>
-                <SmallInfoTag name="Notifications" link="/notifications" icon="BsFillChatRightDotsFill"/>
-                <SmallInfoTag name="Reports" link="/reports" icon="BsFillExclamationTriangleFill"/>
-        </MainContainer>
-    )
+export default function Dashboard(props: any) {
+  return (
+    <ContentBar>
+      <Grid container spacing={3}>
+        <Grid item lg={3} sm={6} xl={3} xs={12}>
+          <CardWidget title="Devices" value="2" icon={<TabletAndroidIcon />} />
+        </Grid>
+        <Grid item lg={3} sm={6} xl={3} xs={12}>
+          <CardWidget title="Servers" value="10" icon={<StorageIcon />} />
+        </Grid>{" "}
+        <Grid item lg={3} sm={6} xl={3} xs={12}>
+          <CardWidget
+            title="Notifications"
+            value="1"
+            icon={<NotificationsNoneIcon />}
+          />
+        </Grid>{" "}
+        <Grid item lg={3} sm={6} xl={3} xs={12}>
+          <CardWidget title="Reports" value="6" icon={<ListAltIcon />} />
+        </Grid>
+      </Grid>
+    </ContentBar>
+  );
 }
-
-Dashboard.propTypes = {
-    classes: PropTypes.object.isRequired,
-  };
-
-export default Dashboard;
