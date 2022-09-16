@@ -11,9 +11,11 @@ import {
 } from "@mui/material";
 import GridViewIcon from "@mui/icons-material/GridView";
 import LinkCustom from "./LinkCustom";
-import StorageIcon from "@mui/icons-material/Storage";
-import GroupIcon from "@mui/icons-material/Group";
+
+import AccountTreeIcon from "@mui/icons-material/AccountTree";
 import LogoutIcon from "@mui/icons-material/Logout";
+import NotificationsIcon from "@mui/icons-material/Notifications";
+import TextSnippetIcon from "@mui/icons-material/TextSnippet";
 export const DrawerSideBar = (
   <div>
     <Toolbar />
@@ -41,17 +43,37 @@ export const DrawerSideBar = (
           </ListItemButton>
         </ListItem>
       </LinkCustom>
-      <LinkCustom to="/servers">
-        <ListItem key={"Server"} disablePadding>
+      <LinkCustom to="/projects">
+        <ListItem key={"Projects"} disablePadding>
           <ListItemButton>
             <ListItemIcon>
-              <StorageIcon />
+              <AccountTreeIcon />
             </ListItemIcon>
-            <ListItemText primary={"Server"} />
+            <ListItemText primary={"Projects"} />
           </ListItemButton>
         </ListItem>
       </LinkCustom>
-      <LinkCustom to="/groups">
+      <LinkCustom to="/notifications">
+        <ListItem key={"Notifications"} disablePadding>
+          <ListItemButton>
+            <ListItemIcon>
+              <NotificationsIcon />
+            </ListItemIcon>
+            <ListItemText primary={"Notifications"} />
+          </ListItemButton>
+        </ListItem>
+      </LinkCustom>{" "}
+      <LinkCustom to="/reports">
+        <ListItem key={"Reports"} disablePadding>
+          <ListItemButton>
+            <ListItemIcon>
+              <TextSnippetIcon />
+            </ListItemIcon>
+            <ListItemText primary={"Reports"} />
+          </ListItemButton>
+        </ListItem>
+      </LinkCustom>{" "}
+      {/* <LinkCustom to="/groups">
         <ListItem key={"Group"} disablePadding>
           <ListItemButton>
             <ListItemIcon>
@@ -60,7 +82,7 @@ export const DrawerSideBar = (
             <ListItemText primary={"Group"} />
           </ListItemButton>
         </ListItem>
-      </LinkCustom>
+      </LinkCustom> */}
       <a
         href="http://localhost:8080/realms/keycloak-react-auth/protocol/openid-connect/logout"
         style={{
