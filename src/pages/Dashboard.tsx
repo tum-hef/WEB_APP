@@ -69,28 +69,30 @@ export default function Dashboard(props: any) {
           </LinkCustom>
         </Grid>{" "}
         <Grid item lg={6} sm={12} xl={6} xs={12}>
-          <Card sx={{ maxWidth: 345 }}>
-            <CardActionArea>
-              <CardMedia
-                component="img"
-                height="140"
-                image="https://thumbs.dreamstime.com/b/cute-gadgets-cartoon-characters-funny-electronic-device-isolated-set-vector-illustration-smartphone-headphones-fitness-tracker-172926365.jpg"
-                alt="green iguana"
-              />
-              <CardContent
-                style={{
-                  // add center
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                }}
-              >
-                <Typography gutterBottom variant="h5" component="div">
-                  Devices
-                </Typography>
-              </CardContent>
-            </CardActionArea>
-          </Card>
+          <LinkCustom to="/devices">
+            <Card sx={{ maxWidth: 345 }}>
+              <CardActionArea>
+                <CardMedia
+                  component="img"
+                  height="140"
+                  image="https://thumbs.dreamstime.com/b/cute-gadgets-cartoon-characters-funny-electronic-device-isolated-set-vector-illustration-smartphone-headphones-fitness-tracker-172926365.jpg"
+                  alt="green iguana"
+                />
+                <CardContent
+                  style={{
+                    // add center
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                  }}
+                >
+                  <Typography gutterBottom variant="h5" component="div">
+                    Devices
+                  </Typography>
+                </CardContent>
+              </CardActionArea>
+            </Card>
+          </LinkCustom>
         </Grid>{" "}
       </Grid>
     </ContentBar>

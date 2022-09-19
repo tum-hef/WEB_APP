@@ -1,5 +1,8 @@
+import { Button } from "@mui/material";
 import DataTable from "react-data-table-component";
 import ContentBar from "../components/ContentBar";
+import DevicesOtherIcon from "@mui/icons-material/DevicesOther";
+import LinkCustom from "../components/LinkCustom";
 
 export default function Servers() {
   let json_file = require("../utils/servers.json");
@@ -22,6 +25,17 @@ export default function Servers() {
     {
       name: "Description",
       selector: (row: any) => row.description,
+      sortable: true,
+    },
+    {
+      name: "Devices",
+      selector: (row: any) => (
+        <LinkCustom to={`/devices`}>
+          <Button variant="contained" color="primary">
+            <DevicesOtherIcon />
+          </Button>
+        </LinkCustom>
+      ),
       sortable: true,
     },
   ];
