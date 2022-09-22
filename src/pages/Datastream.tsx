@@ -42,12 +42,16 @@ const Datastreams = () => {
     {
       name: "Unit of Measurment",
       selector: (row: any) => (
-        <a href={row.unitOfMeasurement.definition}
-        style={{
-          textDecoration: "none",
-          
-        }}
-        >Link</a>
+        <a
+          href={row.unitOfMeasurement.definition}
+          style={{
+            textDecoration: "none",
+          }}
+        >
+          {row.unitOfMeasurement.name !== "-"
+            ? row.unitOfMeasurement.name
+            : "Link"}
+        </a>
       ),
       sortable: true,
     },

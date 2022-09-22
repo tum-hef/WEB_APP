@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import DataTable from "react-data-table-component";
+import DataTable, { ExpanderComponentProps } from "react-data-table-component";
 import ContentBar from "../components/ContentBar";
 import { Button } from "@mui/material";
 import LinkCustom from "../components/LinkCustom";
 import CastIcon from "@mui/icons-material/Cast";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
 const Devices = () => {
   const [devices, setDevices] = useState([]);
 
@@ -29,6 +30,7 @@ const Devices = () => {
       name: "ID",
       selector: (row: any) => `${row["@iot.id"]}`,
       sortable: true,
+      width: "5%",
     },
     {
       name: "Name",
@@ -39,9 +41,11 @@ const Devices = () => {
       name: "Description",
       selector: (row: any) => row.description,
       sortable: true,
+      width: "40%",
     },
     {
       name: "Datastreams",
+      sortable: true,
       selector: (row: any) => (
         <LinkCustom to={`/datastreams/${row["@iot.id"]}`}>
           <Button variant="contained" color="primary">
@@ -49,9 +53,37 @@ const Devices = () => {
           </Button>
         </LinkCustom>
       ),
+    },
+    {
+      name: "Location",
       sortable: true,
+      selector: (row: any) => (
+        <LinkCustom to={`/location/${row["@iot.id"]}`}>
+          <Button variant="contained" color="primary">
+            <LocationOnIcon />
+          </Button>
+        </LinkCustom>
+      ),
     },
   ];
+  const ExpandedComponent: React.FC<ExpanderComponentProps<any>> = ({
+    data,
+  }) => {
+    return (
+      // add div ceneter
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          margin: "10px",
+        }}
+      >
+        <b>Description: </b>
+        {data.description}
+      </div>
+    );
+  };
 
   return (
     <ContentBar>
@@ -59,6 +91,8 @@ const Devices = () => {
         title="Devices"
         columns={columns}
         data={devices}
+        expandableRows
+        expandableRowsComponent={ExpandedComponent}
         pagination={true}
         paginationPerPage={5}
         paginationRowsPerPageOptions={[5, 10, 15]}
