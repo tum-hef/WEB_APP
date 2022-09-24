@@ -6,17 +6,27 @@ import { Button } from "@mui/material";
 import LinkCustom from "../components/LinkCustom";
 import { useParams } from "react-router-dom";
 import SearchIcon from "@mui/icons-material/Search";
+import { useHistory } from "react-router-dom";
 const Datastreams = () => {
   const [datastreans, setDatastreams] = useState([]);
+  const history = useHistory();
   const { id } = useParams<{ id: string }>();
-
   const getDatastreams = async () => {
     try {
-      const response = await axios.get(
-        `https://iot.hef.tum.de/frost/v1.0/Things(${id})/Datastreams`
-      );
-      console.log(response.data);
-      setDatastreams(response.data.value);
+      await axios
+        .get(`https://iot.hef.tum.de/frost/v1.0/Things(${id})/Datastreams`)
+        .then((response) => {
+          console.log(response.data);
+          setDatastreams(response.data.value);
+        })
+        .catch((error) => {
+          console.log(error);
+          // check if 404
+          if (error.response.status === 404) {
+            console.log("404");
+            history.push("/404");
+          }
+        });
     } catch (error) {
       console.log(error);
     }
@@ -50,7 +60,7 @@ const Datastreams = () => {
         >
           {row.unitOfMeasurement.name !== "-"
             ? row.unitOfMeasurement.name
-            : "Link"}
+            : "Not specified"}
         </a>
       ),
       sortable: true,

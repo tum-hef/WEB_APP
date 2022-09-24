@@ -5,25 +5,27 @@ import ContentBar from "../components/ContentBar";
 import { format } from "date-fns";
 import { useParams } from "react-router-dom";
 import { Box, Button, Grid, TextField } from "@mui/material";
-import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
-import Export from "react-data-table-component";
+import { CSVLink } from "react-csv";
+import { Line } from "react-chartjs-2";
+import { useHistory } from "react-router-dom";
 
 import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
-  BarElement,
+  PointElement,
+  LineElement,
   Title,
   Tooltip,
   Legend,
 } from "chart.js";
-import { Bar } from "react-chartjs-2";
 ChartJS.register(
   CategoryScale,
   LinearScale,
-  BarElement,
+  PointElement,
+  LineElement,
   Title,
   Tooltip,
   Legend
@@ -36,17 +38,19 @@ export const options = {
     },
     title: {
       display: true,
+      text: "Observations",
     },
   },
 };
 
 const Observervation = () => {
-  const [datastreans, setDatastreams] = useState([]);
+  const [datastreans, setDatastreams] = useState<any[]>([]);
   const { id } = useParams<{ id: string }>();
   const [start_date, setStartDate] = useState<Date | null>(null);
   const [end_date, setEndDate] = useState<Date | null>(null);
   const [phenomenon_times, setPhenomenonTimes] = useState([]);
   const [result_times, setResultTimes] = useState([]);
+  const history = useHistory();
 
   const handleChangeStartDate = (newValue: any) => {
     setStartDate(newValue);
@@ -56,26 +60,81 @@ const Observervation = () => {
   };
   const getObservation = async () => {
     try {
-      const response = await axios.get(
-        `https://iot.hef.tum.de/frost/v1.0/Datastreams(${id})/Observations?$top=100&$orderby=phenomenonTime%20desc`
-      );
-      console.log(response.data);
-      setDatastreams(response.data.value);
-      setPhenomenonTimes(
-        response?.data.value
-          .map((item: any) =>
-            format(new Date(item.phenomenonTime), "dd.MM.yyyy HH:mm:ss")
-          )
-          .slice(0, 10)
-      );
-      setResultTimes(
-        response?.data.value.map((item: any) => item.result).slice(0, 10)
-      );
+      const response = await axios
+        .get(
+          `https://iot.hef.tum.de/frost/v1.0/Datastreams(${id})/Observations?$top=100&$orderby=phenomenonTime%20desc`
+        )
+        .then((response) => {
+          console.log(response.data);
+          setDatastreams(response.data.value);
+          setPhenomenonTimes(
+            response?.data.value
+              .map((item: any) =>
+                format(new Date(item.phenomenonTime), "dd.MM.yyyy HH:mm:ss")
+              )
+              .slice(0, 10)
+          );
+          setResultTimes(
+            response?.data.value.map((item: any) => item.result).slice(0, 10)
+          );
+        })
+        .catch((error) => {
+          console.log(error);
+          if (error.response.status === 404) {
+            console.log("404");
+            history.push("/404");
+          }
+        });
     } catch (error) {
       console.log(error);
     }
   };
 
+  const getCsvData = () => {
+    const csvData = [["ID", "Result", "Phenomenom Time"]];
+    let i;
+
+    if (datastreans.length > 0 && start_date && end_date) {
+      for (
+        i = 0;
+        i <
+        Object.keys(
+          datastreans.filter(
+            (item: any) =>
+              start_date &&
+              end_date &&
+              new Date(item.phenomenonTime) >= start_date &&
+              new Date(item.phenomenonTime) <= end_date
+          )
+        ).length;
+        i += 1
+      ) {
+        csvData.push([
+          `${datastreans[i]["@iot.id"]}`,
+          `${datastreans[i].result}`,
+          format(
+            new Date(datastreans[i].phenomenonTime),
+            "dd.MM.yyyy HH:mm:ss"
+          ),
+        ]);
+      }
+    } else if (datastreans.length > 0 && !start_date && !end_date) {
+      for (i = 0; i < Object.keys(datastreans).length; i += 1) {
+        csvData.push([
+          `${datastreans[i]["@iot.id"]}`,
+          `${datastreans[i].result}`,
+          format(
+            new Date(datastreans[i].phenomenonTime),
+            "dd.MM.yyyy HH:mm:ss"
+          ),
+        ]);
+      }
+    } else {
+      csvData.push(["No Data"]);
+    }
+
+    return csvData;
+  };
   useEffect(() => {
     getObservation();
   }, []);
@@ -112,7 +171,11 @@ const Observervation = () => {
 
   return (
     <ContentBar>
-      {result_times.length > 0 && <Bar options={options} data={data} />}
+      <CSVLink filename="observation.csv" data={getCsvData()}>
+        {" "}
+        <Button variant="contained">Download CSV</Button>
+      </CSVLink>
+      {result_times.length > 0 && <Line options={options} data={data} />}
 
       <LocalizationProvider dateAdapter={AdapterDateFns}>
         <Grid container justifyContent="center" alignItems="center">

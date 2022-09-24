@@ -6,8 +6,9 @@ import { Button } from "@mui/material";
 import LinkCustom from "../components/LinkCustom";
 import CastIcon from "@mui/icons-material/Cast";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
+
 const Devices = () => {
-  const [devices, setDevices] = useState([]);
+  const [devices, setDevices] = useState<any[]>([]);
 
   const getThings = async () => {
     try {
@@ -66,6 +67,7 @@ const Devices = () => {
       ),
     },
   ];
+
   const ExpandedComponent: React.FC<ExpanderComponentProps<any>> = ({
     data,
   }) => {
@@ -79,6 +81,7 @@ const Devices = () => {
           margin: "10px",
         }}
       >
+        {" "}
         <b>Description: </b>
         {data.description}
       </div>
