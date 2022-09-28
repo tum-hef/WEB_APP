@@ -40,17 +40,13 @@ const Location = () => {
   loading && <div>Loading...</div>;
   return (
     <ContentBar>
-      {/* add grid in center of page  */}
       <Grid container justifyContent="center" alignItems="center">
-        <Grid item xs={12} sm={12} md={12} lg={3}>
-          {/* <p>{location[0]?.name}</p> */}
-          <Typography variant="h5" component="div" gutterBottom mb={2}>
-            {location[0]?.name}
-          </Typography>
-          {location && (
-            <iframe id="iframeId" height="500px" width="100%"></iframe>
-          )}
-        </Grid>
+        <Typography variant="h5" component="div" gutterBottom mb={2}>
+          {location[0]?.name}
+        </Typography>
+        {location && (
+          <iframe id="iframeId" height="500px" width="100%"></iframe>
+        )}
       </Grid>
     </ContentBar>
   );

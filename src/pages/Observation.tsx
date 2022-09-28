@@ -5,7 +5,7 @@ import ContentBar from "../components/ContentBar";
 import { format } from "date-fns";
 import { useParams } from "react-router-dom";
 import { Box, Button, Grid, TextField } from "@mui/material";
-import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
+import { DatePicker, DateTimePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { CSVLink } from "react-csv";
 import { Line } from "react-chartjs-2";
@@ -32,6 +32,11 @@ ChartJS.register(
 );
 export const options = {
   responsive: true,
+  elements: {
+    line: {
+      borderColor: "#1976D2",
+    },
+  },
   plugins: {
     legend: {
       position: "top" as const,
@@ -189,9 +194,9 @@ const Observervation = () => {
             }}
           >
             <Box sx={{ display: "flex", justifyContent: "center" }}>
-              <DatePicker
-                label="Start Date"
-                inputFormat="dd.MM.yyyy"
+              <DateTimePicker
+                label="Start Datetime"
+                inputFormat="dd.MM.yyyy HH:mm:ss"
                 value={start_date}
                 onChange={handleChangeStartDate}
                 renderInput={(params) => <TextField {...params} />}
@@ -200,10 +205,10 @@ const Observervation = () => {
           </Grid>{" "}
           <Grid item xs={12} md={6}>
             <Box sx={{ display: "flex", justifyContent: "center" }}>
-              <DatePicker
-                label="End Date"
+              <DateTimePicker
+                label="End Datetime"
                 value={end_date}
-                inputFormat="dd.MM.yyyy"
+                inputFormat="dd.MM.yyyy HH:mm:ss"
                 onChange={handleChangeEndDate}
                 renderInput={(params) => <TextField {...params} />}
               />

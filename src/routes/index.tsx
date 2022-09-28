@@ -1,10 +1,5 @@
 import * as React from "react";
-import {
-  BrowserRouter as Router,
-  Redirect,
-  Route,
-  Switch,
-} from "react-router-dom";
+import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import { useKeycloak } from "@react-keycloak/web";
 import HomePage from "../pages/Home";
 import Dashboard from "../pages/Dashboard";
@@ -17,10 +12,10 @@ import { NOTFOUND } from "../pages/404";
 import { RotatingLines } from "react-loader-spinner";
 import { Grid } from "@material-ui/core";
 import Devices from "../pages/Devices";
-import Datastream from "../pages/Datastream";
 import Datastreams from "../pages/Datastream";
 import Observervation from "../pages/Observation";
 import Location from "../pages/Location";
+import Store from "../pages/Store";
 const styles = {
   container: {
     height: "100%",
@@ -59,6 +54,7 @@ const AppRouter = (props: any) => {
           <PrivateRoute exact path="/projects" component={Servers} />
           <PrivateRoute exact path="/groups" component={Groups} />
           <PrivateRoute exact path="/devices" component={Devices} />
+          <PrivateRoute exact path="/devices/store" component={Store} />
           <PrivateRoute exact path="/datastreams/:id" component={Datastreams} />
           <PrivateRoute
             exact

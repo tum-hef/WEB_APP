@@ -6,7 +6,7 @@ import { Button } from "@mui/material";
 import LinkCustom from "../components/LinkCustom";
 import CastIcon from "@mui/icons-material/Cast";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
-
+import DownloadIcon from "@mui/icons-material/Download";
 const Devices = () => {
   const [devices, setDevices] = useState<any[]>([]);
 
@@ -66,6 +66,26 @@ const Devices = () => {
         </LinkCustom>
       ),
     },
+    {
+      name: "Location",
+      sortable: true,
+      selector: (row: any) => (
+        <Button
+          variant="contained"
+          color="primary"
+          href={`data:text/json;charset=utf-8,${encodeURIComponent(
+            JSON.stringify({
+              id: row["@iot.id"],
+              name: row.name,
+              description: row.description,
+            })
+          )}`}
+          download="device.json"
+        >
+          <DownloadIcon />
+        </Button>
+      ),
+    },
   ];
 
   const ExpandedComponent: React.FC<ExpanderComponentProps<any>> = ({
@@ -81,15 +101,30 @@ const Devices = () => {
           margin: "10px",
         }}
       >
-        {" "}
-        <b>Description: </b>
-        {data.description}
+        <div
+          style={{
+            margin: "20px",
+          }}
+        >
+          <b>Name: </b>
+          {data.name}
+        </div>
+        <div>
+          <b>Description: </b>
+          {data.description}
+        </div>
       </div>
     );
   };
 
   return (
     <ContentBar>
+      <LinkCustom to="/devices/store">
+        <Button variant="contained" color="primary">
+          Create Device{" "}
+        </Button>
+      </LinkCustom>
+
       <DataTable
         title="Devices"
         columns={columns}

@@ -72,7 +72,7 @@ const Datastreams = () => {
       width: "40%",
     },
     {
-      name: "Observervation",
+      name: "Observations",
       selector: (row: any) => (
         <LinkCustom to={`/observation/${row["@iot.id"]}`}>
           <Button variant="contained" color="primary">
