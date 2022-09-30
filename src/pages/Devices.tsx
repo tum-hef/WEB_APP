@@ -67,7 +67,7 @@ const Devices = () => {
       ),
     },
     {
-      name: "Location",
+      name: "Download as JSON",
       sortable: true,
       selector: (row: any) => (
         <Button

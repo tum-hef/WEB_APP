@@ -5,7 +5,11 @@ import ContentBar from "../components/ContentBar";
 import { format } from "date-fns";
 import { useParams } from "react-router-dom";
 import { Box, Button, Grid, TextField } from "@mui/material";
-import { DatePicker, DateTimePicker, LocalizationProvider } from "@mui/x-date-pickers";
+import {
+  DatePicker,
+  DateTimePicker,
+  LocalizationProvider,
+} from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { CSVLink } from "react-csv";
 import { Line } from "react-chartjs-2";
@@ -108,8 +112,8 @@ const Observervation = () => {
             (item: any) =>
               start_date &&
               end_date &&
-              new Date(item.phenomenonTime) >= start_date &&
-              new Date(item.phenomenonTime) <= end_date
+              new Date(item.phenomenonTime).getTime() >= start_date.getTime() &&
+              new Date(item.phenomenonTime).getTime() <= end_date.getTime()
           )
         ).length;
         i += 1
