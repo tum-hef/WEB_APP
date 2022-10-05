@@ -28,13 +28,15 @@ function Store() {
   return (
     <>
       <ContentBar>
-        <Typography variant="h4"
-        style={{
-          // add text center
-          textAlign: "center",
-          
-        }}
-        >Store Device</Typography>
+        <Typography
+          variant="h4"
+          style={{
+            // add text center
+            textAlign: "center",
+          }}
+        >
+          Store Device
+        </Typography>
         <form onSubmit={formik.handleSubmit}>
           <Typography variant="h6" gutterBottom>
             Device Information
@@ -280,7 +282,7 @@ function Store() {
                     OTAA
                   </MenuItem>
                   <MenuItem key={"ABP"} value={"ABP"}>
-                    Encoder
+                    ABP
                   </MenuItem>
                 </Select>
                 {formik.touched.activation_method &&
