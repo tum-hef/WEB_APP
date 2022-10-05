@@ -1,5 +1,6 @@
 # 1) POLPOPOdsadas
 URL:  /projects
+
 Data displayed: 
 1.	ID
 2.	Client Name
@@ -10,6 +11,7 @@ Data displayed:
 # 2) Devices (Things)
 
 URL:  /devices
+
 Data displayed: 
 1.	ID
 2.	Name 
@@ -25,6 +27,7 @@ Button “Create Device” will redirect to a new form that creates a new device
 # 3)	Create Device (Things)
 
 URL:  / devices/store
+
 Form:
 
 
@@ -48,6 +51,7 @@ b)	LoRaWAN Version (1.0.0 / 1.0.1 1.0.2 / 1.0.3 /1.0.4 /1.1.0)
 # 4)  Datastreams 
 
 URL:  /datastreams/{ID} 
+
 Data displayed: 
 1)	ID
 2)	Name
@@ -58,6 +62,7 @@ Data displayed:
 # 5) Location
 
 URL:  / location/{ID} 
+
 Data displayed: 
 
 1)	Location Address Provided
@@ -66,6 +71,7 @@ Data displayed:
 •	Observation
 
 URL:  / observation/{ID} 
+
 Data displayed: 
 	
 # 6) 	Observation
