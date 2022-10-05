@@ -70,13 +70,13 @@ Data displayed:
 1. Location Address Provided
 2. Map
 
-• Observation
+
+# 6) Observation
 
 URL: / observation/{ID}
 
 Data displayed:
 
-# 6) Observation
 
 2. Phenomenon Time
 3. Result
