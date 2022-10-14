@@ -79,7 +79,7 @@ const Observervation = () => {
           setPhenomenonTimes(
             response?.data.value
               .map((item: any) =>
-                format(new Date(item.phenomenonTime), "dd.MM.yyyy HH:mm:ss")
+                format(new Date(item.phenomenonTime), "dd.MM.yyyy HH:mm")
               )
               .slice(0, 10)
           );
@@ -123,7 +123,7 @@ const Observervation = () => {
           `${datastreans[i].result}`,
           format(
             new Date(datastreans[i].phenomenonTime),
-            "dd.MM.yyyy HH:mm:ss"
+            "dd.MM.yyyy HH:mm"
           ),
         ]);
       }
@@ -134,7 +134,7 @@ const Observervation = () => {
           `${datastreans[i].result}`,
           format(
             new Date(datastreans[i].phenomenonTime),
-            "dd.MM.yyyy HH:mm:ss"
+            "dd.MM.yyyy HH:mm"
           ),
         ]);
       }
@@ -158,7 +158,7 @@ const Observervation = () => {
     {
       name: "Phenomenon Time",
       selector: (row: any) =>
-        format(new Date(row.phenomenonTime), "dd.MM.yyyy hh:mm:ss"),
+        format(new Date(row.phenomenonTime), "dd.MM.yyyy hh:mm"),
       sortable: true,
     },
     {
@@ -200,7 +200,7 @@ const Observervation = () => {
             <Box sx={{ display: "flex", justifyContent: "center" }}>
               <DateTimePicker
                 label="Start Datetime"
-                inputFormat="dd.MM.yyyy HH:mm:ss"
+                inputFormat="dd.MM.yyyy HH:mm"
                 value={start_date}
                 onChange={handleChangeStartDate}
                 renderInput={(params) => <TextField {...params} />}
@@ -212,7 +212,7 @@ const Observervation = () => {
               <DateTimePicker
                 label="End Datetime"
                 value={end_date}
-                inputFormat="dd.MM.yyyy HH:mm:ss"
+                inputFormat="dd.MM.yyyy HH:mm"
                 onChange={handleChangeEndDate}
                 renderInput={(params) => <TextField {...params} />}
               />

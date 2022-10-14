@@ -92,20 +92,10 @@ const Devices = () => {
     data,
   }) => {
     return (
-      // add div ceneter
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          margin: "10px",
-        }}
-      >
-        <div
-          style={{
-            margin: "20px",
-          }}
-        >
+      <div style={{
+        margin: "10px",
+      }}>
+        <div>
           <b>Name: </b>
           {data.name}
         </div>

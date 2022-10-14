@@ -8,9 +8,23 @@ import { useParams } from "react-router-dom";
 const Location = () => {
   const [location, setLocation] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [current_time, setCurrentTime] = useState<Date | null>(null);
   const [displayName, setDisplayName] = useState("");
 
   const { id } = useParams<{ id: string }>();
+
+  const get_last_update_time = async () => {
+    try {
+      const response = await axios.get(
+        `https://iot.hef.tum.de/frost/v1.0/Locations(${id})/HistoricalLocations`
+      );
+      console.log(response.data);
+      setCurrentTime(new Date(response.data.value[0].time));
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   const getLocation = async () => {
     try {
       await axios
@@ -53,25 +67,31 @@ const Location = () => {
   useEffect(() => {
     setLoading(true);
     getLocation();
+    get_last_update_time();
     setLoading(false);
   }, []);
 
   loading && <div>Loading...</div>;
   return (
     <ContentBar>
-      <Grid container justifyContent="center" alignItems="center">
-        <Typography variant="h5" component="div" gutterBottom mb={2}>
-          {displayName}
-        </Typography>
-        {location && (
-          <iframe
-            id="iframeId"
-            height="500px"
-            width="100%"
-            title="map"
-          ></iframe>
-        )}
+      <Grid container justifyContent="left" alignItems="left">
+        <Typography variant="h6" component="h6">
+          <b>Location Name: </b> {displayName}
+        </Typography>{" "}
+        <Typography variant="h6" component="h6">
+          <b>Last Update: </b> {current_time?.toLocaleString()}
+        </Typography>{" "}
       </Grid>
+      <Grid container justifyContent="left" alignItems="left">
+        <Typography variant="h6" component="h6">
+          <b>Location on map: </b>
+        </Typography>
+      </Grid>
+
+      {/* add text left */}
+      {location && (
+        <iframe id="iframeId" height="500px" width="100%" title="map"></iframe>
+      )}
     </ContentBar>
   );
 };
