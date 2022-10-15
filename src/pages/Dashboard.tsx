@@ -1,100 +1,88 @@
-import ContentBar from "../components/ContentBar";
+import React, { useState } from "react";
+import styled from "styled-components/macro";
+import { ThemeProvider } from "styled-components/macro";
 
-import {
-  Card,
-  CardActionArea,
-  CardContent,
-  CardMedia,
-  Grid,
-  Typography,
-} from "@mui/material";
-import ListAltIcon from "@mui/icons-material/ListAlt";
-import NotificationsNoneIcon from "@mui/icons-material/NotificationsNone";
-import StorageIcon from "@mui/icons-material/Storage";
-import TabletAndroidIcon from "@mui/icons-material/TabletAndroid";
-import { CardWidget } from "../components/CardWidget";
-import LinkCustom from "../components/LinkCustom";
+import { Box, CssBaseline, Paper as MuiPaper } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
+import useMediaQuery from "@mui/material/useMediaQuery";
+import { spacing } from "@mui/system";
 
-export default function Dashboard(props: any) {
+import GlobalStyle from "../components/GlobalStyle";
+import dashboardItems from "../components/dashboardItems";
+import Sidebar from "../components/Sidebar";
+
+const drawerWidth = 258;
+
+const Root = styled.div`
+  display: flex;
+  min-height: 100vh;
+`;
+
+const Drawer = styled.div`
+  ${(props) => props.theme.breakpoints.up("md")} {
+    width: ${drawerWidth}px;
+    flex-shrink: 0;
+  }
+`;
+
+const AppContent = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  max-width: 100%;
+`;
+
+const Paper = styled(MuiPaper)(spacing);
+
+const MainContent = styled(Paper)`
+  flex: 1;
+  background: ${(props) => props.theme.palette.background.default};
+
+  @media all and (-ms-high-contrast: none), (-ms-high-contrast: active) {
+    flex: none;
+  }
+
+  .MuiPaper-root .MuiPaper-root {
+    box-shadow: none;
+  }
+`;
+
+const Dashboard: React.FC = ({ children }) => {
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  const handleDrawerToggle = () => {
+    setMobileOpen(!mobileOpen);
+  };
+
+  const theme = useTheme();
+  const isLgUp = useMediaQuery(theme.breakpoints.up("lg"));
+
   return (
-    <ContentBar>
-      <Grid
-        container
-        spacing={2}
-        style={{
-          // add center
-          justifyContent: "center",
-        }}
-      >
-        {/* <Grid item lg={3} sm={6} xl={3} xs={12}>
-          <CardWidget title="Devices" value="2" icon={<TabletAndroidIcon />} />
-        </Grid>
-        <Grid item lg={3} sm={6} xl={3} xs={12}>
-          <CardWidget title="Projects" value="10" icon={<StorageIcon />} />
-        </Grid>{" "}
-        <Grid item lg={3} sm={6} xl={3} xs={12}>
-          <CardWidget
-            title="Notifications"
-            value="1"
-            icon={<NotificationsNoneIcon />}
+    <Root>
+      <CssBaseline />
+      <GlobalStyle />
+      <Drawer>
+        <Box sx={{ display: { xs: "block", lg: "none" } }}>
+          <Sidebar
+            PaperProps={{ style: { width: drawerWidth } }}
+            variant="temporary"
+            open={mobileOpen}
+            onClose={handleDrawerToggle}
+            items={dashboardItems}
           />
-        </Grid>{" "}
-        <Grid item lg={3} sm={6} xl={3} xs={12}>
-          <CardWidget title="Reports" value="6" icon={<ListAltIcon />} />
-        </Grid>{" "} */}
-        <Grid item lg={6} sm={12} xl={6} xs={12}>
-          <LinkCustom to="/projects">
-            <Card sx={{ maxWidth: 345 }}>
-              <CardActionArea>
-                <CardMedia
-                  component="img"
-                  height="140"
-                  image="https://www.herzing.edu/sites/default/files/styles/fp_960_480/public/images/blog/group_projects.png.webp?itok=tQSafZj0"
-                  alt="green iguana"
-                />
-                <CardContent
-                  style={{
-                    // add center
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                  }}
-                >
-                  <Typography gutterBottom variant="h5" component="div">
-                    Projects
-                  </Typography>
-                </CardContent>
-              </CardActionArea>
-            </Card>
-          </LinkCustom>
-        </Grid>{" "}
-        <Grid item lg={6} sm={12} xl={6} xs={12}>
-          <LinkCustom to="/devices">
-            <Card sx={{ maxWidth: 345 }}>
-              <CardActionArea>
-                <CardMedia
-                  component="img"
-                  height="140"
-                  image="https://thumbs.dreamstime.com/b/cute-gadgets-cartoon-characters-funny-electronic-device-isolated-set-vector-illustration-smartphone-headphones-fitness-tracker-172926365.jpg"
-                  alt="green iguana"
-                />
-                <CardContent
-                  style={{
-                    // add center
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                  }}
-                >
-                  <Typography gutterBottom variant="h5" component="div">
-                    Devices
-                  </Typography>
-                </CardContent>
-              </CardActionArea>
-            </Card>
-          </LinkCustom>
-        </Grid>{" "}
-      </Grid>
-    </ContentBar>
+        </Box>
+        <Box sx={{ display: { xs: "none", md: "block" } }}>
+          <Sidebar
+            PaperProps={{ style: { width: drawerWidth } }}
+            items={dashboardItems}
+          />
+        </Box>
+      </Drawer>
+      <AppContent>
+        <MainContent p={isLgUp ? 12 : 5}>{children}</MainContent>
+      </AppContent>
+    </Root>
   );
-}
+};
+
+export default Dashboard;

@@ -16,6 +16,12 @@ import Datastreams from "../pages/Datastream";
 import Observervation from "../pages/Observation";
 import Location from "../pages/Location";
 import Store from "../pages/Store";
+import { useContext } from "react";
+import useTheme from "../hooks/useTheme";
+import { ThemeProvider } from "styled-components/macro";
+
+import { ThemeProvider as MuiThemeProvider } from "@mui/material/styles";
+import createTheme from "../hooks/createTheme";
 const styles = {
   container: {
     height: "100%",
@@ -29,6 +35,7 @@ const styles = {
 const AppRouter = (props: any) => {
   const { initialized } = useKeycloak();
   const { classes } = props;
+  const { theme } = useTheme();
 
   if (!initialized) {
     return (
@@ -46,26 +53,34 @@ const AppRouter = (props: any) => {
   }
 
   return (
-    <div className={classes.container}>
-      <Router>
-        <Switch>
-          <Route exact path="/" component={HomePage} />
-          <PrivateRoute exact path="/dashboard" component={Dashboard} />
-          <PrivateRoute exact path="/projects" component={Servers} />
-          <PrivateRoute exact path="/groups" component={Groups} />
-          <PrivateRoute exact path="/devices" component={Devices} />
-          <PrivateRoute exact path="/devices/store" component={Store} />
-          <PrivateRoute exact path="/datastreams/:id" component={Datastreams} />
-          <PrivateRoute
-            exact
-            path="/observation/:id"
-            component={Observervation}
-          />{" "}
-          <PrivateRoute exact path="/location/:id" component={Location} />
-          <Route path="*" component={NOTFOUND} />
-        </Switch>
-      </Router>
-    </div>
+    <MuiThemeProvider theme={createTheme(theme)}>
+      <ThemeProvider theme={createTheme(theme)}>
+        <div className={classes.container}>
+          <Router>
+            <Switch>
+              <Route exact path="/" component={HomePage} />
+              <PrivateRoute exact path="/dashboard" component={Dashboard} />
+              <PrivateRoute exact path="/projects" component={Servers} />
+              <PrivateRoute exact path="/groups" component={Groups} />
+              <PrivateRoute exact path="/devices" component={Devices} />
+              <PrivateRoute exact path="/devices/store" component={Store} />
+              <PrivateRoute
+                exact
+                path="/datastreams/:id"
+                component={Datastreams}
+              />
+              <PrivateRoute
+                exact
+                path="/observation/:id"
+                component={Observervation}
+              />{" "}
+              <PrivateRoute exact path="/location/:id" component={Location} />
+              <Route path="*" component={NOTFOUND} />
+            </Switch>
+          </Router>
+        </div>
+      </ThemeProvider>
+    </MuiThemeProvider>
   );
 };
 
