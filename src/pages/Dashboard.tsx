@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import styled from "styled-components/macro";
 import { ThemeProvider } from "styled-components/macro";
-
 import { Box, CssBaseline, Paper as MuiPaper } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
@@ -10,7 +9,9 @@ import { spacing } from "@mui/system";
 import GlobalStyle from "../components/GlobalStyle";
 import dashboardItems from "../components/dashboardItems";
 import Sidebar from "../components/Sidebar";
-
+import Navbar from "../components/navbar/Navbar";
+import Footer from "../components/Footer";
+import Settings from "../components/Settings";
 const drawerWidth = 258;
 
 const Root = styled.div`
@@ -79,8 +80,14 @@ const Dashboard: React.FC = ({ children }) => {
         </Box>
       </Drawer>
       <AppContent>
-        <MainContent p={isLgUp ? 12 : 5}>{children}</MainContent>
+        <Navbar onDrawerToggle={handleDrawerToggle} />
+        <MainContent p={isLgUp ? 12 : 5}>
+          {children}
+          {/* <Outlet /> */}
+        </MainContent>
+        <Footer />
       </AppContent>
+      {/* <Settings /> */}
     </Root>
   );
 };
