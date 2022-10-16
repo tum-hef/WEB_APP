@@ -1,7 +1,9 @@
 import React from "react";
 import styled from "styled-components/macro";
+import { useKeycloak } from "@react-keycloak/web";
 
 import { Badge, Grid, Avatar, Typography } from "@mui/material";
+import IUserInfo from "../models/keycloak/UserInfo";
 
 const Footer = styled.div`
   background-color: ${(props) =>
@@ -35,6 +37,9 @@ const FooterBadge = styled(Badge)`
 `;
 
 const SidebarFooter: React.FC = ({ ...rest }) => {
+  const { keycloak } = useKeycloak();
+  const userInfo = keycloak.idTokenParsed as IUserInfo;
+
   return (
     <Footer {...rest}>
       <Grid container spacing={2}>
@@ -47,23 +52,23 @@ const SidebarFooter: React.FC = ({ ...rest }) => {
             }}
             variant="dot"
           >
-            {/* {!!user && <Avatar alt={user.displayName} src={user.avatar} />} */}
-            {/* Demo data */}
-            {/* {!user && (
-              <Avatar
-                alt="Lucy Lavender"
-                src="/static/img/avatars/avatar-1.jpg"
-              />
-            )} */}
+            <Avatar
+              sx={{
+                width: 32,
+                height: 32,
+                backgroundColor: "primary.main",
+              }}
+            >
+              {userInfo?.given_name?.charAt(0) +
+                userInfo?.family_name?.charAt(0)}
+            </Avatar>
           </FooterBadge>
         </Grid>
         <Grid item>
-          {/* {!!user && (
-            <FooterText variant="body2">{user.displayName}</FooterText>
-          )} */}
-          {/* Demo data */}
-          {/* {!user && <FooterText variant="body2">Lucy Lavender</FooterText>} */}
-          <FooterSubText variant="caption">UX Designer</FooterSubText>
+          <FooterText variant="body2">
+            {userInfo?.given_name + " " + userInfo?.family_name}
+          </FooterText>
+          <FooterSubText variant="caption">{userInfo?.email}</FooterSubText>
         </Grid>
       </Grid>
     </Footer>

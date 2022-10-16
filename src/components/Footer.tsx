@@ -45,17 +45,19 @@ function Footer() {
     <Wrapper>
       <Grid container spacing={0}>
         <Grid
-          sx={{ display: { xs: "none", md: "block" } }}
+          // sx={{ display: { xs: "none", md: "block" } }}
           container
           item
           xs={12}
           md={6}
+          alignItems="center"
+          justifyContent="center"
         >
           <List>
             <ListItemButton component="a" href="#">
-              <ListItemText primary="Support" />
-            </ListItemButton>
-            <ListItemButton component="a" href="#">
+              <ListItemText primary="Training" />
+            </ListItemButton>{" "}
+            {/* <ListItemButton component="a" href="#">
               <ListItemText primary="Help Center" />
             </ListItemButton>
             <ListItemButton component="a" href="#">
@@ -63,14 +65,14 @@ function Footer() {
             </ListItemButton>
             <ListItemButton component="a" href="#">
               <ListItemText primary="Terms of Service" />
-            </ListItemButton>
+            </ListItemButton> */}
           </List>
         </Grid>
-        <Grid container item xs={12} md={6} justifyContent="flex-end">
+        <Grid container item xs={12} md={6} justifyContent="center">
           <List>
             <ListItemButton>
               <ListItemText
-                primary={`© ${new Date().getFullYear()} - Material App`}
+                primary={`© ${new Date().getFullYear()} - TUM HEF`}
               />
             </ListItemButton>
           </List>

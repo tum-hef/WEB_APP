@@ -4,6 +4,7 @@ import ContentBar from "../components/ContentBar";
 import { Grid, Typography } from "@mui/material";
 
 import { useParams } from "react-router-dom";
+import Dashboard from "./Dashboard";
 
 const Location = () => {
   const [location, setLocation] = useState<any[]>([]);
@@ -73,7 +74,7 @@ const Location = () => {
 
   loading && <div>Loading...</div>;
   return (
-    <ContentBar>
+    <Dashboard>
       <Grid container justifyContent="left" alignItems="left">
         <Typography variant="h6" component="h6">
           <b>Location Name: </b> {displayName}
@@ -92,7 +93,7 @@ const Location = () => {
       {location && (
         <iframe id="iframeId" height="500px" width="100%" title="map"></iframe>
       )}
-    </ContentBar>
+    </Dashboard>
   );
 };
 

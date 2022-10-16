@@ -81,7 +81,12 @@ const Dashboard: React.FC = ({ children }) => {
       </Drawer>
       <AppContent>
         <Navbar onDrawerToggle={handleDrawerToggle} />
-        <MainContent p={isLgUp ? 12 : 5}>
+        <MainContent
+          p={isLgUp ? 12 : 5}
+          style={{
+            backgroundColor: "#F7F9FC",
+          }}
+        >
           {children}
           {/* <Outlet /> */}
         </MainContent>

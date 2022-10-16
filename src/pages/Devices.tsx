@@ -7,6 +7,7 @@ import LinkCustom from "../components/LinkCustom";
 import CastIcon from "@mui/icons-material/Cast";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import DownloadIcon from "@mui/icons-material/Download";
+import Dashboard from "./Dashboard";
 const Devices = () => {
   const [devices, setDevices] = useState<any[]>([]);
 
@@ -92,9 +93,11 @@ const Devices = () => {
     data,
   }) => {
     return (
-      <div style={{
-        margin: "10px",
-      }}>
+      <div
+        style={{
+          margin: "10px",
+        }}
+      >
         <div>
           <b>Name: </b>
           {data.name}
@@ -108,7 +111,7 @@ const Devices = () => {
   };
 
   return (
-    <ContentBar>
+    <Dashboard>
       <LinkCustom to="/devices/store">
         <Button variant="contained" color="primary">
           Create Device{" "}
@@ -125,7 +128,7 @@ const Devices = () => {
         paginationPerPage={5}
         paginationRowsPerPageOptions={[5, 10, 15]}
       />
-    </ContentBar>
+    </Dashboard>
   );
 };
 

@@ -7,6 +7,7 @@ import LinkCustom from "../components/LinkCustom";
 import { useParams } from "react-router-dom";
 import SearchIcon from "@mui/icons-material/Search";
 import { useHistory } from "react-router-dom";
+import Dashboard from "./Dashboard";
 const Datastreams = () => {
   const [datastreans, setDatastreams] = useState([]);
   const history = useHistory();
@@ -85,7 +86,7 @@ const Datastreams = () => {
   ];
 
   return (
-    <ContentBar>
+    <Dashboard>
       <DataTable
         title="Datastreams"
         columns={columns}
@@ -94,7 +95,7 @@ const Datastreams = () => {
         paginationPerPage={5}
         paginationRowsPerPageOptions={[5, 10, 15]}
       />
-    </ContentBar>
+    </Dashboard>
   );
 };
 

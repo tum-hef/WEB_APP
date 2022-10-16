@@ -16,6 +16,7 @@ import {
 import { device_initial_values } from "../formik/initial_values";
 import { devoice_validationSchema } from "../formik/validation_schema";
 import { useFormik } from "formik";
+import Dashboard from "./Dashboard";
 
 function Store() {
   const formik = useFormik({
@@ -27,7 +28,7 @@ function Store() {
   });
   return (
     <>
-      <ContentBar>
+      <Dashboard>
         <Typography
           variant="h4"
           style={{
@@ -355,7 +356,7 @@ function Store() {
             Store
           </Button>
         </form>
-      </ContentBar>
+      </Dashboard>
     </>
   );
 }

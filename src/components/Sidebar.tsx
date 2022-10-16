@@ -3,7 +3,6 @@ import styled from "styled-components/macro";
 import { NavLink } from "react-router-dom";
 
 import { spacing } from "@mui/system";
-import { green } from "@mui/material/colors";
 
 import {
   Box as MuiBox,
@@ -51,22 +50,6 @@ const Brand = styled(ListItemButton)<{
   }
 `;
 
-const BrandChip = styled(Chip)`
-  background-color: ${green[700]};
-  border-radius: 5px;
-  color: ${(props) => props.theme.palette.common.white};
-  font-size: 55%;
-  height: 18px;
-  margin-left: 2px;
-  margin-top: -16px;
-  padding: 3px 0;
-
-  span {
-    padding-left: ${(props) => props.theme.spacing(1.375)};
-    padding-right: ${(props) => props.theme.spacing(1.375)};
-  }
-`;
-
 export type SidebarProps = {
   PaperProps: {
     style: {
@@ -90,10 +73,25 @@ const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   return (
     <Drawer variant="permanent" {...rest}>
-      <Brand component={NavLink} to="/">
-        TUM
-        <Box ml={1}>
-          Material App <BrandChip label="PRO" />
+      <Brand
+        component={NavLink}
+        to="/"
+        style={{
+          backgroundColor: "#233044",
+          alignItems: "center",
+          display: "flex",
+          justifyContent: "center",
+          textAlign: "center",
+        }}
+      >
+        <Box
+          style={{
+            display: "flex",
+            alignItems: "center",
+            color: "#fff",
+          }}
+        >
+          TUM HEF
         </Box>
       </Brand>
       <SidebarNav items={items} />

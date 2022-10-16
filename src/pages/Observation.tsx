@@ -25,6 +25,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import Dashboard from "./Dashboard";
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -121,10 +122,7 @@ const Observervation = () => {
         csvData.push([
           `${datastreans[i]["@iot.id"]}`,
           `${datastreans[i].result}`,
-          format(
-            new Date(datastreans[i].phenomenonTime),
-            "dd.MM.yyyy HH:mm"
-          ),
+          format(new Date(datastreans[i].phenomenonTime), "dd.MM.yyyy HH:mm"),
         ]);
       }
     } else if (datastreans.length > 0 && !start_date && !end_date) {
@@ -132,10 +130,7 @@ const Observervation = () => {
         csvData.push([
           `${datastreans[i]["@iot.id"]}`,
           `${datastreans[i].result}`,
-          format(
-            new Date(datastreans[i].phenomenonTime),
-            "dd.MM.yyyy HH:mm"
-          ),
+          format(new Date(datastreans[i].phenomenonTime), "dd.MM.yyyy HH:mm"),
         ]);
       }
     } else {
@@ -179,7 +174,7 @@ const Observervation = () => {
   };
 
   return (
-    <ContentBar>
+    <Dashboard>
       <CSVLink filename="observation.csv" data={getCsvData()}>
         {" "}
         <Button variant="contained">Download CSV</Button>
@@ -255,7 +250,7 @@ const Observervation = () => {
         paginationPerPage={5}
         paginationRowsPerPageOptions={[5, 10, 20]}
       />
-    </ContentBar>
+    </Dashboard>
   );
 };
 

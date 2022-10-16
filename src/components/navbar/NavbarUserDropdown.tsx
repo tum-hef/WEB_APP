@@ -9,7 +9,6 @@ import {
   IconButton as MuiIconButton,
 } from "@mui/material";
 
-
 const IconButton = styled(MuiIconButton)`
   svg {
     width: 22px;
@@ -44,7 +43,11 @@ function NavbarUserDropdown() {
           color="inherit"
           size="large"
         >
-          <Power />
+          <Power
+            style={{
+              color: "#9E9E9E",
+            }}
+          />
         </IconButton>
       </Tooltip>
       <Menu

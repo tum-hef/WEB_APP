@@ -3,6 +3,7 @@ import DataTable from "react-data-table-component";
 import ContentBar from "../components/ContentBar";
 import DevicesOtherIcon from "@mui/icons-material/DevicesOther";
 import LinkCustom from "../components/LinkCustom";
+import Dashboard from "./Dashboard";
 
 export default function Servers() {
   let json_file = require("../utils/servers.json");
@@ -45,7 +46,8 @@ export default function Servers() {
   });
 
   return (
-    <ContentBar>
+    // <ContentBar>
+    <Dashboard>
       <DataTable
         title="Projects"
         columns={columns}
@@ -54,6 +56,7 @@ export default function Servers() {
         paginationPerPage={5}
         paginationRowsPerPageOptions={[5, 10, 15]}
       />
-    </ContentBar>
+    </Dashboard>
+    // </ContentBar>
   );
 }

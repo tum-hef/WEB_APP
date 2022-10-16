@@ -4,6 +4,7 @@ import IUserInfo from "../models/keycloak/UserInfo";
 import { useKeycloak } from "@react-keycloak/web";
 import DataTable from "react-data-table-component";
 import ContentBar from "../components/ContentBar";
+import Dashboard from "./Dashboard";
 
 const Groups = () => {
   // PART 1
@@ -57,7 +58,7 @@ const Groups = () => {
   ];
 
   return (
-    <ContentBar>
+    <Dashboard>
       <DataTable
         title="Groups"
         columns={columns}
@@ -66,7 +67,7 @@ const Groups = () => {
         paginationPerPage={5}
         paginationRowsPerPageOptions={[5, 10, 15]}
       />
-    </ContentBar>
+    </Dashboard>
   );
 };
 
