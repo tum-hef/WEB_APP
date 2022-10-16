@@ -76,15 +76,15 @@ const Location = () => {
   return (
     <Dashboard>
       <Grid container justifyContent="left" alignItems="left">
-        <Typography variant="h6" component="h6">
+        <Typography variant="h6" component="h6" m={2}>
           <b>Location Name: </b> {displayName}
         </Typography>{" "}
-        <Typography variant="h6" component="h6">
+        <Typography variant="h6" component="h6" m={2}>
           <b>Last Update: </b> {current_time?.toLocaleString()}
         </Typography>{" "}
       </Grid>
       <Grid container justifyContent="left" alignItems="left">
-        <Typography variant="h6" component="h6">
+        <Typography variant="h6" component="h6" m={2}>
           <b>Location on map: </b>
         </Typography>
       </Grid>

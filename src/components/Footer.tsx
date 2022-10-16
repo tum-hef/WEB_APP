@@ -1,4 +1,3 @@
-import * as React from "react";
 import styled from "styled-components/macro";
 
 import {
@@ -8,6 +7,7 @@ import {
   ListItemButtonProps as MuiListItemButtonProps,
   ListItemButton as MuiListItemButton,
 } from "@mui/material";
+import LinkCustom from "./LinkCustom";
 
 interface ListItemButtonProps extends MuiListItemButtonProps {
   component?: string;
@@ -45,27 +45,27 @@ function Footer() {
     <Wrapper>
       <Grid container spacing={0}>
         <Grid
-          // sx={{ display: { xs: "none", md: "block" } }}
           container
           item
           xs={12}
           md={6}
           alignItems="center"
           justifyContent="center"
+          direction="row"
         >
           <List>
-            <ListItemButton component="a" href="#">
-              <ListItemText primary="Training" />
-            </ListItemButton>{" "}
-            {/* <ListItemButton component="a" href="#">
-              <ListItemText primary="Help Center" />
-            </ListItemButton>
-            <ListItemButton component="a" href="#">
-              <ListItemText primary="Privacy" />
-            </ListItemButton>
-            <ListItemButton component="a" href="#">
-              <ListItemText primary="Terms of Service" />
-            </ListItemButton> */}
+            <LinkCustom to={"training"}>
+              <ListItemButton>
+                <ListItemText primary="Training" />
+              </ListItemButton>
+            </LinkCustom>
+          </List>{" "}
+          <List>
+            <LinkCustom to={"impressum"}>
+              <ListItemButton>
+                <ListItemText primary="Impressum" />
+              </ListItemButton>
+            </LinkCustom>
           </List>
         </Grid>
         <Grid container item xs={12} md={6} justifyContent="center">

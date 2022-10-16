@@ -113,7 +113,13 @@ const Devices = () => {
   return (
     <Dashboard>
       <LinkCustom to="/devices/store">
-        <Button variant="contained" color="primary">
+        <Button
+          variant="contained"
+          color="primary"
+          style={{
+            marginBottom: "10px",
+          }}
+        >
           Create Device{" "}
         </Button>
       </LinkCustom>

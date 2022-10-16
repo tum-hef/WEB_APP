@@ -27,12 +27,6 @@ function NavbarUserDropdown() {
     setAnchorMenu(null);
   };
 
-  const handleSignOut = async () => {
-    // await signOut();
-    // navigate("/auth/sign-in");
-    console.log("LOGOUT");
-  };
-
   return (
     <React.Fragment>
       <Tooltip title="Account">
@@ -56,8 +50,18 @@ function NavbarUserDropdown() {
         open={Boolean(anchorMenu)}
         onClose={closeMenu}
       >
-        <MenuItem onClick={closeMenu}>Profile</MenuItem>
-        <MenuItem onClick={handleSignOut}>Sign out</MenuItem>
+        {/* <MenuItem onClick={closeMenu}>Profile</MenuItem> */}
+        <MenuItem>
+          <a
+            href="http://localhost:8080/realms/keycloak-react-auth/protocol/openid-connect/logout"
+            style={{
+              textDecoration: "none",
+              color: "inherit",
+            }}
+          >
+            Logout
+          </a>
+        </MenuItem>
       </Menu>
     </React.Fragment>
   );

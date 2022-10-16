@@ -1,13 +1,30 @@
 import React from "react";
 import styled, { css } from "styled-components/macro";
 import ReactPerfectScrollbar from "react-perfect-scrollbar";
-import { List } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 
 import { SidebarItemsType } from "../types/sidebar";
 import SidebarNavSection from "./SidebarNavSection";
 
+import {
+  Box,
+  Divider,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Toolbar,
+  Typography,
+} from "@mui/material";
+import GridViewIcon from "@mui/icons-material/GridView";
+import LinkCustom from "./LinkCustom";
+
+import AccountTreeIcon from "@mui/icons-material/AccountTree";
+import LogoutIcon from "@mui/icons-material/Logout";
+import NotificationsIcon from "@mui/icons-material/Notifications";
+import TextSnippetIcon from "@mui/icons-material/TextSnippet";
 import "../vendor/perfect-scrollbar.css";
 
 const baseScrollbar = css`
@@ -45,17 +62,128 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
 
   return (
     <ScrollbarComponent>
-      <List disablePadding>
+      <List>
         <Items>
-          {items &&
-            items.map((item) => (
-              <SidebarNavSection
-                component="div"
-                key={item.title}
-                pages={item.pages}
-                title={item.title}
-              />
-            ))}
+          <LinkCustom to="/dashboard">
+            <ListItem key={"Dashboard"} disablePadding>
+              <ListItemButton>
+                <ListItemIcon>
+                  <GridViewIcon
+                    style={{
+                      color: "white",
+                    }}
+                  />
+                </ListItemIcon>
+                <ListItemText
+                  style={{
+                    color: "white",
+                  }}
+                  primary={"Dashboard"}
+                />
+              </ListItemButton>
+            </ListItem>
+          </LinkCustom>
+          <LinkCustom to="/projects">
+            <ListItem key={"Projects"} disablePadding>
+              <ListItemButton>
+                <ListItemIcon>
+                  <AccountTreeIcon
+                    style={{
+                      color: "white",
+                    }}
+                  />
+                </ListItemIcon>
+                <ListItemText
+                  style={{
+                    color: "white",
+                  }}
+                  primary={"Projects"}
+                />
+              </ListItemButton>
+            </ListItem>
+          </LinkCustom>
+          <LinkCustom to="/notifications">
+            <ListItem key={"Notifications"} disablePadding>
+              <ListItemButton>
+                <ListItemIcon>
+                  <NotificationsIcon
+                    style={{
+                      color: "white",
+                    }}
+                  />
+                </ListItemIcon>
+                <ListItemText
+                  style={{
+                    color: "white",
+                  }}
+                  primary={"Notifications"}
+                />
+              </ListItemButton>
+            </ListItem>
+          </LinkCustom>{" "}
+          <LinkCustom to="/reports">
+            <ListItem key={"Reports"} disablePadding>
+              <ListItemButton>
+                <ListItemIcon>
+                  <TextSnippetIcon
+                    style={{
+                      color: "white",
+                    }}
+                  />
+                </ListItemIcon>
+                <ListItemText
+                  style={{
+                    color: "white",
+                  }}
+                  primary={"Reports"}
+                />
+              </ListItemButton>
+            </ListItem>
+          </LinkCustom>{" "}
+          <LinkCustom to="/trainings">
+            <ListItem key={"Trainings "} disablePadding>
+              <ListItemButton>
+                <ListItemIcon>
+                  <TextSnippetIcon
+                    style={{
+                      color: "white",
+                    }}
+                  />
+                </ListItemIcon>
+                <ListItemText
+                  primary={"Trainings"}
+                  style={{
+                    color: "white",
+                  }}
+                />
+              </ListItemButton>
+            </ListItem>
+          </LinkCustom>{" "}
+          <a
+            href="http://localhost:8080/realms/keycloak-react-auth/protocol/openid-connect/logout"
+            style={{
+              textDecoration: "none",
+              color: "inherit",
+            }}
+          >
+            <ListItem key={"Logout"} disablePadding>
+              <ListItemButton>
+                <ListItemIcon>
+                  <LogoutIcon
+                    style={{
+                      color: "white",
+                    }}
+                  />
+                </ListItemIcon>
+                <ListItemText
+                  style={{
+                    color: "white",
+                  }}
+                  primary={"Logout"}
+                />
+              </ListItemButton>
+            </ListItem>
+          </a>
         </Items>
       </List>
     </ScrollbarComponent>
