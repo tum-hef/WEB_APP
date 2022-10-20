@@ -153,7 +153,7 @@ const Observervation = () => {
     {
       name: "Phenomenon Time",
       selector: (row: any) =>
-        format(new Date(row.phenomenonTime), "dd.MM.yyyy hh:mm"),
+        format(new Date(row.phenomenonTime), "dd.MM.yyyy hh:mm:ss"),
       sortable: true,
     },
     {

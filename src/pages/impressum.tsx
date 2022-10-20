@@ -26,12 +26,12 @@ function Impressum() {
         <Typography variant="h3" style={{ color: "#233044" }} mt={8}>
           Publisher
         </Typography>
+        <p>Technische Universität München</p>{" "}
         <p>
           World Agricultural Systems Center Hans Eisenmann-Forum für
           Agrarwissenschaften
         </p>{" "}
-        <p>Tel.: +49 8161 71-3464</p>
-        <p>Fax: +49 8161 71-2899</p>{" "}
+        <p>Liesel-Beckmann-Str. 2 D-85354 Freising</p>{" "}
         <Typography variant="h3" style={{ color: "#233044" }} mt={8}>
           Legal status and representation
         </Typography>
@@ -45,25 +45,25 @@ function Impressum() {
           Liability diclaimer
         </Typography>
         <p>
-          The information provided on this website has been collected and
-          verified to the best of our knowledge and belief. However, there will
-          be no warranty that the information provided is up to date, correct,
-          complete, and available. There is no contractual relationship with
-          users of this website. We accept no liability for any loss or damage
-          caused by using this website. The exclusion of liability does not
-          apply where the provisions of the German Civil Code (BGB) on liability
-          in case of breach of official duty are applicable (§ 839 of the BGB).
-          We accept no liability for any loss or damage caused by malware when
-          accessing or downloading data or the installation or use of software
-          from this website. Where necessary in individual cases: the exclusion
-          of liability does not apply to information governed by the Directive
-          2006/123/EC of the European Parliament and of the Council. This
-          information is guaranteed to be accurate and up to date. Social Media:
-          Despite careful control of the content, we accept no liability for the
-          content of external links and third-party comments on any TUM social
-          media channels. Operators of linked websites bear sole responsibility
-          for their content.
+          Permission is hereby granted, free of charge, to any person obtaining
+          a copy of this software and associated documentation files (the
+          “Software”), to deal in the Software without restriction, including
+          without limitation the rights to use, copy, modify, merge, publish,
+          distribute, sublicense, and/or sell copies of the Software, and to
+          permit persons to whom the Software is furnished to do so, subject to
+          the following conditions: The above copyright notice and this
+          permission notice shall be included in all copies or substantial
+          portions of the Software.
         </p>{" "}
+        <p>
+          The software is provided “as is”, without warranty of any kind,
+          express or implied, including but not limited to the warranties of
+          merchantability, fitness for a particular purpose and noninfringement.
+          in no event shall the authors or copyright holders be liable for any
+          claim, damages or other liability, whether in an action of contract,
+          tort or otherwise, arising from, out of or in connection with the
+          software or the use or other dealings in the software.
+        </p>
       </Paper>
     </Dashboard>
   );

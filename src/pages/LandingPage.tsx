@@ -1,5 +1,5 @@
 import Dashboard from "./Dashboard";
-
+import { useEffect, useState } from "react";
 import {
   Card,
   CardActionArea,
@@ -8,48 +8,109 @@ import {
   Grid,
   Typography,
 } from "@mui/material";
-import ListAltIcon from "@mui/icons-material/ListAlt";
-import NotificationsNoneIcon from "@mui/icons-material/NotificationsNone";
-import StorageIcon from "@mui/icons-material/Storage";
-import TabletAndroidIcon from "@mui/icons-material/TabletAndroid";
-import { CardWidget } from "../components/CardWidget";
+import { green, red } from "@mui/material/colors";
+import axios from "axios";
 import LinkCustom from "../components/LinkCustom";
+import { ToastContainer, toast } from "react-toastify";
+import Stats from "../components/Stats";
+let json_file = require("../utils/servers.json");
 export default function LandingPage() {
+  const [projects, setProjects] = useState<number | null>(null);
+  const [devices, setDevices] = useState<number | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  useEffect(() => {
+    console.log("Dashboard useEffect");
+    asyncGetProjects();
+    asyncGetDevices();
+    setLoading(false);
+  }, []);
+
+  const asyncGetProjects = async () => {
+    try {
+      setProjects(Object.keys(json_file).length);
+      console.log("Projects: ", projects);
+    } catch (err) {
+      console.log(err);
+      toast.error("Error Getting Projects");
+    }
+  };
+  const asyncGetDevices = async () => {
+    try {
+      const response = await axios.get(
+        "https://iot.hef.tum.de/frost/v1.0/Things"
+      );
+      setDevices(response.data.value.length);
+      setLoading(false);
+    } catch (err) {
+      console.log(err);
+      setLoading(false);
+      toast.error("Error Getting Devices");
+    }
+  };
+
   return (
     <Dashboard>
+      <ToastContainer
+        position="bottom-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="dark"
+      />
+      <Grid container spacing={2}>
+        <Grid item xs={12} sm={6} md={3}>
+          <Stats
+            title="Projects"
+            amount={projects}
+            percentagecolor={red[500]}
+          />
+        </Grid>{" "}
+        <Grid item xs={12} sm={6} md={3}>
+          <Stats title="Devices" amount={devices} percentagecolor={red[500]} />
+        </Grid>{" "}
+        <Grid item xs={12} sm={6} md={3}>
+          <Stats
+            title="Datastreams"
+            amount="1.320+"
+            percentagecolor={red[500]}
+          />
+        </Grid>{" "}
+        <Grid item xs={12} sm={6} md={3}>
+          <Stats
+            title="Observations"
+            amount="1.320+"
+            percentagecolor={red[500]}
+          />
+        </Grid>
+      </Grid>{" "}
       <Grid
         container
         spacing={2}
+        mt={6}
         style={{
-          // add center
           justifyContent: "center",
         }}
       >
-        {/* <Grid item lg={3} sm={6} xl={3} xs={12}>
-          <CardWidget title="Devices" value="2" icon={<TabletAndroidIcon />} />
-        </Grid>
-        <Grid item lg={3} sm={6} xl={3} xs={12}>
-          <CardWidget title="Projects" value="10" icon={<StorageIcon />} />
-        </Grid>{" "}
-        <Grid item lg={3} sm={6} xl={3} xs={12}>
-          <CardWidget
-            title="Notifications"
-            value="1"
-            icon={<NotificationsNoneIcon />}
-          />
-        </Grid>{" "}
-        <Grid item lg={3} sm={6} xl={3} xs={12}>
-          <CardWidget title="Reports" value="6" icon={<ListAltIcon />} />
-        </Grid>{" "} */}
         <Grid item lg={6} sm={12} xl={6} xs={12}>
           <LinkCustom to="/projects">
-            <Card sx={{ maxWidth: 345 }}>
+            <Card
+              sx={{ maxWidth: 345 }}
+              style={{
+                minWidth: "100%",
+              }}
+            >
               <CardActionArea>
                 <CardMedia
                   component="img"
                   height="140"
+                  width="100%"
                   image="https://www.herzing.edu/sites/default/files/styles/fp_960_480/public/images/blog/group_projects.png.webp?itok=tQSafZj0"
-                  alt="green iguana"
+                  alt="Projects"
                 />
                 <CardContent
                   style={{
@@ -69,13 +130,21 @@ export default function LandingPage() {
         </Grid>{" "}
         <Grid item lg={6} sm={12} xl={6} xs={12}>
           <LinkCustom to="/devices">
-            <Card sx={{ maxWidth: 345 }}>
+            <Card
+              sx={{ maxWidth: 345 }}
+              style={{
+                minWidth: "100%",
+              }}
+            >
               <CardActionArea>
                 <CardMedia
                   component="img"
                   height="140"
-                  image="https://thumbs.dreamstime.com/b/cute-gadgets-cartoon-characters-funny-electronic-device-isolated-set-vector-illustration-smartphone-headphones-fitness-tracker-172926365.jpg"
-                  alt="green iguana"
+                  image="https://www.pngall.com/wp-content/uploads/1/Electronic-PNG-Photo.png"
+                  style={{
+                    objectFit: "cover",
+                  }}
+                  alt="Devices"
                 />
                 <CardContent
                   style={{

@@ -12,6 +12,7 @@ import Sidebar from "../components/Sidebar";
 import Navbar from "../components/navbar/Navbar";
 import Footer from "../components/Footer";
 import Settings from "../components/Settings";
+import "react-toastify/dist/ReactToastify.css";
 const drawerWidth = 258;
 
 const Root = styled.div`
@@ -88,11 +89,9 @@ const Dashboard: React.FC = ({ children }) => {
           }}
         >
           {children}
-          {/* <Outlet /> */}
         </MainContent>
         <Footer />
       </AppContent>
-      {/* <Settings /> */}
     </Root>
   );
 };
