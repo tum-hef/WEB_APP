@@ -111,6 +111,10 @@ export default function LandingPage() {
                   width="100%"
                   image="https://www.herzing.edu/sites/default/files/styles/fp_960_480/public/images/blog/group_projects.png.webp?itok=tQSafZj0"
                   alt="Projects"
+                  style={{
+                    height: "250px",
+                    maxHeight: "250px",
+                  }}
                 />
                 <CardContent
                   style={{
@@ -138,12 +142,13 @@ export default function LandingPage() {
             >
               <CardActionArea>
                 <CardMedia
+                  style={{
+                    height: "250px",
+                    maxHeight: "250px",
+                  }}
                   component="img"
                   height="140"
                   image="https://www.pngall.com/wp-content/uploads/1/Electronic-PNG-Photo.png"
-                  style={{
-                    objectFit: "cover",
-                  }}
                   alt="Devices"
                 />
                 <CardContent

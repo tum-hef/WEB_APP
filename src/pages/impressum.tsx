@@ -26,10 +26,10 @@ function Impressum() {
         <Typography variant="h3" style={{ color: "#233044" }} mt={8}>
           Publisher
         </Typography>
-        <p>Technische Universität München</p>{" "}
+        <p>Technical University of Munich</p>{" "}
         <p>
-          World Agricultural Systems Center Hans Eisenmann-Forum für
-          Agrarwissenschaften
+          World Agricultural Systems Center Hans Eisenmann Forum for
+          Agricultural Sciences
         </p>{" "}
         <p>Liesel-Beckmann-Str. 2 D-85354 Freising</p>{" "}
         <Typography variant="h3" style={{ color: "#233044" }} mt={8}>

@@ -103,7 +103,15 @@ const Stats: React.FC<StatsProps> = ({
   return (
     <Card illustration={illustration}>
       <CardContent>
-        <Typography variant="h6" mb={6}>
+        <Typography
+          variant="h6"
+          mb={6}
+          style={{
+            color: "#233044",
+            // increase font size
+            fontSize: "1.3rem",
+          }}
+        >
           {title}
         </Typography>
         <Typography variant="h3" mb={6}>
