@@ -5,18 +5,13 @@ import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 
 import { SidebarItemsType } from "../types/sidebar";
-import SidebarNavSection from "./SidebarNavSection";
 
 import {
-  Box,
-  Divider,
   List,
   ListItem,
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  Toolbar,
-  Typography,
 } from "@mui/material";
 import GridViewIcon from "@mui/icons-material/GridView";
 import LinkCustom from "./LinkCustom";

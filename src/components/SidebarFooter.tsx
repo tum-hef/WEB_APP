@@ -40,6 +40,8 @@ const SidebarFooter: React.FC = ({ ...rest }) => {
   const { keycloak } = useKeycloak();
   const userInfo = keycloak.idTokenParsed as IUserInfo;
 
+  console.log(userInfo);
+
   return (
     <Footer {...rest}>
       <Grid container spacing={2}>

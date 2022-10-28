@@ -8,15 +8,15 @@ import {
   Grid,
   Typography,
 } from "@mui/material";
-import { green, red } from "@mui/material/colors";
+import { red } from "@mui/material/colors";
 import axios from "axios";
 import LinkCustom from "../components/LinkCustom";
 import { ToastContainer, toast } from "react-toastify";
 import Stats from "../components/Stats";
 let json_file = require("../utils/servers.json");
 export default function LandingPage() {
-  const [projects, setProjects] = useState<number | null>(null);
-  const [devices, setDevices] = useState<number | null>(null);
+  const [projects, setProjects] = useState<number | null>(0);
+  const [devices, setDevices] = useState<number | null>(0);
   const [loading, setLoading] = useState<boolean>(true);
   useEffect(() => {
     console.log("Dashboard useEffect");

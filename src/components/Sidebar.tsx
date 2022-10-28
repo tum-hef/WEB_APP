@@ -6,7 +6,6 @@ import { spacing } from "@mui/system";
 
 import {
   Box as MuiBox,
-  Chip,
   Drawer as MuiDrawer,
   ListItemButton,
 } from "@mui/material";

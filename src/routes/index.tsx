@@ -47,7 +47,6 @@ const AppRouter = (props: any) => {
 
   if (!initialized) {
     return (
-      // ADD GRID CENTER
       <Grid container justify="center" alignItems="center">
         <RotatingLines
           strokeColor="grey"

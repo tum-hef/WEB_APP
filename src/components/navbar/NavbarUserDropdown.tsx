@@ -2,12 +2,7 @@ import * as React from "react";
 import styled from "styled-components/macro";
 import { Power } from "react-feather";
 
-import {
-  Tooltip,
-  Menu,
-  MenuItem,
-  IconButton as MuiIconButton,
-} from "@mui/material";
+import { Menu, MenuItem, IconButton as MuiIconButton } from "@mui/material";
 
 const IconButton = styled(MuiIconButton)`
   svg {
@@ -29,21 +24,19 @@ function NavbarUserDropdown() {
 
   return (
     <React.Fragment>
-      <Tooltip title="Account">
-        <IconButton
-          aria-owns={Boolean(anchorMenu) ? "menu-appbar" : undefined}
-          aria-haspopup="true"
-          onClick={toggleMenu}
-          color="inherit"
-          size="large"
-        >
-          <Power
-            style={{
-              color: "#9E9E9E",
-            }}
-          />
-        </IconButton>
-      </Tooltip>
+      <IconButton
+        aria-owns={Boolean(anchorMenu) ? "menu-appbar" : undefined}
+        aria-haspopup="true"
+        onClick={toggleMenu}
+        color="inherit"
+        size="large"
+      >
+        <Power
+          style={{
+            color: "#9E9E9E",
+          }}
+        />
+      </IconButton>
       <Menu
         id="menu-appbar"
         anchorEl={anchorMenu}
