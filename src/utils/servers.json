@@ -1,0 +1,68 @@
+{
+  "frost": {
+    "id": "52b80722-45e4-4eea-aaec-6c1aa54507cc",
+    "client": "frost",
+    "mappings": [
+      {
+        "id": "ddc65bc5-4637-4903-a885-f8c5bab809bb",
+        "name": "read",
+        "composite": false,
+        "clientRole": true,
+        "containerId": "52b80722-45e4-4eea-aaec-6c1aa54507cc"
+      },
+      {
+        "id": "5bf90aa4-6706-4028-bc3f-ae4f3f10358b",
+        "name": "create",
+        "composite": false,
+        "clientRole": true,
+        "containerId": "52b80722-45e4-4eea-aaec-6c1aa54507cc"
+      }
+    ],
+    "url": "https://iot.hef.tum.de/frost/",
+    "description": "Frost 1 "
+  },
+  "frost_test2": {
+    "id": "f90fd8a9-71e6-4e2b-98ac-3f8516e69641",
+    "client": "frost_test2",
+    "mappings": [
+      {
+        "id": "d6021f52-2cd4-47d2-9e50-7a8cebea0d95",
+        "name": "create",
+        "composite": false,
+        "clientRole": true,
+        "containerId": "f90fd8a9-71e6-4e2b-98ac-3f8516e69641"
+      },
+      {
+        "id": "099b8e4d-0d00-43db-9f0d-63b824ea9b74",
+        "name": "read",
+        "composite": false,
+        "clientRole": true,
+        "containerId": "f90fd8a9-71e6-4e2b-98ac-3f8516e69641"
+      }
+    ],
+    "url": "http://tuzehez-hefiot.srv.mwn.de:6004/FROST-Server/",
+     "description": "Frost 2 "
+  },
+  "frost_test3": {
+    "id": "40570252-63a0-4f09-ac8f-b798d20fe109",
+    "client": "frost_test3",
+    "mappings": [
+      {
+        "id": "77cd7f72-5386-4dde-aeb3-cdd10fe061ab",
+        "name": "read",
+        "composite": false,
+        "clientRole": true,
+        "containerId": "40570252-63a0-4f09-ac8f-b798d20fe109"
+      },
+      {
+        "id": "5e39607d-41b9-4ba6-b42a-67b3f5f01b13",
+        "name": "create",
+        "composite": false,
+        "clientRole": true,
+        "containerId": "40570252-63a0-4f09-ac8f-b798d20fe109"
+      }
+    ],
+    "url": "http://tuzehez-hefiot.srv.mwn.de:6001/FROST-Server/",
+     "description": "Frost 3 "
+  }
+}

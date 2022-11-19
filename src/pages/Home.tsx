@@ -18,8 +18,11 @@ const HomePage = () => {
         keycloak?.login()
     }, [keycloak])
 
-    if (keycloak?.authenticated)
-    return <Redirect to={currentLocationState?.from as string} />
+    if (keycloak?.authenticated){
+
+        console.log("Logged out")
+        return <Redirect to={currentLocationState?.from as string} />
+    }
 
     return (
         <Wrapper>
