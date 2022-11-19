@@ -109,7 +109,7 @@ export default function LandingPage() {
                   component="img"
                   height="140"
                   width="100%"
-                  image="https://www.herzing.edu/sites/default/files/styles/fp_960_480/public/images/blog/group_projects.png.webp?itok=tQSafZj0"
+                  image="./images/group_projects.png"
                   alt="Projects"
                   style={{
                     height: "250px",
@@ -118,13 +118,12 @@ export default function LandingPage() {
                 />
                 <CardContent
                   style={{
-                    // add center
                     display: "flex",
                     justifyContent: "center",
                     alignItems: "center",
                   }}
                 >
-                  <Typography gutterBottom variant="h5" component="div">
+                  <Typography gutterBottom variant="h3" component="div">
                     Projects
                   </Typography>
                 </CardContent>
@@ -148,7 +147,7 @@ export default function LandingPage() {
                   }}
                   component="img"
                   height="140"
-                  image="https://www.pngall.com/wp-content/uploads/1/Electronic-PNG-Photo.png"
+                  image="./images/iot_devices.jpeg"
                   alt="Devices"
                 />
                 <CardContent
@@ -159,7 +158,7 @@ export default function LandingPage() {
                     alignItems: "center",
                   }}
                 >
-                  <Typography gutterBottom variant="h5" component="div">
+                  <Typography gutterBottom variant="h3" component="div">
                     Devices
                   </Typography>
                 </CardContent>

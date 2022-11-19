@@ -6,6 +6,7 @@ import {
   ListItemText as MuiListItemText,
   ListItemButtonProps as MuiListItemButtonProps,
   ListItemButton as MuiListItemButton,
+  Typography,
 } from "@mui/material";
 import LinkCustom from "./LinkCustom";
 
@@ -56,14 +57,30 @@ function Footer() {
           <List>
             <LinkCustom to={"training"}>
               <ListItemButton>
-                <ListItemText primary="Training" />
+                <ListItemText
+                  disableTypography
+                  primary={
+                    // @ts-ignore
+                    <Typography style={{ fontSize: "13px" }}>
+                      Training
+                    </Typography>
+                  }
+                />
               </ListItemButton>
             </LinkCustom>
           </List>{" "}
           <List>
             <LinkCustom to={"impressum"}>
               <ListItemButton>
-                <ListItemText primary="Impressum" />
+                <ListItemText
+                  disableTypography
+                  primary={
+                    // @ts-ignore
+                    <Typography type="body2" style={{ fontSize: "13px" }}>
+                      Impressum
+                    </Typography>
+                  }
+                />
               </ListItemButton>
             </LinkCustom>
           </List>
@@ -72,7 +89,13 @@ function Footer() {
           <List>
             <ListItemButton>
               <ListItemText
-                primary={`© ${new Date().getFullYear()} - TUM HEF`}
+                disableTypography
+                primary={
+                  // @ts-ignore
+                  <Typography type="body2" style={{ fontSize: "13px" }}>
+                    © {new Date().getFullYear()} - TUM HEF
+                  </Typography>
+                }
               />
             </ListItemButton>
           </List>

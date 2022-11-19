@@ -73,6 +73,7 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
                   style={{
                     color: "white",
                   }}
+                  primaryTypographyProps={{ fontSize: "18px" }}
                   primary={"Dashboard"}
                 />
               </ListItemButton>
@@ -89,6 +90,7 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
                   />
                 </ListItemIcon>
                 <ListItemText
+                  primaryTypographyProps={{ fontSize: "18px" }}
                   style={{
                     color: "white",
                   }}
@@ -111,6 +113,7 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
                   style={{
                     color: "white",
                   }}
+                  primaryTypographyProps={{ fontSize: "18px" }}
                   primary={"Notifications"}
                 />
               </ListItemButton>
@@ -127,6 +130,7 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
                   />
                 </ListItemIcon>
                 <ListItemText
+                  primaryTypographyProps={{ fontSize: "18px" }}
                   style={{
                     color: "white",
                   }}
@@ -146,6 +150,7 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
                   />
                 </ListItemIcon>
                 <ListItemText
+                  primaryTypographyProps={{ fontSize: "18px" }}
                   primary={"Trainings"}
                   style={{
                     color: "white",
@@ -171,6 +176,7 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
                   />
                 </ListItemIcon>
                 <ListItemText
+                  primaryTypographyProps={{ fontSize: "18px" }}
                   style={{
                     color: "white",
                   }}

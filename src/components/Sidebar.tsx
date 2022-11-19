@@ -88,9 +88,14 @@ const Sidebar: React.FC<SidebarProps> = ({
             display: "flex",
             alignItems: "center",
             color: "#fff",
+            fontSize: "1.4rem",
           }}
         >
-          TUM HEF
+          <img
+            src="/images/tum_logo.png"
+            alt="logo"
+            style={{ width: "55px", marginRight: "10px" }}
+          />
         </Box>
       </Brand>
       <SidebarNav items={items} />
