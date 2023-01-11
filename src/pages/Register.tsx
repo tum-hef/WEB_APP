@@ -45,6 +45,21 @@ function Register() {
     onSubmit: async (values) => {
       formik.resetForm();
       console.log(values);
+      console.log(
+        process.env.REACT_APP_KEYCLOAK_USERNAME +
+          " " +
+          process.env.REACT_APP_KEYCLOAK_PASSWORD +
+          " " +
+          process.env.REACT_APP_KEYCLOAK_CLIENT_ID
+      );
+      if (
+        !process.env.REACT_APP_KEYCLOAK_USERNAME ||
+        !process.env.REACT_APP_KEYCLOAK_PASSWORD ||
+        !process.env.REACT_APP_KEYCLOAK_CLIENT_ID
+      ) {
+        console.log("No username");
+        return;
+      }
     },
   });
   const location = useLocation<{ [key: string]: unknown }>();
