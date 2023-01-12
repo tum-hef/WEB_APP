@@ -1,11 +1,10 @@
-import React from "react";
-import { Redirect, useLocation } from "react-router-dom";
+import React, { useCallback } from "react";
+import { Link, Redirect, useLocation } from "react-router-dom";
 import Button from "@mui/material/Button";
 import Avatar from "@mui/material/Avatar";
 import CssBaseline from "@mui/material/CssBaseline";
 import TextField from "@mui/material/TextField";
 import { useFormik } from "formik";
-import Link from "@mui/material/Link";
 import Grid from "@mui/material/Grid";
 import Box from "@mui/material/Box";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
@@ -14,7 +13,22 @@ import Container from "@mui/material/Container";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { useKeycloak } from "@react-keycloak/web";
 import * as yup from "yup";
+import { Alert } from "@mui/material";
+import axios from "axios";
 function Register() {
+  const { keycloak } = useKeycloak();
+
+  const login = useCallback(() => {
+    keycloak?.login();
+  }, [keycloak]);
+
+  const [error, setError] = React.useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
+  const [success, setSuccess] = React.useState<boolean>(false);
+  const [successMessage, setSuccessMessage] = React.useState<string | null>(
+    null
+  );
+  const [accessToken, setAccessToken] = React.useState<string | null>(null);
   const formik = useFormik({
     initialValues: {
       firstName: "",
@@ -44,21 +58,63 @@ function Register() {
     }),
     onSubmit: async (values) => {
       formik.resetForm();
-      console.log(values);
-      console.log(
-        process.env.REACT_APP_KEYCLOAK_USERNAME +
-          " " +
-          process.env.REACT_APP_KEYCLOAK_PASSWORD +
-          " " +
-          process.env.REACT_APP_KEYCLOAK_CLIENT_ID
-      );
-      if (
-        !process.env.REACT_APP_KEYCLOAK_USERNAME ||
-        !process.env.REACT_APP_KEYCLOAK_PASSWORD ||
-        !process.env.REACT_APP_KEYCLOAK_CLIENT_ID
-      ) {
-        console.log("No username");
+      if (!process.env.REACT_APP_BACKEND_URL) {
+        setError(true);
+        setErrorMessage(
+          "Server Error, please try again later. Error Code: R01"
+        );
+
+        setTimeout(() => {
+          setError(false);
+          setErrorMessage(null);
+        }, 5000);
         return;
+      }
+
+      try {
+        const response = await axios
+          .post(`${process.env.REACT_APP_BACKEND_URL}/register`, {
+            firstName: values.firstName,
+            lastName: values.lastName,
+            email: values.email,
+            username: values.username,
+            password: values.password,
+          })
+          .then((response) => {
+            if (response.status === 200) {
+              setSuccess(true);
+              setSuccessMessage("Registration Successful");
+              setTimeout(() => {
+                setSuccess(false);
+                setSuccessMessage(null);
+              }, 5000);
+            }
+          })
+          .catch((error) => {
+            console.log(error);
+            setError(true);
+            setErrorMessage(
+              error.response.data.error
+                ? error.response.data.error
+                : "Registration Failed"
+            );
+            setTimeout(() => {
+              setError(false);
+              setErrorMessage(null);
+            }, 5000);
+          });
+      } catch (error: any) {
+        console.log(error);
+        setError(true);
+        setErrorMessage(
+          error.response.data.error
+            ? error.response.data.error
+            : "Registration Failed"
+        );
+        setTimeout(() => {
+          setError(false);
+          setErrorMessage(null);
+        }, 5000);
       }
     },
   });
@@ -67,7 +123,6 @@ function Register() {
     from: { pathname: "/dashboard" },
   };
 
-  const { keycloak } = useKeycloak();
   const theme = createTheme();
 
   if (keycloak?.authenticated) {
@@ -93,6 +148,28 @@ function Register() {
           <Typography component="h1" variant="h5">
             Sign up
           </Typography>
+          {error && (
+            <Alert
+              severity="error"
+              style={{
+                margin: "10px",
+              }}
+            >
+              {errorMessage}
+            </Alert>
+          )}
+
+          {success && (
+            <Alert
+              severity="success"
+              style={{
+                margin: "10px",
+              }}
+            >
+              {successMessage}
+            </Alert>
+          )}
+
           <Box
             component="form"
             noValidate
@@ -190,7 +267,7 @@ function Register() {
                   name="passwordConfirmation"
                   label="Password Confirmation"
                   type="password"
-                  id="password"
+                  id="passwordConfirmation"
                   autoComplete="new-password"
                   value={formik.values.passwordConfirmation}
                   onChange={formik.handleChange}
@@ -215,9 +292,7 @@ function Register() {
             </Button>
             <Grid container justifyContent="flex-end">
               <Grid item>
-                <Link href="/" variant="body2">
-                  Already have an account? Sign in
-                </Link>
+                <Button onClick={login}>Already have an account?</Button>
               </Grid>
             </Grid>
           </Box>
