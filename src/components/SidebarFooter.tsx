@@ -38,7 +38,7 @@ const FooterBadge = styled(Badge)`
 
 const SidebarFooter: React.FC = ({ ...rest }) => {
   const { keycloak } = useKeycloak();
-  const userInfo = keycloak.idTokenParsed as IUserInfo;
+  const userInfo = keycloak?.idTokenParsed;
 
   console.log(userInfo);
 
@@ -61,16 +61,15 @@ const SidebarFooter: React.FC = ({ ...rest }) => {
                 backgroundColor: "primary.main",
               }}
             >
-              {userInfo?.given_name?.charAt(0) +
-                userInfo?.family_name?.charAt(0)}
+              {userInfo?.preferred_username?.charAt(0).toUpperCase()}
             </Avatar>
           </FooterBadge>
         </Grid>
         <Grid item>
-          <FooterText variant="body2">
-            {userInfo?.given_name + " " + userInfo?.family_name}
+          <FooterText variant="body1">
+            {userInfo?.preferred_username}
           </FooterText>
-          <FooterSubText variant="caption">{userInfo?.email}</FooterSubText>
+          {/* <FooterSubText variant="caption">{userInfo?.email}</FooterSubText> */}
         </Grid>
       </Grid>
     </Footer>

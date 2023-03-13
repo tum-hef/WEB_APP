@@ -10,16 +10,16 @@ const Groups = () => {
   // PART 1
 
   const { keycloak } = useKeycloak();
-  const userInfo = keycloak.idTokenParsed as IUserInfo;
+  const userInfo = keycloak?.idTokenParsed;
 
   // get keycloak ID user
-  const userId = userInfo.sub;
+  const userId = userInfo?.sub;
 
   // token get from keycloak
   const token = keycloak.token;
 
   const [groups, setGroups] = useState([]);
-  console.log(userInfo.preferred_username + " USERNAME" + userId);
+  console.log(userInfo?.preferred_username + " USERNAME" + userId);
 
   const getGroups = async () => {
     const response = await axios.get(

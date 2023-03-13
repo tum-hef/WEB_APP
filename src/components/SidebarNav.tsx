@@ -21,6 +21,7 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import TextSnippetIcon from "@mui/icons-material/TextSnippet";
 import "../vendor/perfect-scrollbar.css";
+import { useKeycloak } from "@react-keycloak/web";
 
 const baseScrollbar = css`
   background-color: ${(props) => props.theme.sidebar.background};
@@ -49,6 +50,11 @@ type SidebarNavProps = {
 };
 
 const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
+  const { keycloak } = useKeycloak();
+
+  const handleLogout = () => {
+    keycloak.logout();
+  };
   const theme = useTheme();
   const matches = useMediaQuery(theme.breakpoints.up("md"));
   const ScrollbarComponent = (
@@ -159,32 +165,24 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
               </ListItemButton>
             </ListItem>
           </LinkCustom>{" "}
-          <a
-            href="http://localhost:8080/realms/keycloak-react-auth/protocol/openid-connect/logout"
-            style={{
-              textDecoration: "none",
-              color: "inherit",
-            }}
-          >
-            <ListItem key={"Logout"} disablePadding>
-              <ListItemButton>
-                <ListItemIcon>
-                  <LogoutIcon
-                    style={{
-                      color: "white",
-                    }}
-                  />
-                </ListItemIcon>
-                <ListItemText
-                  primaryTypographyProps={{ fontSize: "18px" }}
+          <ListItem key={"Logout"} disablePadding onClick={handleLogout}>
+            <ListItemButton>
+              <ListItemIcon>
+                <LogoutIcon
                   style={{
                     color: "white",
                   }}
-                  primary={"Logout"}
                 />
-              </ListItemButton>
-            </ListItem>
-          </a>
+              </ListItemIcon>
+              <ListItemText
+                primaryTypographyProps={{ fontSize: "18px" }}
+                style={{
+                  color: "white",
+                }}
+                primary={"Logout"}
+              />
+            </ListItemButton>
+          </ListItem>
         </Items>
       </List>
     </ScrollbarComponent>
