@@ -72,7 +72,7 @@ function Register() {
       }
 
       try {
-        const response = await axios
+        await axios
           .post(`${process.env.REACT_APP_BACKEND_URL}/register`, {
             firstName: values.firstName,
             lastName: values.lastName,
@@ -81,12 +81,22 @@ function Register() {
             password: values.password,
           })
           .then((response) => {
+            console.log(JSON.stringify(response));
             if (response.status === 200) {
               setSuccess(true);
-              setSuccessMessage("Registration Successful");
+              setSuccessMessage(
+                "Registration Successful, please check your email"
+              );
               setTimeout(() => {
                 setSuccess(false);
                 setSuccessMessage(null);
+              }, 5000);
+            } else {
+              setError(true);
+              setErrorMessage("Registration Failed");
+              setTimeout(() => {
+                setError(false);
+                setErrorMessage(null);
               }, 5000);
             }
           })
