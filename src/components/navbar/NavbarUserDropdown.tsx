@@ -1,7 +1,7 @@
 import * as React from "react";
 import styled from "styled-components/macro";
 import { Power } from "react-feather";
-
+import { useKeycloak } from "@react-keycloak/web";
 import { Menu, MenuItem, IconButton as MuiIconButton } from "@mui/material";
 
 const IconButton = styled(MuiIconButton)`
@@ -20,6 +20,11 @@ function NavbarUserDropdown() {
 
   const closeMenu = () => {
     setAnchorMenu(null);
+  };
+  const { keycloak } = useKeycloak();
+
+  const handleLogout = () => {
+    keycloak.logout();
   };
 
   return (
@@ -43,18 +48,7 @@ function NavbarUserDropdown() {
         open={Boolean(anchorMenu)}
         onClose={closeMenu}
       >
-        {/* <MenuItem onClick={closeMenu}>Profile</MenuItem> */}
-        <MenuItem>
-          <a
-            href="http://localhost:8080/realms/keycloak-react-auth/protocol/openid-connect/logout"
-            style={{
-              textDecoration: "none",
-              color: "inherit",
-            }}
-          >
-            Logout
-          </a>
-        </MenuItem>
+        <MenuItem onClick={handleLogout}>Logout</MenuItem>
       </Menu>
     </React.Fragment>
   );

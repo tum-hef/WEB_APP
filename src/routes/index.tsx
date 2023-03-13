@@ -26,6 +26,7 @@ import { ThemeProvider as MuiThemeProvider } from "@mui/material/styles";
 import createTheme from "../hooks/createTheme";
 import LandingPage from "../pages/LandingPage";
 import Impressum from "../pages/impressum";
+import Register from "../pages/Register";
 const styles = {
   container: {
     height: "100%",
@@ -69,6 +70,7 @@ const AppRouter = (props: any) => {
               <Router>
                 <Switch>
                   <Route exact path="/" component={HomePage} />
+                  <Route exact path="/register" component={Register} />
                   <Route exact path="/impressum" component={Impressum} />
                   <PrivateRoute
                     exact
