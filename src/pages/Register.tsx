@@ -85,7 +85,9 @@ function Register() {
             if (response.status === 200) {
               setSuccess(true);
               setSuccessMessage(
-                "Registration Successful, please check your email"
+                response.data.message
+                  ? response.data.message
+                  : "Registration Successful"
               );
               setTimeout(() => {
                 setSuccess(false);
