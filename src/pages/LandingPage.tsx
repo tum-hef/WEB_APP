@@ -13,17 +13,56 @@ import axios from "axios";
 import LinkCustom from "../components/LinkCustom";
 import { ToastContainer, toast } from "react-toastify";
 import Stats from "../components/Stats";
+import { useKeycloak } from "@react-keycloak/web";
+import styled from "styled-components";
+
 let json_file = require("../utils/servers.json");
 export default function LandingPage() {
   const [projects, setProjects] = useState<number | null>(0);
   const [devices, setDevices] = useState<number | null>(0);
   const [loading, setLoading] = useState<boolean>(true);
+  const [nodeRedPort, setNodeRedPort] = useState<number | null>(null);
+  const { keycloak } = useKeycloak();
+  const userInfo = keycloak?.idTokenParsed;
   useEffect(() => {
     console.log("Dashboard useEffect");
+    getNodeRedPort();
+    alert(nodeRedPort + " PORT");
     asyncGetProjects();
     asyncGetDevices();
     setLoading(false);
   }, []);
+
+  const Anchor = styled.a`
+    text-decoration: none;
+    color: inherit;
+    &:hover {
+      text-decoration: none;
+      color: #1976d2;
+    }
+  `;
+
+  const getNodeRedPort = async () => {
+    const ces = process.env.REACT_APP_BACKEND_URL;
+    // alert(ces);
+    const email = userInfo?.preferred_username;
+    await axios
+      .get(`${ces}/node-red?email=${email}`, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+      .then((res) => {
+        // check if code is 200
+        alert(res.status);
+        if (res.status === 200) {
+          //true
+          console.log(res.data); //true
+
+          setNodeRedPort(res.data.PORT); //true
+        }
+      });
+  };
 
   const asyncGetProjects = async () => {
     try {
@@ -166,6 +205,46 @@ export default function LandingPage() {
             </Card>
           </LinkCustom>
         </Grid>{" "}
+        {nodeRedPort && (
+          <Grid item lg={6} sm={12} xl={6} xs={12}>
+            <Anchor
+              href={`${process.env.REACT_APP_BACKEND_URL_ROOT}:${nodeRedPort}`}
+              target="_blank"
+            >
+              <Card
+                sx={{ maxWidth: 345 }}
+                style={{
+                  minWidth: "100%",
+                }}
+              >
+                <CardActionArea>
+                  <CardMedia
+                    style={{
+                      height: "250px",
+                      maxHeight: "250px",
+                    }}
+                    component="img"
+                    height="140"
+                    image="./images/iot_devices.jpeg"
+                    alt="Devices"
+                  />
+                  <CardContent
+                    style={{
+                      // add center
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                    }}
+                  >
+                    <Typography gutterBottom variant="h3" component="div">
+                      Node Red
+                    </Typography>
+                  </CardContent>
+                </CardActionArea>
+              </Card>
+            </Anchor>
+          </Grid>
+        )}
       </Grid>
     </Dashboard>
   );
