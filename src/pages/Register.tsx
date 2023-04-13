@@ -24,19 +24,11 @@ function Register() {
     keycloak?.login();
   }, [keycloak]);
 
-  const [error, setError] = React.useState<boolean>(false);
-  const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
-  const [success, setSuccess] = React.useState<boolean>(false);
-  const [successMessage, setSuccessMessage] = React.useState<string | null>(
-    null
-  );
-  const [accessToken, setAccessToken] = React.useState<string | null>(null);
   const formik = useFormik({
     initialValues: {
       firstName: "",
       lastName: "",
       email: "",
-      username: "",
       password: "",
       passwordConfirmation: "",
     },
@@ -51,7 +43,6 @@ function Register() {
           /^([a-zA-Z0-9_\-\.]+)@tum\.de$/,
           "Email must be a TUM email address"
         ),
-      username: yup.string().required("Username is required"),
       password: yup
         .string()
         .required("Password is required")
@@ -66,15 +57,7 @@ function Register() {
       formik.resetForm();
 
       if (!process.env.REACT_APP_BACKEND_URL) {
-        setError(true);
-        setErrorMessage(
-          "Server Error, please try again later. Error Code: R01"
-        );
-
-        setTimeout(() => {
-          setError(false);
-          setErrorMessage(null);
-        }, 5000);
+        Swal.fire("Error", "Problem with credentials", "error");
         return;
       }
 
@@ -156,27 +139,6 @@ function Register() {
           <Typography component="h1" variant="h5">
             Sign up
           </Typography>
-          {error && (
-            <Alert
-              severity="error"
-              style={{
-                margin: "10px",
-              }}
-            >
-              {errorMessage}
-            </Alert>
-          )}
-
-          {success && (
-            <Alert
-              severity="success"
-              style={{
-                margin: "10px",
-              }}
-            >
-              {successMessage}
-            </Alert>
-          )}
 
           <Box
             component="form"
@@ -232,23 +194,6 @@ function Register() {
                   onChange={formik.handleChange}
                   error={formik.touched.email && Boolean(formik.errors.email)}
                   helperText={formik.touched.email && formik.errors.email}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  required
-                  fullWidth
-                  name="username"
-                  label="Username"
-                  type="text"
-                  id="username"
-                  autoComplete="username"
-                  value={formik.values.username}
-                  onChange={formik.handleChange}
-                  error={
-                    formik.touched.username && Boolean(formik.errors.username)
-                  }
-                  helperText={formik.touched.username && formik.errors.username}
                 />
               </Grid>
               <Grid item xs={12}>
