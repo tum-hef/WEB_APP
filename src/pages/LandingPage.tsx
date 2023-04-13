@@ -27,7 +27,6 @@ export default function LandingPage() {
   useEffect(() => {
     console.log("Dashboard useEffect");
     getNodeRedPort();
-    alert(nodeRedPort + " PORT");
     asyncGetProjects();
     asyncGetDevices();
     setLoading(false);
@@ -53,13 +52,8 @@ export default function LandingPage() {
         },
       })
       .then((res) => {
-        // check if code is 200
-        alert(res.status);
         if (res.status === 200) {
-          //true
-          console.log(res.data); //true
-
-          setNodeRedPort(res.data.PORT); //true
+          setNodeRedPort(res.data.PORT);
         }
       });
   };

@@ -15,6 +15,8 @@ import { useKeycloak } from "@react-keycloak/web";
 import * as yup from "yup";
 import { Alert } from "@mui/material";
 import axios from "axios";
+import Swal from "sweetalert2";
+
 function Register() {
   const { keycloak } = useKeycloak();
 
@@ -44,7 +46,11 @@ function Register() {
       email: yup
         .string()
         .email("Invalid email address")
-        .required("Email is required"),
+        .required("Email is required")
+        .matches(
+          /^([a-zA-Z0-9_\-\.]+)@tum\.de$/,
+          "Email must be a TUM email address"
+        ),
       username: yup.string().required("Username is required"),
       password: yup
         .string()
@@ -58,6 +64,7 @@ function Register() {
     }),
     onSubmit: async (values) => {
       formik.resetForm();
+
       if (!process.env.REACT_APP_BACKEND_URL) {
         setError(true);
         setErrorMessage(
@@ -77,56 +84,45 @@ function Register() {
             firstName: values.firstName,
             lastName: values.lastName,
             email: values.email,
-            username: values.username,
             password: values.password,
           })
           .then((response) => {
             console.log(JSON.stringify(response));
             if (response.status === 200) {
-              setSuccess(true);
-              setSuccessMessage(
-                response.data.message
-                  ? response.data.message
-                  : "Registration Successful"
+              Swal.fire(
+                "Good job!",
+                "Please check your email to verify and to access your account",
+                "success"
               );
-              setTimeout(() => {
-                setSuccess(false);
-                setSuccessMessage(null);
-              }, 5000);
             } else {
-              setError(true);
-              setErrorMessage("Registration Failed");
-              setTimeout(() => {
-                setError(false);
-                setErrorMessage(null);
-              }, 5000);
+              Swal.fire("Error", "Try Again", "error");
             }
           })
           .catch((error) => {
-            console.log(error);
-            setError(true);
-            setErrorMessage(
+            if (
+              error.response.status === 400 &&
+              error.response.data.code === "A00001" &&
               error.response.data.error
-                ? error.response.data.error
-                : "Registration Failed"
-            );
-            setTimeout(() => {
-              setError(false);
-              setErrorMessage(null);
-            }, 5000);
+            ) {
+              Swal.fire("Error", error.response.data.error, "error");
+            } else if (
+              error.response.status === 400 &&
+              error.response.data.code === "A00002" &&
+              error.response.data.error
+            ) {
+              Swal.fire("Error", error.response.data.error, "error");
+            } else if (
+              error.response.status === 400 &&
+              error.response.data.code === "A00003" &&
+              error.response.data.error
+            ) {
+              Swal.fire("Error", error.response.data.error, "error");
+            } else {
+              Swal.fire("Error", "Try Again", "error");
+            }
           });
       } catch (error: any) {
-        console.log(error);
-        setError(true);
-        setErrorMessage(
-          error.response.data.error
-            ? error.response.data.error
-            : "Registration Failed"
-        );
-        setTimeout(() => {
-          setError(false);
-          setErrorMessage(null);
-        }, 5000);
+        Swal.fire("Error", "Try Again", "error");
       }
     },
   });
