@@ -15,44 +15,105 @@ import { ToastContainer, toast } from "react-toastify";
 import Stats from "../components/Stats";
 import { useKeycloak } from "@react-keycloak/web";
 import styled from "styled-components";
-
+const Anchor = styled.a`
+  text-decoration: none;
+  color: inherit;
+  &:hover {
+    text-decoration: none;
+    color: #1976d2;
+  }
+`;
 let json_file = require("../utils/servers.json");
 export default function LandingPage() {
   const [projects, setProjects] = useState<number | null>(0);
   const [devices, setDevices] = useState<number | null>(0);
   const [loading, setLoading] = useState<boolean>(true);
   const [nodeRedPort, setNodeRedPort] = useState<number | null>(null);
+  const [datasteamSize, setDatastreamSize] = useState<number>(0);
+  const [observationSize, setObservationSize] = useState<number>(0);
   const { keycloak } = useKeycloak();
   const userInfo = keycloak?.idTokenParsed;
-  useEffect(() => {
-    console.log("Dashboard useEffect");
-    getNodeRedPort();
-    asyncGetProjects();
-    asyncGetDevices();
-    setLoading(false);
-  }, []);
+  const token = keycloak?.token;
 
-  const Anchor = styled.a`
-    text-decoration: none;
-    color: inherit;
-    &:hover {
-      text-decoration: none;
-      color: #1976d2;
-    }
-  `;
+  const [frostServerPort, setFrostServerPort] = useState<number | null>(null);
 
-  const getNodeRedPort = async () => {
-    const ces = process.env.REACT_APP_BACKEND_URL;
-    // alert(ces);
+  const fetchDataStreams = () => {
+    const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
+    axios
+      .get(`${backend_url}:${frostServerPort}/FROST-Server/v1.1/Datastreams`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .then((res) => {
+        console.log(JSON.stringify(res.data.value.length));
+        if (res.status === 200 && res.data.value.length) {
+          setDatastreamSize(res.data.value.length);
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+        toast.error("Error Getting Datastreams1");
+      });
+  };
+
+  const fetchObservations = () => {
+    const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
+    axios
+      .get(`${backend_url}:${frostServerPort}/FROST-Server/v1.1/Observations`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .then((res) => {
+        if (res.status === 200 && res.data.value.length) {
+          setObservationSize(res.data.value.length);
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+        toast.error("Error Getting Observations");
+      });
+  };
+
+  const fetchData = async () => {
+    const backend_url = process.env.REACT_APP_BACKEND_URL;
     const email = userInfo?.preferred_username;
     await axios
-      .get(`${ces}/node-red?email=${email}`, {
+      .get(`${backend_url}/frost-server?email=${email}`, {
         headers: {
           "Content-Type": "application/json",
         },
       })
       .then((res) => {
-        if (res.status === 200) {
+        if (res.status === 200 && res.data.PORT) {
+          setFrostServerPort(res.data.PORT);
+        }
+      });
+  };
+  useEffect(() => {
+    getNodeRedPort();
+    if (frostServerPort !== null) {
+      fetchDataStreams();
+      fetchObservations();
+    } else {
+      fetchData();
+    }
+  }, [frostServerPort]);
+
+  const getNodeRedPort = async () => {
+    const backend_url = process.env.REACT_APP_BACKEND_URL;
+    const email = userInfo?.preferred_username;
+    await axios
+      .get(`${backend_url}/node-red?email=${email}`, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+      .then((res) => {
+        if (res.status === 200 && res.data.PORT) {
           setNodeRedPort(res.data.PORT);
         }
       });
@@ -61,7 +122,6 @@ export default function LandingPage() {
   const asyncGetProjects = async () => {
     try {
       setProjects(Object.keys(json_file).length);
-      console.log("Projects: ", projects);
     } catch (err) {
       console.log(err);
       toast.error("Error Getting Projects");
@@ -109,14 +169,14 @@ export default function LandingPage() {
         <Grid item xs={12} sm={6} md={3}>
           <Stats
             title="Datastreams"
-            amount="1.320+"
+            amount={datasteamSize}
             percentagecolor={red[500]}
           />
         </Grid>{" "}
         <Grid item xs={12} sm={6} md={3}>
           <Stats
             title="Observations"
-            amount="1.320+"
+            amount={observationSize}
             percentagecolor={red[500]}
           />
         </Grid>
@@ -217,9 +277,11 @@ export default function LandingPage() {
                       height: "250px",
                       maxHeight: "250px",
                     }}
+                    // image is very near
+
                     component="img"
                     height="140"
-                    image="./images/iot_devices.jpeg"
+                    image="./images/node-red-icon.png"
                     alt="Devices"
                   />
                   <CardContent

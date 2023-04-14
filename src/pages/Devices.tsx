@@ -8,24 +8,77 @@ import CastIcon from "@mui/icons-material/Cast";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import DownloadIcon from "@mui/icons-material/Download";
 import Dashboard from "./Dashboard";
+import { useKeycloak } from "@react-keycloak/web";
+import { ToastContainer, toast } from "react-toastify";
+
 const Devices = () => {
+  const { keycloak } = useKeycloak();
+  const userInfo = keycloak?.idTokenParsed;
+  const token = keycloak?.token;
+
+  const [frostServerPort, setFrostServerPort] = useState<number | null>(null);
   const [devices, setDevices] = useState<any[]>([]);
 
-  const getThings = async () => {
-    try {
-      const response = await axios.get(
-        "https://iot.hef.tum.de/frost/v1.0/Things"
-      );
-      console.log(response.data);
-      setDevices(response.data.value);
-    } catch (error) {
-      console.log(error);
-    }
+  // const getThings = async () => {
+  //   try {
+  //     const response = await axios.get(
+  //       "https://iot.hef.tum.de/frost/v1.0/Things"
+  //     );
+  //     console.log(response.data);
+  //     setDevices(response.data.value);
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  // };
+
+  // useEffect(() => {
+  //   getThings();
+  // }, []);
+
+  const fetchThings = () => {
+    const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
+    axios
+      .get(`${backend_url}:${frostServerPort}/FROST-Server/v1.1/Things`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .then((res) => {
+        if (res.status === 200 && res.data.value) {
+          console.log(res.data.value)
+          setDevices(res.data.value);
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+        toast.error("Error Getting Things");
+      });
+  };
+
+  const fetchFrostPort = async () => {
+    const backend_url = process.env.REACT_APP_BACKEND_URL;
+    const email = userInfo?.preferred_username;
+    await axios
+      .get(`${backend_url}/frost-server?email=${email}`, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+      .then((res) => {
+        if (res.status === 200 && res.data.PORT) {
+          setFrostServerPort(res.data.PORT);
+        }
+      });
   };
 
   useEffect(() => {
-    getThings();
-  }, []);
+    if (frostServerPort !== null) {
+      fetchThings();
+    } else {
+      fetchFrostPort();
+    }
+  }, [frostServerPort]);
 
   const columns = [
     {
@@ -112,6 +165,18 @@ const Devices = () => {
 
   return (
     <Dashboard>
+      <ToastContainer
+        position="bottom-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="dark"
+      />
       <LinkCustom to="/devices/store">
         <Button
           variant="contained"
