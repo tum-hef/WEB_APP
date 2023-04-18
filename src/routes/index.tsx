@@ -27,6 +27,8 @@ import createTheme from "../hooks/createTheme";
 import LandingPage from "../pages/LandingPage";
 import Impressum from "../pages/impressum";
 import Register from "../pages/Register";
+import Stepper from "../pages/Stepper";
+import StepperStore from "../pages/Stepper";
 const styles = {
   container: {
     height: "100%",
@@ -78,6 +80,11 @@ const AppRouter = (props: any) => {
                     component={LandingPage}
                   />
                   <PrivateRoute exact path="/projects" component={Servers} />
+                  <PrivateRoute
+                    exact
+                    path="/stepper"
+                    component={StepperStore}
+                  />
                   <PrivateRoute exact path="/groups" component={Groups} />
                   <PrivateRoute exact path="/devices" component={Devices} />
                   <PrivateRoute exact path="/devices/store" component={Store} />
