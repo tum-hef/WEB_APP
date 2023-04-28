@@ -46,7 +46,7 @@ const Devices = () => {
       })
       .then((res) => {
         if (res.status === 200 && res.data.value) {
-          console.log(res.data.value)
+          console.log(res.data.value);
           setDevices(res.data.value);
         }
       })
@@ -177,7 +177,7 @@ const Devices = () => {
         pauseOnHover
         theme="dark"
       />
-      <LinkCustom to="/devices/store">
+      <LinkCustom to="/stepper">
         <Button
           variant="contained"
           color="primary"
@@ -185,7 +185,7 @@ const Devices = () => {
             marginBottom: "10px",
           }}
         >
-          Create Device{" "}
+          Create{" "}
         </Button>
       </LinkCustom>
 

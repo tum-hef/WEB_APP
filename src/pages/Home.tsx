@@ -1,11 +1,16 @@
 import { useCallback } from "react";
 import { Link, Redirect, useLocation } from "react-router-dom";
 import Button from "@mui/material/Button";
-
 import { useKeycloak } from "@react-keycloak/web";
-
-import { Wrapper, LoginContainer, LogoContainer } from "../styles/Home.styles";
-
+import {
+  Box,
+  CssBaseline,
+  Grid,
+  Paper,
+  ThemeProvider,
+  Typography,
+  createTheme,
+} from "@mui/material";
 const HomePage = () => {
   const location = useLocation<{ [key: string]: unknown }>();
   const currentLocationState = location.state || {
@@ -22,28 +27,211 @@ const HomePage = () => {
     console.log("Logged out");
     return <Redirect to={currentLocationState?.from as string} />;
   }
+  const theme = createTheme();
 
   return (
-    <Wrapper>
-      <LogoContainer>
-        <img src={require("../resources/tum.png")} alt="" />
-        <p>Hans Eisenmann Forum für Agrarwissenschaften</p>
-      </LogoContainer>
-      <LoginContainer>
-        <Button
-          variant="contained"
-          onClick={login}
+    <ThemeProvider theme={theme}>
+      <Grid
+        container
+        component="main"
+        sx={{
+          height: "100vh",
+          border: "none",
+        }}
+      >
+        <CssBaseline />
+        <Grid
+          item
+          xs={false}
+          sm={3}
+          md={6}
+          sx={{
+            backgroundColor: "#003359",
+            backgroundImage:
+              "linear-gradient(to left, transparent 100%, #003359 50%), url(/images/design_element.png)",
+            backgroundRepeat: "no-repeat",
+            backgroundPosition: "220% center",
+            backgroundSize: "130% auto",
+            border: "none",
+            height: "100%",
+            position: "relative",
+          }}
+        />
+        <Grid
+          item
+          xs={12}
+          sm={8}
+          md={6}
+          component={Paper}
+          elevation={6}
+          square
           style={{
-            marginRight: "10px",
+            backgroundColor: "#003359",
+            borderLeft: "1px solid #003359",
           }}
         >
-          Login
-        </Button>
-        <Link to={"/register"} style={{ textDecoration: "none" }}>
-          <Button variant="contained">Register</Button>
-        </Link>
-      </LoginContainer>
-    </Wrapper>
+          <Grid
+            container
+            justifyContent="flex-end"
+            style={{
+              textAlign: "right",
+              paddingRight: "20px",
+              paddingTop: "20px",
+            }}
+          >
+            <Grid item>
+              <Typography
+                component="h1"
+                variant="h6"
+                style={{
+                  alignSelf: "flex-end",
+                  alignContent: "flex-end",
+                  alignItems: "flex-end",
+                  color: "white",
+                  marginTop: "15px",
+                  marginRight: "20px",
+                  fontWeight: "bold",
+                  fontSize: "30px",
+                }}
+              >
+                HEF
+              </Typography>{" "}
+              <Typography
+                component="h1"
+                variant="h6"
+                style={{
+                  color: "white",
+                  marginRight: "20px",
+                  marginTop: "-10px",
+                }}
+              >
+                Hans Eisenmann-Forum
+              </Typography>{" "}
+              <Typography
+                component="h1"
+                variant="h6"
+                style={{
+                  color: "white",
+                  marginRight: "20px",
+                  marginTop: "-10px",
+                }}
+              >
+                für Agrarwissenschaften
+              </Typography>
+            </Grid>{" "}
+            <Grid item>
+              <img
+                src="/images/tum_logo.png"
+                alt="logo"
+                style={{
+                  width: "150px",
+                  height: "80px",
+                  marginTop: "20px",
+                  marginRight: "20px",
+                }}
+              />
+            </Grid>
+          </Grid>
+
+          <Box
+            sx={{
+              my: 8,
+              mx: 4,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              marginBottom: "0px",
+            }}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Grid
+                item
+                sx={{
+                  display: { xs: "none", sm: "block" },
+                }}
+              >
+                <img
+                  src="/images/light_blue_line.png"
+                  alt="logo"
+                  style={{
+                    maxWidth: "150px",
+                    maxHeight: "400px",
+                    marginRight: "400px",
+                  }}
+                />
+              </Grid>
+              <Grid item>
+                <Button
+                  fullWidth
+                  variant="contained"
+                  sx={{ mt: 3, mb: 2, ml: "-3" }}
+                  onClick={login}
+                  style={{
+                    maxWidth: "100px",
+                    maxHeight: "100px",
+                    minWidth: "150px",
+                    minHeight: "50px",
+                    backgroundColor: "white",
+                    color: "#003359",
+                    fontWeight: "bold",
+                    fontSize: "26px",
+                    textTransform: "none",
+                  }}
+                >
+                  Login
+                </Button>
+              </Grid>
+
+              <Grid item>
+                <Link to={"/register"} style={{ textDecoration: "none" }}>
+                  <Button
+                    fullWidth
+                    variant="contained"
+                    sx={{ mt: 3, mb: 2, ml: 2, mr: 2 }}
+                    style={{
+                      maxWidth: "100px",
+                      maxHeight: "100px",
+                      minWidth: "150px",
+                      minHeight: "50px",
+                      backgroundColor: "white",
+                      color: "#003359",
+                      fontWeight: "bold",
+                      fontSize: "26px",
+                      textTransform: "none",
+                    }}
+                  >
+                    Register
+                  </Button>
+                </Link>
+              </Grid>
+            </Box>
+          </Box>
+          <Box
+            sx={{ mt: -2, mb: 0 }}
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              justifyContent: "flex-end",
+              marginRight: "20px",
+              padding: "20px",
+            }}
+          >
+            <img
+              src="/images/hef_circle.png"
+              alt="logo"
+              style={{ width: "150px", height: "150px" }}
+            />
+          </Box>
+        </Grid>
+      </Grid>
+    </ThemeProvider>
   );
 };
 

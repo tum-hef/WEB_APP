@@ -38,6 +38,7 @@ export default function LandingPage() {
   const [frostServerPort, setFrostServerPort] = useState<number | null>(null);
 
   const fetchDataStreams = () => {
+    console.log(frostServerPort)
     const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
     axios
       .get(`${backend_url}:${frostServerPort}/FROST-Server/v1.1/Datastreams`, {
