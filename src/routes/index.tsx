@@ -29,6 +29,7 @@ import Impressum from "../pages/impressum";
 import Register from "../pages/Register";
 import Stepper from "../pages/Stepper";
 import StepperStore from "../pages/Stepper";
+import ListClients from "../pages/ListClients";
 const styles = {
   container: {
     height: "100%",
@@ -77,7 +78,7 @@ const AppRouter = (props: any) => {
                   <PrivateRoute
                     exact
                     path="/dashboard"
-                    component={LandingPage}
+                    component={ListClients}
                   />
                   <PrivateRoute exact path="/projects" component={Servers} />
                   <PrivateRoute
