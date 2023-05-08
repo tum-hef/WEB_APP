@@ -29,8 +29,8 @@ function Register() {
       firstName: "",
       lastName: "",
       email: "",
-      password: "",
-      passwordConfirmation: "",
+      // password: "",
+      // passwordConfirmation: "",
     },
     validationSchema: yup.object({
       firstName: yup.string().required("First Name is required"),
@@ -43,15 +43,15 @@ function Register() {
           /^([a-zA-Z0-9_\-\.]+)@tum\.de$/,
           "Email must be a TUM email address"
         ),
-      password: yup
-        .string()
-        .required("Password is required")
-        .min(8, "Password must be at least 8 characters"),
-      passwordConfirmation: yup
-        .string()
-        .required("Password Confirmation is required")
-        .min(8, "Password must be at least 8 characters")
-        .oneOf([yup.ref("password"), null], "Passwords must match"),
+      // password: yup
+      //   .string()
+      //   .required("Password is required")
+      //   .min(8, "Password must be at least 8 characters"),
+      // passwordConfirmation: yup
+      //   .string()
+      //   .required("Password Confirmation is required")
+      //   .min(8, "Password must be at least 8 characters")
+      //   .oneOf([yup.ref("password"), null], "Passwords must match"),
     }),
     onSubmit: async (values) => {
       formik.resetForm();
@@ -67,7 +67,7 @@ function Register() {
             firstName: values.firstName,
             lastName: values.lastName,
             email: values.email,
-            password: values.password,
+            // password: values.password,
           })
           .then((response) => {
             console.log(JSON.stringify(response));
@@ -196,7 +196,7 @@ function Register() {
                   helperText={formik.touched.email && formik.errors.email}
                 />
               </Grid>
-              <Grid item xs={12}>
+              {/* <Grid item xs={12}>
                 <TextField
                   required
                   fullWidth
@@ -233,7 +233,7 @@ function Register() {
                     formik.errors.passwordConfirmation
                   }
                 />
-              </Grid>
+              </Grid> */}
             </Grid>
             <Button
               type="submit"
