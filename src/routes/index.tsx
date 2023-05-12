@@ -80,6 +80,12 @@ const AppRouter = (props: any) => {
                     path="/dashboard"
                     component={ListClients}
                   />
+                  {/* <PrivateRoute
+                    exact
+                    path="/client/:client_id"
+                    component={LandingPage}
+                  />{" "} */}
+                  <PrivateRoute exact path="/client" component={LandingPage} />
                   <PrivateRoute exact path="/projects" component={Servers} />
                   <PrivateRoute
                     exact

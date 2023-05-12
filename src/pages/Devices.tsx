@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import DataTable, { ExpanderComponentProps } from "react-data-table-component";
-import ContentBar from "../components/ContentBar";
 import { Button } from "@mui/material";
 import LinkCustom from "../components/LinkCustom";
 import CastIcon from "@mui/icons-material/Cast";
@@ -19,26 +18,11 @@ const Devices = () => {
   const [frostServerPort, setFrostServerPort] = useState<number | null>(null);
   const [devices, setDevices] = useState<any[]>([]);
 
-  // const getThings = async () => {
-  //   try {
-  //     const response = await axios.get(
-  //       "https://iot.hef.tum.de/frost/v1.0/Things"
-  //     );
-  //     console.log(response.data);
-  //     setDevices(response.data.value);
-  //   } catch (error) {
-  //     console.log(error);
-  //   }
-  // };
-
-  // useEffect(() => {
-  //   getThings();
-  // }, []);
-
   const fetchThings = () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
+    console.log(backend_url);
     axios
-      .get(`${backend_url}:${frostServerPort}/FROST-Server/v1.1/Things`, {
+      .get(`${backend_url}:${frostServerPort}/FROST-Server/v1.0/Things`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,

@@ -8,34 +8,70 @@ import { useParams } from "react-router-dom";
 import SearchIcon from "@mui/icons-material/Search";
 import { useHistory } from "react-router-dom";
 import Dashboard from "./Dashboard";
+import { useKeycloak } from "@react-keycloak/web";
+import { ToastContainer, toast } from "react-toastify";
 const Datastreams = () => {
   const [datastreans, setDatastreams] = useState([]);
+  const [frostServerPort, setFrostServerPort] = useState<number | null>(null);
   const history = useHistory();
+  const { keycloak } = useKeycloak();
+  const userInfo = keycloak?.idTokenParsed;
+  const token = keycloak?.token;
+  const [loading, setLoading] = useState(true);
   const { id } = useParams<{ id: string }>();
+
   const getDatastreams = async () => {
     try {
-      await axios
-        .get(`https://iot.hef.tum.de/frost/v1.0/Things(${id})/Datastreams`)
-        .then((response) => {
-          console.log(response.data);
-          setDatastreams(response.data.value);
+      const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
+      const url = `${backend_url}:${frostServerPort}/FROST-Server/v1.0/Things(${id})/Datastreams`;
+      console.log(url);
+      axios
+        .get(url, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
         })
-        .catch((error) => {
-          console.log(error);
-          // check if 404
-          if (error.response.status === 404) {
-            console.log("404");
-            history.push("/404");
+        .then((response) => {
+          console.log(response);
+          if (response.status === 200 && response.data.value) {
+            setDatastreams(response.data.value);
           }
+        })
+        .catch((err) => {
+          console.log(err);
+          toast.error("Error Getting Last Update Time");
         });
     } catch (error) {
       console.log(error);
     }
   };
 
+  const fetchFrostPort = async () => {
+    const backend_url = process.env.REACT_APP_BACKEND_URL;
+    const email = userInfo?.preferred_username;
+    await axios
+      .get(`${backend_url}/frost-server?email=${email}`, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+      .then((res) => {
+        if (res.status === 200 && res.data.PORT) {
+          setFrostServerPort(res.data.PORT);
+        }
+      });
+  };
+
   useEffect(() => {
-    getDatastreams();
-  }, []);
+    if (frostServerPort !== null) {
+      getDatastreams();
+    } else {
+      fetchFrostPort();
+    }
+    setLoading(true);
+    setLoading(false);
+  }, [frostServerPort]);
 
   const columns = [
     {

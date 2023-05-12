@@ -38,10 +38,10 @@ export default function LandingPage() {
   const [frostServerPort, setFrostServerPort] = useState<number | null>(null);
 
   const fetchDataStreams = () => {
-    console.log(frostServerPort)
+    console.log(frostServerPort);
     const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
     axios
-      .get(`${backend_url}:${frostServerPort}/FROST-Server/v1.1/Datastreams`, {
+      .get(`${backend_url}:${frostServerPort}/FROST-Server/v1.0/Datastreams`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -62,7 +62,7 @@ export default function LandingPage() {
   const fetchObservations = () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
     axios
-      .get(`${backend_url}:${frostServerPort}/FROST-Server/v1.1/Observations`, {
+      .get(`${backend_url}:${frostServerPort}/FROST-Server/v1.0/Observations`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -96,12 +96,14 @@ export default function LandingPage() {
   };
   useEffect(() => {
     getNodeRedPort();
+    asyncGetDevices();
     if (frostServerPort !== null) {
       fetchDataStreams();
       fetchObservations();
     } else {
       fetchData();
     }
+    setLoading(false);
   }, [frostServerPort]);
 
   const getNodeRedPort = async () => {
@@ -120,24 +122,25 @@ export default function LandingPage() {
       });
   };
 
-  const asyncGetProjects = async () => {
-    try {
-      setProjects(Object.keys(json_file).length);
-    } catch (err) {
-      console.log(err);
-      toast.error("Error Getting Projects");
-    }
-  };
+
   const asyncGetDevices = async () => {
     try {
-      const response = await axios.get(
-        "https://iot.hef.tum.de/frost/v1.0/Things"
-      );
-      setDevices(response.data.value.length);
-      setLoading(false);
+      const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
+      axios
+        .get(`${backend_url}:${frostServerPort}/FROST-Server/v1.0/Things`, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        })
+        .then((res) => {
+          if (res.status === 200 && res.data.value) {
+            console.log(res.data.value);
+            setDevices(res.data.value.length);
+          }
+        });
     } catch (err) {
       console.log(err);
-      setLoading(false);
       toast.error("Error Getting Devices");
     }
   };

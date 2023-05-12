@@ -1,22 +1,9 @@
 import LinkCustom from "../components/LinkCustom";
 import { ToastContainer, toast } from "react-toastify";
-import Stats from "../components/Stats";
 import { useKeycloak } from "@react-keycloak/web";
-import styled from "styled-components";
 import { useEffect, useState } from "react";
 import Dashboard from "./Dashboard";
-import {
-  Box,
-  Button,
-  Grid,
-  IconButton,
-  List,
-  ListItem,
-  ListItemText,
-  Typography,
-} from "@mui/material";
-import CommentIcon from "@mui/icons-material/Comment";
-import { use } from "i18next";
+import { Button, Grid, Typography } from "@mui/material";
 import axios from "axios";
 
 export default function ListClients() {
@@ -26,34 +13,35 @@ export default function ListClients() {
   const { keycloak } = useKeycloak();
   const userInfo = keycloak?.idTokenParsed;
 
-  const items = ["Item 1", "Item 2", "Item 3", "Item 4"];
   useEffect(() => {
     const fetchData = async () => {
       if (keycloak && userInfo && userInfo.sub) {
         setUserID(userInfo.sub);
 
-        try {
-          const response = await axios.get(
-            `http://138.246.237.35:4500/get_clients?user_id=${userInfo.sub}`
-          );
+        if (userID) {
+          try {
+            const response = await axios.get(
+              `http://138.246.237.35:4500/get_clients?user_id=${userID}`
+            );
 
-          if (response.status === 200 && response.data.clients) {
-            setClients(response.data.clients);
-            setLoading(false);
-          } else {
-            toast.error("Error fetching clients");
+            if (response.status === 200 && response.data.clients) {
+              setClients(response.data.clients);
+              setLoading(false);
+            } else {
+              toast.error("Error fetching clients");
+              setLoading(false);
+            }
+          } catch (error) {
+            toast.error("An error occurred while fetching clients.");
+            console.log(error);
             setLoading(false);
           }
-        } catch (error) {
-          toast.error("An error occurred while fetching clients.");
-          console.log(error);
-          setLoading(false);
         }
       }
     };
 
     fetchData();
-  }, [keycloak, userInfo]);
+  }, [keycloak, userInfo, userID]);
 
   return (
     <Dashboard>
@@ -94,13 +82,15 @@ export default function ListClients() {
                   </Typography>
                 </Grid>
                 <Grid item xs={2}>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    style={{ marginLeft: "auto" }}
-                  >
-                    Button
-                  </Button>
+                  <LinkCustom to={`/client`}>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      style={{ marginLeft: "auto" }}
+                    >
+                      View
+                    </Button>
+                  </LinkCustom>
                 </Grid>
               </Grid>
             </Grid>
