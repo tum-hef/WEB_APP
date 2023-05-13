@@ -24,7 +24,7 @@ const Anchor = styled.a`
   }
 `;
 export default function LandingPage() {
-  const [projects, setProjects] = useState<number | null>(1);
+  const [projects, setProjects] = useState<number | null>(2);
   const [devices, setDevices] = useState<number | null>(0);
   const [loading, setLoading] = useState<boolean>(true);
   const [nodeRedPort, setNodeRedPort] = useState<number | null>(null);
