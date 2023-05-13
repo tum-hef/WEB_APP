@@ -23,9 +23,8 @@ const Anchor = styled.a`
     color: #1976d2;
   }
 `;
-let json_file = require("../utils/servers.json");
 export default function LandingPage() {
-  const [projects, setProjects] = useState<number | null>(0);
+  const [projects, setProjects] = useState<number | null>(1);
   const [devices, setDevices] = useState<number | null>(0);
   const [loading, setLoading] = useState<boolean>(true);
   const [nodeRedPort, setNodeRedPort] = useState<number | null>(null);
@@ -61,6 +60,7 @@ export default function LandingPage() {
 
   const fetchObservations = () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
+
     axios
       .get(`${backend_url}:${frostServerPort}/FROST-Server/v1.0/Observations`, {
         headers: {
@@ -69,8 +69,8 @@ export default function LandingPage() {
         },
       })
       .then((res) => {
-        if (res.status === 200 && res.data.value.length) {
-          setObservationSize(res.data.value.length);
+        if (res.status === 200 && res.data["@iot.count"]) {
+          setObservationSize(res.data["@iot.count"]);
         }
       })
       .catch((err) => {
@@ -121,7 +121,6 @@ export default function LandingPage() {
         }
       });
   };
-
 
   const asyncGetDevices = async () => {
     try {

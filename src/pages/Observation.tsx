@@ -5,6 +5,8 @@ import ContentBar from "../components/ContentBar";
 import { format } from "date-fns";
 import { useParams } from "react-router-dom";
 import { Box, Button, Grid, TextField } from "@mui/material";
+import { ToastContainer, toast } from "react-toastify";
+
 import {
   DatePicker,
   DateTimePicker,
@@ -26,6 +28,7 @@ import {
   Legend,
 } from "chart.js";
 import Dashboard from "./Dashboard";
+import { useKeycloak } from "@react-keycloak/web";
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -54,6 +57,10 @@ export const options = {
 };
 
 const Observervation = () => {
+  const { keycloak } = useKeycloak();
+  const userInfo = keycloak?.idTokenParsed;
+  const token = keycloak?.token;
+  const [frostServerPort, setFrostServerPort] = useState<number | null>(null);
   const [datastreans, setDatastreams] = useState<any[]>([]);
   const { id } = useParams<{ id: string }>();
   const [start_date, setStartDate] = useState<Date | null>(null);
@@ -61,43 +68,77 @@ const Observervation = () => {
   const [phenomenon_times, setPhenomenonTimes] = useState([]);
   const [result_times, setResultTimes] = useState([]);
   const history = useHistory();
-
+  const [loading, setLoading] = useState(true);
   const handleChangeStartDate = (newValue: any) => {
     setStartDate(newValue);
   };
   const handleChangeEndDate = (newValue: any) => {
     setEndDate(newValue);
   };
-  const getObservation = async () => {
-    try {
-      const response = await axios
-        .get(
-          `https://iot.hef.tum.de/frost/v1.0/Datastreams(${id})/Observations?$top=100&$orderby=phenomenonTime%20desc`
-        )
-        .then((response) => {
-          console.log(response.data);
-          setDatastreams(response.data.value);
+  // const getObservation = async () => {
+  //   try {
+  //     const response = await axios
+  //       .get(
+  //         `https://iot.hef.tum.de/frost/v1.0/Datastreams(${id})/Observations?$top=100&$orderby=phenomenonTime%20desc`
+  //       )
+  //       .then((response) => {
+  //         console.log(response.data);
+  //         setDatastreams(response.data.value);
+  //         setPhenomenonTimes(
+  //           response?.data.value
+  //             .map((item: any) =>
+  //               format(new Date(item.phenomenonTime), "dd.MM.yyyy HH:mm")
+  //             )
+  //             .slice(0, 10)
+  //         );
+  //         setResultTimes(
+  //           response?.data.value.map((item: any) => item.result).slice(0, 10)
+  //         );
+  //       })
+  //       .catch((error) => {
+  //         console.log(error);
+  //         if (error.response.status === 404) {
+  //           console.log("404");
+  //           history.push("/404");
+  //         }
+  //       });
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  // };
+
+  const fetchObservations = () => {
+    const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
+    console.log(backend_url);
+    axios
+      .get(
+        `${backend_url}:${frostServerPort}/FROST-Server/v1.0/Datastreams(${id})/Observations?$top=100&$orderby=phenomenonTime%20desc`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
+      .then((res) => {
+        if (res.status === 200 && res.data.value) {
+          setDatastreams(res.data.value);
           setPhenomenonTimes(
-            response?.data.value
+            res?.data.value
               .map((item: any) =>
                 format(new Date(item.phenomenonTime), "dd.MM.yyyy HH:mm")
               )
               .slice(0, 10)
           );
           setResultTimes(
-            response?.data.value.map((item: any) => item.result).slice(0, 10)
+            res?.data.value.map((item: any) => item.result).slice(0, 10)
           );
-        })
-        .catch((error) => {
-          console.log(error);
-          if (error.response.status === 404) {
-            console.log("404");
-            history.push("/404");
-          }
-        });
-    } catch (error) {
-      console.log(error);
-    }
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+        toast.error("Error Getting Things");
+      });
   };
 
   const getCsvData = () => {
@@ -139,9 +180,32 @@ const Observervation = () => {
 
     return csvData;
   };
+
+  const fetchFrostPort = async () => {
+    const backend_url = process.env.REACT_APP_BACKEND_URL;
+    const email = userInfo?.preferred_username;
+    await axios
+      .get(`${backend_url}/frost-server?email=${email}`, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+      .then((res) => {
+        if (res.status === 200 && res.data.PORT) {
+          setFrostServerPort(res.data.PORT);
+        }
+      });
+  };
+
   useEffect(() => {
-    getObservation();
-  }, []);
+    setLoading(true);
+    if (frostServerPort !== null) {
+      fetchObservations();
+    } else {
+      fetchFrostPort();
+    }
+    setLoading(false);
+  }, [frostServerPort]);
 
   const columns = [
     {
@@ -175,6 +239,18 @@ const Observervation = () => {
 
   return (
     <Dashboard>
+      <ToastContainer
+        position="bottom-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="dark"
+      />
       <CSVLink filename="observation.csv" data={getCsvData()}>
         {" "}
         <Button variant="contained">Download CSV</Button>
