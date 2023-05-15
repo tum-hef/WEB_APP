@@ -1,11 +1,55 @@
 import { Button } from "@mui/material";
 import DataTable from "react-data-table-component";
-import ContentBar from "../components/ContentBar";
 import DevicesOtherIcon from "@mui/icons-material/DevicesOther";
 import LinkCustom from "../components/LinkCustom";
 import Dashboard from "./Dashboard";
+import axios from "axios";
+import { useEffect, useState } from "react";
+import { useKeycloak } from "@react-keycloak/web";
 
 export default function Servers() {
+  const { keycloak } = useKeycloak();
+  const userInfo = keycloak?.idTokenParsed;
+  const token = keycloak?.token;
+  const [projects, setProjects] = useState([
+    {
+      id: null,
+      url: null,
+    },
+  ]);
+
+  const [frostServerPort, setFrostServerPort] = useState<number | null>(null);
+
+  const fetchData = async () => {
+    const backend_url = process.env.REACT_APP_BACKEND_URL;
+    const email = userInfo?.preferred_username;
+    await axios
+      .get(`${backend_url}/frost-server?email=${email}`, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+      .then((res) => {
+        if (res.status === 200 && res.data.PORT) {
+          setFrostServerPort(res.data.PORT);
+          const obj = [
+            {
+              id: res.data.PORT,
+              url: res.data.PORT,
+            },
+          ];
+          setProjects(obj);
+        }
+      });
+  };
+
+  useEffect(() => {
+    fetchData();
+    if (frostServerPort == null) {
+      fetchData();
+    }
+  }, [frostServerPort]);
+
   let json_file = require("../utils/servers.json");
   const columns = [
     {
@@ -13,21 +57,17 @@ export default function Servers() {
       selector: (row: any) => row.id,
       sortable: true,
     },
-    {
-      name: "Client",
-      selector: (row: any) => row.client,
-      sortable: true,
-    },
+
     {
       name: "URL",
-      selector: (row: any) => row.url,
+      selector: (row: any) =>
+        process.env.REACT_APP_BACKEND_URL_ROOT +
+        ":" +
+        row.url +
+        "/FROST-Server/v1.0",
       sortable: true,
     },
-    {
-      name: "Description",
-      selector: (row: any) => row.description,
-      sortable: true,
-    },
+
     {
       name: "Devices",
       selector: (row: any) => (
@@ -41,17 +81,17 @@ export default function Servers() {
     },
   ];
 
-  let new_array = Object.keys(json_file).map(function (key) {
-    return json_file[key];
-  });
+  // let new_array = Object.keys(json_file).map(function (key) {
+  //   return json_file[key];
+  // });
 
   return (
     // <ContentBar>
     <Dashboard>
       <DataTable
-        title="Projects"
+        title="Data Space"
         columns={columns}
-        data={new_array}
+        data={projects}
         pagination={true}
         paginationPerPage={5}
         paginationRowsPerPageOptions={[5, 10, 15]}

@@ -27,17 +27,7 @@ export const DrawerSideBar = () => {
   return (
     <div>
       <Toolbar />
-      <Box
-        alignContent={"center"}
-        textAlign={"center"}
-        // remove margin top
-        mt={-5}
-        mb={2}
-      >
-        <Typography variant="h6" noWrap>
-          Parid
-        </Typography>
-      </Box>
+      <Box alignContent={"center"} textAlign={"center"} mt={-5} mb={2}></Box>
 
       <Divider />
       <List>
@@ -52,12 +42,12 @@ export const DrawerSideBar = () => {
           </ListItem>
         </LinkCustom>
         <LinkCustom to="/projects">
-          <ListItem key={"Projects"} disablePadding>
+          <ListItem key={"Data Space"} disablePadding>
             <ListItemButton>
               <ListItemIcon>
                 <AccountTreeIcon />
               </ListItemIcon>
-              <ListItemText primary={"Projects"} />
+              <ListItemText primary={"Data Space"} />
             </ListItemButton>
           </ListItem>
         </LinkCustom>

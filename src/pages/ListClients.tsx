@@ -8,7 +8,7 @@ import axios from "axios";
 
 export default function ListClients() {
   const [userID, setUserID] = useState<string | null>(null);
-  const [clients, setClients] = useState<any[]>([]);
+  const [groups, setGroups] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const { keycloak } = useKeycloak();
   const userInfo = keycloak?.idTokenParsed;
@@ -24,8 +24,11 @@ export default function ListClients() {
               `http://138.246.237.35:4500/get_clients?user_id=${userID}`
             );
 
-            if (response.status === 200 && response.data.clients) {
-              setClients(response.data.clients);
+            if (response.status === 200 && response.data.groups) {
+              setGroups(response.data.groups);
+              setLoading(false);
+            } else if (response.status === 404 && response.data.message) {
+              toast.error(response.data.message);
               setLoading(false);
             } else {
               toast.error("Error fetching clients");
@@ -71,14 +74,16 @@ export default function ListClients() {
               color: "#233044",
             }}
           >
-            Clients
+            Groups
           </Typography>
-          {clients.map((item, index) => (
-            <Grid item xs={12} key={item.client_id}>
+          {groups.map((item, index) => (
+            <Grid item xs={12} key={item.group_name}>
               <Grid container alignItems="center">
                 <Grid item xs={10}>
                   <Typography variant="h6" gutterBottom>
-                    {item.client_id}
+                    {item.attributes.group_name +
+                      " - " +
+                      item.attributes.group_type}
                   </Typography>
                 </Grid>
                 <Grid item xs={2}>

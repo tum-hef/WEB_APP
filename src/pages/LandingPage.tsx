@@ -24,7 +24,7 @@ const Anchor = styled.a`
   }
 `;
 export default function LandingPage() {
-  const [projects, setProjects] = useState<number | null>(2);
+  const [projects, setProjects] = useState<number | null>(1);
   const [devices, setDevices] = useState<number | null>(0);
   const [loading, setLoading] = useState<boolean>(true);
   const [nodeRedPort, setNodeRedPort] = useState<number | null>(null);
@@ -161,7 +161,7 @@ export default function LandingPage() {
       <Grid container spacing={2}>
         <Grid item xs={12} sm={6} md={3}>
           <Stats
-            title="Projects"
+            title="Data space"
             amount={projects}
             percentagecolor={red[500]}
           />
@@ -220,7 +220,7 @@ export default function LandingPage() {
                   }}
                 >
                   <Typography gutterBottom variant="h3" component="div">
-                    Projects
+                    Data space
                   </Typography>
                 </CardContent>
               </CardActionArea>

@@ -71,41 +71,80 @@ const Observervation = () => {
   const [loading, setLoading] = useState(true);
   const handleChangeStartDate = (newValue: any) => {
     setStartDate(newValue);
+
+    if (start_date && end_date) {
+      const formatted_start_date = start_date.toISOString();
+      const formatted_end_date = end_date.toISOString();
+
+      const url =
+        `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Datastreams(${id})/Observations?` +
+        "$filter=phenomenonTime%20gt%20" +
+        formatted_start_date +
+        "%20and%20phenomenonTime%20lt%20" +
+        formatted_end_date +
+        "&$select=phenomenonTime,result&$top=1000&$orderby=phenomenonTime%20desc";
+
+      axios
+        .get(url, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        })
+        .then((response: any) => {
+          console.log(response.data);
+          setDatastreams(response.data.value);
+          setPhenomenonTimes(
+            response?.data.value
+              .map((item: any) =>
+                format(new Date(item.phenomenonTime), "dd.MM.yyyy HH:mm")
+              )
+              .slice(0, 10)
+          );
+          setResultTimes(
+            response?.data.value.map((item: any) => item.result).slice(0, 10)
+          );
+        });
+    }
   };
   const handleChangeEndDate = (newValue: any) => {
     setEndDate(newValue);
+
+    if (start_date && end_date) {
+      const formatted_start_date = start_date.toISOString();
+      const formatted_end_date = end_date.toISOString();
+
+      const url =
+        `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Datastreams(${id})/Observations?` +
+        "$filter=phenomenonTime%20gt%20" +
+        formatted_start_date +
+        "%20and%20phenomenonTime%20lt%20" +
+        formatted_end_date +
+        "&$select=phenomenonTime,result&$top=1000&$orderby=phenomenonTime%20desc";
+
+      axios
+        .get(url, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        })
+        .then((response: any) => {
+          console.log(response.data);
+          setDatastreams(response.data.value);
+          setPhenomenonTimes(
+            response?.data.value
+              .map((item: any) =>
+                format(new Date(item.phenomenonTime), "dd.MM.yyyy HH:mm")
+              )
+              .slice(0, 10)
+          );
+          setResultTimes(
+            response?.data.value.map((item: any) => item.result).slice(0, 10)
+          );
+        });
+    }
   };
-  // const getObservation = async () => {
-  //   try {
-  //     const response = await axios
-  //       .get(
-  //         `https://iot.hef.tum.de/frost/v1.0/Datastreams(${id})/Observations?$top=100&$orderby=phenomenonTime%20desc`
-  //       )
-  //       .then((response) => {
-  //         console.log(response.data);
-  //         setDatastreams(response.data.value);
-  //         setPhenomenonTimes(
-  //           response?.data.value
-  //             .map((item: any) =>
-  //               format(new Date(item.phenomenonTime), "dd.MM.yyyy HH:mm")
-  //             )
-  //             .slice(0, 10)
-  //         );
-  //         setResultTimes(
-  //           response?.data.value.map((item: any) => item.result).slice(0, 10)
-  //         );
-  //       })
-  //       .catch((error) => {
-  //         console.log(error);
-  //         if (error.response.status === 404) {
-  //           console.log("404");
-  //           history.push("/404");
-  //         }
-  //       });
-  //   } catch (error) {
-  //     console.log(error);
-  //   }
-  // };
 
   const fetchObservations = () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
@@ -128,10 +167,10 @@ const Observervation = () => {
               .map((item: any) =>
                 format(new Date(item.phenomenonTime), "dd.MM.yyyy HH:mm")
               )
-              .slice(0, 10)
+              .slice(0, 50)
           );
           setResultTimes(
-            res?.data.value.map((item: any) => item.result).slice(0, 10)
+            res?.data.value.map((item: any) => item.result).slice(0, 50)
           );
         }
       })
@@ -299,6 +338,7 @@ const Observervation = () => {
                   onClick={() => {
                     setStartDate(null);
                     setEndDate(null);
+                    fetchObservations();
                   }}
                 >
                   Clear Filter
@@ -312,16 +352,7 @@ const Observervation = () => {
       <DataTable
         title="Observation"
         columns={columns}
-        data={
-          start_date && end_date
-            ? datastreans.filter((data: any) => {
-                const date = new Date(data.phenomenonTime).getTime();
-                return (
-                  date >= start_date.getTime() && date <= end_date.getTime()
-                );
-              })
-            : datastreans
-        }
+        data={datastreans}
         pagination={true}
         paginationPerPage={5}
         paginationRowsPerPageOptions={[5, 10, 20]}

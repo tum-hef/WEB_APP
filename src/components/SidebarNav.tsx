@@ -66,7 +66,7 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
       <List>
         <Items>
           <LinkCustom to="/dashboard">
-            <ListItem key={"Dashboard"} disablePadding>
+            <ListItem key={"Landing Page"} disablePadding>
               <ListItemButton>
                 <ListItemIcon>
                   <GridViewIcon
@@ -80,13 +80,13 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
                     color: "white",
                   }}
                   primaryTypographyProps={{ fontSize: "18px" }}
-                  primary={"Dashboard"}
+                  primary={"Landing Page"}
                 />
               </ListItemButton>
             </ListItem>
           </LinkCustom>
           <LinkCustom to="/projects">
-            <ListItem key={"Projects"} disablePadding>
+            <ListItem key={"Data Space"} disablePadding>
               <ListItemButton>
                 <ListItemIcon>
                   <AccountTreeIcon
@@ -100,7 +100,7 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
                   style={{
                     color: "white",
                   }}
-                  primary={"Projects"}
+                  primary={"Data Space"}
                 />
               </ListItemButton>
             </ListItem>
