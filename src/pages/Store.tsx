@@ -16,7 +16,7 @@ import {
 import { device_initial_values } from "../formik/initial_values";
 import { devoice_validationSchema } from "../formik/validation_schema";
 import { useFormik } from "formik";
-import Dashboard from "./Dashboard";
+import Dashboard from "../components/DashboardComponent";
 
 function Store() {
   const formik = useFormik({

@@ -7,7 +7,7 @@ import LinkCustom from "../components/LinkCustom";
 import { useParams } from "react-router-dom";
 import SearchIcon from "@mui/icons-material/Search";
 import { useHistory } from "react-router-dom";
-import Dashboard from "./Dashboard";
+import Dashboard from "../components/DashboardComponent";
 import { useKeycloak } from "@react-keycloak/web";
 import { ToastContainer, toast } from "react-toastify";
 const Datastreams = () => {

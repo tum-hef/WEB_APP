@@ -1,7 +1,7 @@
 import { Paper } from "@material-ui/core";
 import { Typography } from "@mui/material";
 import React from "react";
-import Dashboard from "./Dashboard";
+import Dashboard from "../components/DashboardComponent";
 
 function Impressum() {
   return (

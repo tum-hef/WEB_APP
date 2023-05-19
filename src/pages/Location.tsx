@@ -4,7 +4,7 @@ import ContentBar from "../components/ContentBar";
 import { Grid, Typography } from "@mui/material";
 import { useKeycloak } from "@react-keycloak/web";
 import { useParams } from "react-router-dom";
-import Dashboard from "./Dashboard";
+import Dashboard from "../components/DashboardComponent";
 import { ToastContainer, toast } from "react-toastify";
 
 const Location = () => {

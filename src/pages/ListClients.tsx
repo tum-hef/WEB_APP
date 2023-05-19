@@ -2,8 +2,8 @@ import LinkCustom from "../components/LinkCustom";
 import { ToastContainer, toast } from "react-toastify";
 import { useKeycloak } from "@react-keycloak/web";
 import { useEffect, useState } from "react";
-import Dashboard from "./Dashboard";
-import { Button, Grid, Typography } from "@mui/material";
+import Dashboard from "../components/DashboardComponent";
+import { Breadcrumbs, Button, Grid, Typography } from "@mui/material";
 import axios from "axios";
 
 export default function ListClients() {
@@ -21,7 +21,7 @@ export default function ListClients() {
         if (userID) {
           try {
             const response = await axios.get(
-              `http://138.246.237.35:4500/get_clients?user_id=${userID}`
+              `${process.env.REACT_APP_BACKEND_URL}/get_clients?user_id=${userID}`
             );
 
             if (response.status === 200 && response.data.groups) {
@@ -65,42 +65,54 @@ export default function ListClients() {
           Loading...
         </Typography>
       ) : (
-        <Grid container spacing={2}>
-          <Typography
-            variant="h2"
-            align="center"
-            gutterBottom
+        <>
+          <Breadcrumbs
+            aria-label="breadcrumb"
             style={{
-              color: "#233044",
+              marginBottom: "10px",
             }}
           >
-            Groups
-          </Typography>
-          {groups.map((item, index) => (
-            <Grid item xs={12} key={item.group_name}>
-              <Grid container alignItems="center">
-                <Grid item xs={10}>
-                  <Typography variant="h6" gutterBottom>
-                    {item.attributes.group_name +
-                      " - " +
-                      item.attributes.group_type}
-                  </Typography>
-                </Grid>
-                <Grid item xs={2}>
-                  <LinkCustom to={`/client`}>
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      style={{ marginLeft: "auto" }}
-                    >
-                      View
-                    </Button>
-                  </LinkCustom>
+            <Typography color="text.primary">Landing Page</Typography>
+          </Breadcrumbs>
+
+          <Grid container spacing={2}>
+            <Typography
+              variant="h2"
+              align="center"
+              gutterBottom
+              style={{
+                color: "#233044",
+              }}
+            >
+              Groups
+            </Typography>
+
+            {groups.map((item, index) => (
+              <Grid item xs={12} key={item.group_name}>
+                <Grid container alignItems="center">
+                  <Grid item xs={10}>
+                    <Typography variant="h6" gutterBottom>
+                      {item.attributes.group_name +
+                        " - " +
+                        item.attributes.group_type}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={2}>
+                    <LinkCustom to={`/dashboard/${item.id}`}>
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        style={{ marginLeft: "auto" }}
+                      >
+                        Select
+                      </Button>
+                    </LinkCustom>
+                  </Grid>
                 </Grid>
               </Grid>
-            </Grid>
-          ))}
-        </Grid>
+            ))}
+          </Grid>
+        </>
       )}
     </Dashboard>
   );

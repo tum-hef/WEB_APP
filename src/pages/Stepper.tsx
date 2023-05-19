@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Form, Formik } from "formik";
-import Dashboard from "./Dashboard";
+import Dashboard from "../components/DashboardComponent";
 import {
   Stepper,
   Step,
@@ -11,8 +11,10 @@ import {
   TextField,
   Button,
   Typography,
+  Breadcrumbs,
 } from "@mui/material";
 import axios from "axios";
+import LinkCustom from "../components/LinkCustom";
 
 const steps = [
   "Store Device",
@@ -96,14 +98,7 @@ function StepperStore() {
 
             // Fourth Step
             datastream_name: "",
-            datastream_unit_of_measurement_name: "",
-            datastream_unit_of_measurement_symbol: "",
-            datastream_unit_of_measurement_definition: "",
-            datastream_device_id: "",
             datastram_description: "",
-            datastream_sensor_id: "",
-            datastream_observedProperty_id: "",
-            datasteam_observation_type: "",
           }}
           validationSchema={getValidationSchemaPerStep(activeStep)}
           onSubmit={async (values: any, helpers: any) => {
@@ -118,417 +113,337 @@ function StepperStore() {
           }}
         >
           {({ isSubmitting, errors, touched, handleChange, values }) => (
-            <Form
-              style={{
-                padding: "2rem",
-              }}
-            >
-              <Stepper
-                activeStep={activeStep}
+            <>
+              <Breadcrumbs
+                aria-label="breadcrumb"
                 style={{
-                  backgroundColor: "transparent",
-                  marginBottom: "2rem",
+                  marginBottom: "10px",
                 }}
               >
-                {steps.map((label) => (
-                  <Step key={label}>
-                    <StepLabel>{label}</StepLabel>
-                  </Step>
-                ))}
-              </Stepper>
-              {activeStep === 0 && (
-                <Grid container spacing={2}>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      label="Device Name"
-                      name="device_name"
-                      onChange={handleChange}
-                      value={values.device_name}
-                      variant="outlined"
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      label="Device Description"
-                      name="device_description"
-                      onChange={handleChange}
-                      value={values.device_description}
-                      variant="outlined"
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      label="Device Location"
-                      name="device_location_name"
-                      onChange={handleChange}
-                      value={values.device_location_name}
-                      variant="outlined"
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      label="Location Description"
-                      name="device_location_description"
-                      onChange={handleChange}
-                      value={values.device_location_description}
-                      variant="outlined"
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      label="Latitude"
-                      name="device_latitude"
-                      onChange={handleChange}
-                      value={values.device_latitude}
-                      variant="outlined"
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      label="Longitude"
-                      name="device_longitude"
-                      onChange={handleChange}
-                      value={values.device_longitude}
-                      variant="outlined"
-                    />
-                  </Grid>
-                </Grid>
-              )}
-              {activeStep === 1 && (
-                <Grid container spacing={2}>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      select
-                      fullWidth
-                      label="New Sensor"
-                      name="sensor_check"
-                      value={newSensor ? "new" : "existing"}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        setNewSensor(value === "new" ? true : false);
-                        if (value === "existing") {
-                          values.sensor_name = "";
-                          values.sensor_description = "";
-                          values.sensor_metadata = "";
-                        } else if (value === "new") {
-                          values.sensor_existing_id = "";
-                        }
-                      }}
-                      variant="outlined"
-                    >
-                      <MenuItem value="new">New Sensor</MenuItem>
-                      <MenuItem value="existing">Existing Sensor</MenuItem>
-                    </TextField>
-                  </Grid>
-                  {!newSensor && (
-                    <Grid item xs={12} md={6}>
-                      <TextField
-                        select
-                        fullWidth
-                        label="Existing Sensor"
-                        name="sensor_existing_id"
-                        value={values.sensor_existing_id}
-                        onChange={handleChange}
-                        variant="outlined"
-                      >
-                        {sensors.map((sensor) => (
-                          <MenuItem
-                            key={sensor["@iot.id"]}
-                            value={sensor["@iot.id"]}
-                          >
-                            {sensor["name"]}
-                          </MenuItem>
-                        ))}
-                      </TextField>
-                    </Grid>
-                  )}
-                  {newSensor && (
-                    <>
-                      <Grid item xs={12} md={6}>
-                        <TextField
-                          fullWidth
-                          label="Sensor Name"
-                          name="sensor_name"
-                          onChange={handleChange}
-                          value={values.sensor_name}
-                          variant="outlined"
-                        />
-                      </Grid>
-                      <Grid item xs={12} md={6}>
-                        <TextField
-                          fullWidth
-                          label="Metadata"
-                          name="sensor_metadata"
-                          onChange={handleChange}
-                          value={values.sensor_metadata}
-                          variant="outlined"
-                        />
-                      </Grid>
-                      <Grid item xs={12} md={6}>
-                        <TextField
-                          fullWidth
-                          label="Description"
-                          name="sensor_description"
-                          onChange={handleChange}
-                          value={values.sensor_description}
-                          variant="outlined"
-                        />
-                      </Grid>
-                    </>
-                  )}
-                </Grid>
-              )}
-              {activeStep === 2 && (
-                <Grid container spacing={2}>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      select
-                      fullWidth
-                      label="New Observed Property"
-                      name="observeProperty_check"
-                      value={newObserveProperty ? "new" : "existing"}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        setNewObserveProperty(value === "new" ? true : false);
-                        if (value === "existing") {
-                          values.observeProperty_name = "";
-                          values.observeProperty_definition = "";
-                          values.observeProperty_description = "";
-                        } else if (value === "new") {
-                          values.observeProperty_existing_id = "";
-                        }
-                      }}
-                      variant="outlined"
-                    >
-                      <MenuItem value="new">New Observed Property</MenuItem>
-                      <MenuItem value="existing">
-                        Existing Observed Property
-                      </MenuItem>
-                    </TextField>
-                  </Grid>
-                  {!newObserveProperty && (
-                    <Grid item xs={12} md={6}>
-                      <TextField
-                        select
-                        fullWidth
-                        label="Existing Observed Property"
-                        name="observeProperty_existing_id"
-                        value={values.observeProperty_existing_id}
-                        onChange={handleChange}
-                        variant="outlined"
-                      >
-                        {observeProperties.map((observeProperty) => (
-                          <MenuItem
-                            key={observeProperty["@iot.id"]}
-                            value={observeProperty["@iot.id"]}
-                          >
-                            {observeProperty.name}
-                          </MenuItem>
-                        ))}
-                      </TextField>
-                    </Grid>
-                  )}
+                <LinkCustom to="/">MUI</LinkCustom>
+                <LinkCustom to="/material-ui/getting-started/installation/">
+                  Core
+                </LinkCustom>
+                <Typography color="text.primary">Breadcrumbs</Typography>
+              </Breadcrumbs>
 
-                  {newObserveProperty && (
-                    <>
+              <Form
+                style={{
+                  padding: "2rem",
+                }}
+              >
+                <Stepper
+                  activeStep={activeStep}
+                  style={{
+                    backgroundColor: "transparent",
+                    marginBottom: "2rem",
+                  }}
+                >
+                  {steps.map((label) => (
+                    <Step key={label}>
+                      <StepLabel>{label}</StepLabel>
+                    </Step>
+                  ))}
+                </Stepper>
+                {activeStep === 0 && (
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        label="Device Name"
+                        name="device_name"
+                        onChange={handleChange}
+                        value={values.device_name}
+                        variant="outlined"
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        label="Device Description"
+                        name="device_description"
+                        onChange={handleChange}
+                        value={values.device_description}
+                        variant="outlined"
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        label="Device Location"
+                        name="device_location_name"
+                        onChange={handleChange}
+                        value={values.device_location_name}
+                        variant="outlined"
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        label="Location Description"
+                        name="device_location_description"
+                        onChange={handleChange}
+                        value={values.device_location_description}
+                        variant="outlined"
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        label="Latitude"
+                        name="device_latitude"
+                        onChange={handleChange}
+                        value={values.device_latitude}
+                        variant="outlined"
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        label="Longitude"
+                        name="device_longitude"
+                        onChange={handleChange}
+                        value={values.device_longitude}
+                        variant="outlined"
+                      />
+                    </Grid>
+                  </Grid>
+                )}
+                {activeStep === 1 && (
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        select
+                        fullWidth
+                        label="New Sensor"
+                        name="sensor_check"
+                        value={newSensor ? "new" : "existing"}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setNewSensor(value === "new" ? true : false);
+                          if (value === "existing") {
+                            values.sensor_name = "";
+                            values.sensor_description = "";
+                            values.sensor_metadata = "";
+                          } else if (value === "new") {
+                            values.sensor_existing_id = "";
+                          }
+                        }}
+                        variant="outlined"
+                      >
+                        <MenuItem value="new">New Sensor</MenuItem>
+                        <MenuItem value="existing">Existing Sensor</MenuItem>
+                      </TextField>
+                    </Grid>
+                    {!newSensor && (
                       <Grid item xs={12} md={6}>
                         <TextField
+                          select
                           fullWidth
-                          label="Name"
-                          name="observeProperty_name"
+                          label="Existing Sensor"
+                          name="sensor_existing_id"
+                          value={values.sensor_existing_id}
                           onChange={handleChange}
-                          value={values.observeProperty_name}
                           variant="outlined"
-                        />
+                        >
+                          {sensors.map((sensor) => (
+                            <MenuItem
+                              key={sensor["@iot.id"]}
+                              value={sensor["@iot.id"]}
+                            >
+                              {sensor["name"]}
+                            </MenuItem>
+                          ))}
+                        </TextField>
                       </Grid>
+                    )}
+                    {newSensor && (
+                      <>
+                        <Grid item xs={12} md={6}>
+                          <TextField
+                            fullWidth
+                            label="Sensor Name"
+                            name="sensor_name"
+                            onChange={handleChange}
+                            value={values.sensor_name}
+                            variant="outlined"
+                          />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                          <TextField
+                            fullWidth
+                            label="Metadata"
+                            name="sensor_metadata"
+                            onChange={handleChange}
+                            value={values.sensor_metadata}
+                            variant="outlined"
+                          />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                          <TextField
+                            fullWidth
+                            label="Description"
+                            name="sensor_description"
+                            onChange={handleChange}
+                            value={values.sensor_description}
+                            variant="outlined"
+                          />
+                        </Grid>
+                      </>
+                    )}
+                  </Grid>
+                )}
+                {activeStep === 2 && (
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        select
+                        fullWidth
+                        label="New Observed Property"
+                        name="observeProperty_check"
+                        value={newObserveProperty ? "new" : "existing"}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setNewObserveProperty(value === "new" ? true : false);
+                          if (value === "existing") {
+                            values.observeProperty_name = "";
+                            values.observeProperty_definition = "";
+                            values.observeProperty_description = "";
+                          } else if (value === "new") {
+                            values.observeProperty_existing_id = "";
+                          }
+                        }}
+                        variant="outlined"
+                      >
+                        <MenuItem value="new">New Observed Property</MenuItem>
+                        <MenuItem value="existing">
+                          Existing Observed Property
+                        </MenuItem>
+                      </TextField>
+                    </Grid>
+                    {!newObserveProperty && (
                       <Grid item xs={12} md={6}>
                         <TextField
+                          select
                           fullWidth
-                          label="Definition"
-                          name="observeProperty_definition"
+                          label="Existing Observed Property"
+                          name="observeProperty_existing_id"
+                          value={values.observeProperty_existing_id}
                           onChange={handleChange}
-                          value={values.observeProperty_definition}
                           variant="outlined"
-                        />
+                        >
+                          {observeProperties.map((observeProperty) => (
+                            <MenuItem
+                              key={observeProperty["@iot.id"]}
+                              value={observeProperty["@iot.id"]}
+                            >
+                              {observeProperty.name}
+                            </MenuItem>
+                          ))}
+                        </TextField>
                       </Grid>
-                      <Grid item xs={12} md={6}>
-                        <TextField
-                          fullWidth
-                          label="Description"
-                          name="observeProperty_description"
-                          onChange={handleChange}
-                          value={values.observeProperty_description}
-                          variant="outlined"
-                        />
-                      </Grid>
-                    </>
+                    )}
+
+                    {newObserveProperty && (
+                      <>
+                        <Grid item xs={12} md={6}>
+                          <TextField
+                            fullWidth
+                            label="Name"
+                            name="observeProperty_name"
+                            onChange={handleChange}
+                            value={values.observeProperty_name}
+                            variant="outlined"
+                          />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                          <TextField
+                            fullWidth
+                            label="Definition"
+                            name="observeProperty_definition"
+                            onChange={handleChange}
+                            value={values.observeProperty_definition}
+                            variant="outlined"
+                          />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                          <TextField
+                            fullWidth
+                            label="Description"
+                            name="observeProperty_description"
+                            onChange={handleChange}
+                            value={values.observeProperty_description}
+                            variant="outlined"
+                          />
+                        </Grid>
+                      </>
+                    )}
+                  </Grid>
+                )}
+                {activeStep === 3 && (
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        label="Name"
+                        name="datastream_name"
+                        onChange={handleChange}
+                        value={values.datastream_name}
+                        variant="outlined"
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        name="datastram_description"
+                        label="Datastream Description"
+                        onChange={handleChange}
+                        value={values.datastram_description}
+                        variant="outlined"
+                      />
+                    </Grid>
+                  </Grid>
+                )}
+                <Grid container spacing={2} justifyContent="center" mt={10}>
+                  {activeStep > 0 && (
+                    <Grid item>
+                      <Button
+                        style={{
+                          backgroundColor: "#233044",
+                        }}
+                        variant="contained"
+                        onClick={() => setActiveStep((s) => s - 1)}
+                      >
+                        Previous Step
+                      </Button>
+                    </Grid>
                   )}
-                </Grid>
-              )}
-              {activeStep === 3 && (
-                <Grid container spacing={2}>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      label="Name"
-                      name="datastream_name"
-                      onChange={handleChange}
-                      value={values.datastream_name}
-                      variant="outlined"
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      name="datastream_unit_of_measurement_name"
-                      label="Unit of Measurement Name"
-                      onChange={handleChange}
-                      value={values.datastream_unit_of_measurement_name}
-                      variant="outlined"
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      name="datastream_unit_of_measurement_symbol"
-                      label="Unit of Measurement Symbol"
-                      onChange={handleChange}
-                      value={values.datastream_unit_of_measurement_symbol}
-                      variant="outlined"
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      name="datastream_unit_of_measurement_definition"
-                      label="Unit of Measurement Definition"
-                      onChange={handleChange}
-                      value={values.datastream_unit_of_measurement_definition}
-                      variant="outlined"
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      name="datastream_device_id"
-                      label="Device ID"
-                      onChange={handleChange}
-                      value={values.datastream_device_id}
-                      variant="outlined"
-                      select
-                    >
-                      <MenuItem value="1">Device 1</MenuItem>
-                      <MenuItem value="2">Device 2</MenuItem>
-                      <MenuItem value="3">Device 3</MenuItem>
-                    </TextField>
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      name="datastram_description"
-                      label="Datastream Description"
-                      onChange={handleChange}
-                      value={values.datastram_description}
-                      variant="outlined"
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      name="datastream_sensor_id"
-                      onChange={handleChange}
-                      value={values.datastream_sensor_id}
-                      select
-                      label="Sensor ID"
-                      variant="outlined"
-                    >
-                      {sensors.map((sensor) => (
-                        <MenuItem
-                          key={sensor["@iot.id"]}
-                          value={sensor["@iot.id"]}
-                        >
-                          {sensor.name}
-                        </MenuItem>
-                      ))}
-                    </TextField>
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      name="datastream_observedProperty_id"
-                      select
-                      label="Observed Property ID"
-                      onChange={handleChange}
-                      value={values.datastream_observedProperty_id}
-                      variant="outlined"
-                    >
-                      {observeProperties.map((observeProperty) => (
-                        <MenuItem
-                          key={observeProperty["@iot.id"]}
-                          value={observeProperty["@iot.id"]}
-                        >
-                          {observeProperty.name}
-                        </MenuItem>
-                      ))}
-                    </TextField>
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      name="datasteam_observation_type"
-                      label="Observation Type"
-                      onChange={handleChange}
-                      value={values.datasteam_observation_type}
-                      variant="outlined"
-                    />
-                  </Grid>
-                </Grid>
-              )}
-              <Grid container spacing={2} justifyContent="center" mt={10}>
-                {activeStep > 0 && (
                   <Grid item>
                     <Button
+                      startIcon={
+                        isSubmitting ? <CircularProgress size="1rem" /> : null
+                      }
+                      variant="contained"
+                      // color="primary"
                       style={{
                         backgroundColor: "#233044",
                       }}
-                      variant="contained"
-                      onClick={() => setActiveStep((s) => s - 1)}
+                      type="submit"
+                      disabled={
+                        isSubmitting ||
+                        (isLastStep && Object.keys(errors).length > 0)
+                      }
                     >
-                      Previous Step
+                      {isSubmitting
+                        ? "Submitting"
+                        : isLastStep
+                        ? "Finish"
+                        : "Next step"}
                     </Button>
                   </Grid>
-                )}
-                <Grid item>
-                  <Button
-                    startIcon={
-                      isSubmitting ? <CircularProgress size="1rem" /> : null
-                    }
-                    variant="contained"
-                    // color="primary"
-                    style={{
-                      backgroundColor: "#233044",
-                    }}
-                    type="submit"
-                    disabled={
-                      isSubmitting ||
-                      (isLastStep && Object.keys(errors).length > 0)
-                    }
-                  >
-                    {isSubmitting
-                      ? "Submitting"
-                      : isLastStep
-                      ? "Finish"
-                      : "Next step"}
-                  </Button>
                 </Grid>
-              </Grid>
-            </Form>
+              </Form>
+            </>
           )}
         </Formik>
       </Dashboard>

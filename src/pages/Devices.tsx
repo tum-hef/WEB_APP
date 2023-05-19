@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import DataTable, { ExpanderComponentProps } from "react-data-table-component";
-import { Button } from "@mui/material";
+import { Breadcrumbs, Button, Typography } from "@mui/material";
 import LinkCustom from "../components/LinkCustom";
 import CastIcon from "@mui/icons-material/Cast";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import DownloadIcon from "@mui/icons-material/Download";
-import Dashboard from "./Dashboard";
+import Dashboard from "../components/DashboardComponent";
 import { useKeycloak } from "@react-keycloak/web";
 import { ToastContainer, toast } from "react-toastify";
 
@@ -161,6 +161,17 @@ const Devices = () => {
         pauseOnHover
         theme="dark"
       />
+      <Breadcrumbs
+        aria-label="breadcrumb"
+        style={{
+          marginBottom: "10px",
+        }}
+      >
+        <LinkCustom to="/dashboard">Landing Page</LinkCustom>
+        <LinkCustom to="/dashboard">Dashboard</LinkCustom>
+        <Typography color="text.primary">Devices</Typography>
+      </Breadcrumbs>
+
       <LinkCustom to="/stepper">
         <Button
           variant="contained"

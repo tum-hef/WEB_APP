@@ -1,6 +1,6 @@
-import React, { forwardRef } from "react";
+import React from "react";
 import styled from "styled-components/macro";
-import { NavLink, NavLinkProps } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import { rgba, darken } from "polished";
 
 import {
@@ -12,11 +12,6 @@ import {
 } from "@mui/material";
 import { ExpandLess, ExpandMore } from "@mui/icons-material";
 
-const CustomRouterLink = forwardRef<any, NavLinkProps>((props, ref) => (
-  <div ref={ref}>
-    <NavLink {...props} />
-  </div>
-));
 
 type ItemType = {
   activeclassname?: string;

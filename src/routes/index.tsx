@@ -8,7 +8,7 @@ import PropTypes from "prop-types";
 import Groups from "../pages/Groups";
 import { StyledEngineProvider } from "@mui/styled-engine-sc";
 import { create } from "jss";
-import Servers from "../pages/Servers";
+import DataSpace from "../pages/DataSpace";
 import { NOTFOUND } from "../pages/404";
 import { RotatingLines } from "react-loader-spinner";
 import { Grid } from "@material-ui/core";
@@ -24,10 +24,9 @@ import StylesProvider from "@mui/styles/StylesProvider";
 import jssPreset from "@mui/styles/jssPreset";
 import { ThemeProvider as MuiThemeProvider } from "@mui/material/styles";
 import createTheme from "../hooks/createTheme";
-import LandingPage from "../pages/LandingPage";
+import DashboardPage from "../pages/DashboardPage";
 import Impressum from "../pages/impressum";
 import Register from "../pages/Register";
-import Stepper from "../pages/Stepper";
 import StepperStore from "../pages/Stepper";
 import ListClients from "../pages/ListClients";
 const styles = {
@@ -80,13 +79,16 @@ const AppRouter = (props: any) => {
                     path="/dashboard"
                     component={ListClients}
                   />
-                  {/* <PrivateRoute
+                  <PrivateRoute
                     exact
-                    path="/client/:client_id"
-                    component={LandingPage}
-                  />{" "} */}
-                  <PrivateRoute exact path="/client" component={LandingPage} />
-                  <PrivateRoute exact path="/projects" component={Servers} />
+                    path="/dashboard/:group_id"
+                    component={DashboardPage}
+                  />
+                  <PrivateRoute
+                    exact
+                    path="/data-spaces"
+                    component={DataSpace}
+                  />
                   <PrivateRoute
                     exact
                     path="/stepper"

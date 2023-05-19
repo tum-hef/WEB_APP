@@ -1,17 +1,15 @@
 import React, { useState } from "react";
 import styled from "styled-components/macro";
-import { ThemeProvider } from "styled-components/macro";
 import { Box, CssBaseline, Paper as MuiPaper } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { spacing } from "@mui/system";
 
-import GlobalStyle from "../components/GlobalStyle";
-import dashboardItems from "../components/dashboardItems";
-import Sidebar from "../components/Sidebar";
-import Navbar from "../components/navbar/Navbar";
-import Footer from "../components/Footer";
-import Settings from "../components/Settings";
+import GlobalStyle from "./GlobalStyle";
+import dashboardItems from "./dashboardItems";
+import Sidebar from "./Sidebar";
+import Navbar from "./navbar/Navbar";
+import Footer from "./Footer";
 import "react-toastify/dist/ReactToastify.css";
 const drawerWidth = 258;
 
@@ -49,7 +47,7 @@ const MainContent = styled(Paper)`
   }
 `;
 
-const Dashboard: React.FC = ({ children }) => {
+const DashboardComponent: React.FC = ({ children }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleDrawerToggle = () => {
@@ -96,4 +94,4 @@ const Dashboard: React.FC = ({ children }) => {
   );
 };
 
-export default Dashboard;
+export default DashboardComponent;

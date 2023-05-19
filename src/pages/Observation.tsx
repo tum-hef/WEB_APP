@@ -27,7 +27,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-import Dashboard from "./Dashboard";
+import Dashboard from "../components/DashboardComponent";
 import { useKeycloak } from "@react-keycloak/web";
 ChartJS.register(
   CategoryScale,
