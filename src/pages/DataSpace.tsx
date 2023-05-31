@@ -145,8 +145,7 @@ export default function DataSpace() {
         }}
       >
         {" "}
-        <LinkCustom to="/dashboard">Landing Page</LinkCustom>
-        <Typography color="text.primary">Data Space</Typography>
+        <Typography color="text.primary">Landing Page</Typography>
       </Breadcrumbs>
 
       <Paper

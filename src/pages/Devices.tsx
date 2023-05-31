@@ -167,8 +167,7 @@ const Devices = () => {
           marginBottom: "10px",
         }}
       >
-        <LinkCustom to="/dashboard">Landing Page</LinkCustom>
-        <LinkCustom to="/dashboard">Dashboard</LinkCustom>
+        <LinkCustom to="/data-spaces">Data Streams</LinkCustom>
         <Typography color="text.primary">Devices</Typography>
       </Breadcrumbs>
 

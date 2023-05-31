@@ -4,7 +4,7 @@ import DataTable from "react-data-table-component";
 import ContentBar from "../components/ContentBar";
 import { format } from "date-fns";
 import { useParams } from "react-router-dom";
-import { Box, Button, Grid, TextField } from "@mui/material";
+import { Box, Breadcrumbs, Button, Grid, TextField, Typography } from "@mui/material";
 import { ToastContainer, toast } from "react-toastify";
 
 import {
@@ -29,6 +29,7 @@ import {
 } from "chart.js";
 import Dashboard from "../components/DashboardComponent";
 import { useKeycloak } from "@react-keycloak/web";
+import LinkCustom from "../components/LinkCustom";
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -290,6 +291,15 @@ const Observervation = () => {
         pauseOnHover
         theme="dark"
       />
+      <Breadcrumbs
+        aria-label="breadcrumb"
+        style={{
+          marginBottom: "10px",
+        }}
+      >
+        <LinkCustom to="/data-spaces">Data Streams</LinkCustom>
+        <Typography color="text.primary">Observations</Typography>
+      </Breadcrumbs>
       <CSVLink filename="observation.csv" data={getCsvData()}>
         {" "}
         <Button variant="contained">Download CSV</Button>

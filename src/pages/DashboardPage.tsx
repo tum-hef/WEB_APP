@@ -155,8 +155,7 @@ export default function DashboardPage() {
                   marginBottom: "10px",
                 }}
               >
-                <LinkCustom to="/dashboard">Landing Page</LinkCustom>
-                <Typography color="text.primary">Dashboard</Typography>
+                <Typography color="text.primary">Landing Page</Typography>
               </Breadcrumbs>
               <ToastContainer
                 position="bottom-right"

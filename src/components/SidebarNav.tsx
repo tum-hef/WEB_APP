@@ -5,8 +5,8 @@ import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 
 import { SidebarItemsType } from "../types/sidebar";
-
 import {
+  Collapse,
   List,
   ListItem,
   ListItemButton,
@@ -18,13 +18,21 @@ import LinkCustom from "./LinkCustom";
 import WorkspacesIcon from "@mui/icons-material/Workspaces";
 import AccountTreeIcon from "@mui/icons-material/AccountTree";
 import LogoutIcon from "@mui/icons-material/Logout";
-import NotificationsIcon from "@mui/icons-material/Notifications";
 import TextSnippetIcon from "@mui/icons-material/TextSnippet";
 import "../vendor/perfect-scrollbar.css";
 import { useKeycloak } from "@react-keycloak/web";
 import axios from "axios";
-import { Link } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 
+import { ExpandLess, ExpandMore } from "@mui/icons-material";
+import ElectricBoltIcon from "@mui/icons-material/ElectricBolt";
+import TabletAndroidIcon from "@mui/icons-material/TabletAndroid";
+import DeviceThermostatIcon from "@mui/icons-material/DeviceThermostat";
+import FolderSpecialIcon from "@mui/icons-material/FolderSpecial";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
+import PersonSearchIcon from "@mui/icons-material/PersonSearch";
+import BiotechSharpIcon from "@mui/icons-material/BiotechSharp";
+import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 const baseScrollbar = css`
   background-color: ${(props) => props.theme.sidebar.background};
   border-right: 1px solid rgba(0, 0, 0, 0.12);
@@ -55,8 +63,8 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
   const { keycloak } = useKeycloak();
   const [nodeRedPort, setNodeRedPort] = useState<number | null>(null);
   const userInfo = keycloak?.idTokenParsed;
-  const token = keycloak?.token;
-
+  const location = useLocation();
+  const currentUrl = location.pathname;
   const getNodeRedPort = async () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL;
     const email = userInfo?.preferred_username;
@@ -71,6 +79,16 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
           setNodeRedPort(res.data.PORT);
         }
       });
+  };
+  const [openDataSpace, setOpenDataSpace] = useState(false);
+  const [openFrostEntities, setOpenFrostEntities] = useState(false);
+  const handleDataSpace = () => {
+    setOpenDataSpace(!openDataSpace);
+    setOpenFrostEntities(false);
+  };
+
+  const handleFrostEntities = () => {
+    setOpenFrostEntities(!openFrostEntities);
   };
 
   useEffect(() => {
@@ -90,7 +108,9 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
     <ScrollbarComponent>
       <List>
         <Items>
-          <LinkCustom to="/dashboard">
+          <LinkCustom
+            to={currentUrl === "/dashboard" ? "/dashboard" : "/data-spaces"}
+          >
             <ListItem key={"Landing Page"} disablePadding>
               <ListItemButton>
                 <ListItemIcon>
@@ -110,26 +130,224 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
               </ListItemButton>
             </ListItem>
           </LinkCustom>
-          <LinkCustom to="/data-spaces">
-            <ListItem key={"Data Space"} disablePadding>
-              <ListItemButton>
+          <ListItemButton onClick={handleDataSpace}>
+            <ListItemIcon>
+              <AccountTreeIcon
+                style={{
+                  color: "white",
+                }}
+              />
+            </ListItemIcon>
+            <ListItemText
+              primary="Data Space"
+              style={{
+                color: "white",
+              }}
+              primaryTypographyProps={{ fontSize: "18px" }}
+            />
+            {openDataSpace ? (
+              <ExpandLess
+                style={{
+                  color: "white",
+                }}
+              />
+            ) : (
+              <ExpandMore
+                style={{
+                  color: "white",
+                }}
+              />
+            )}
+          </ListItemButton>
+          <Collapse in={openDataSpace} timeout="auto" unmountOnExit>
+            <List component="div" disablePadding>
+              <LinkCustom to="/devices">
+                <ListItem key={"Quick Data Entry"} disablePadding>
+                  <ListItemButton>
+                    <ListItemIcon>
+                      <ElectricBoltIcon
+                        style={{
+                          color: "white",
+                          marginLeft: "20px",
+                        }}
+                      />
+                    </ListItemIcon>
+                    <ListItemText
+                      style={{
+                        color: "white",
+                      }}
+                      primaryTypographyProps={{ fontSize: "18px" }}
+                      primary={"Quick Data Entry"}
+                    />
+                  </ListItemButton>
+                </ListItem>
+              </LinkCustom>
+              <ListItemButton onClick={handleFrostEntities}>
                 <ListItemIcon>
-                  <AccountTreeIcon
+                  <MenuOutlinedIcon
                     style={{
                       color: "white",
+                      marginLeft: "20px",
                     }}
                   />
                 </ListItemIcon>
                 <ListItemText
-                  primaryTypographyProps={{ fontSize: "18px" }}
+                  primary="FROST Entities"
                   style={{
                     color: "white",
                   }}
-                  primary={"Data Space"}
+                  primaryTypographyProps={{ fontSize: "18px" }}
                 />
+                {openFrostEntities ? (
+                  <ExpandLess
+                    style={{
+                      color: "white",
+                    }}
+                  />
+                ) : (
+                  <ExpandMore
+                    style={{
+                      color: "white",
+                    }}
+                  />
+                )}
               </ListItemButton>
-            </ListItem>
-          </LinkCustom>{" "}
+            </List>
+          </Collapse>{" "}
+          <Collapse in={openFrostEntities} timeout="auto" unmountOnExit>
+            <List component="div" disablePadding>
+              <LinkCustom to="/devices">
+                <ListItemButton sx={{ pl: 4 }}>
+                  <ListItemIcon>
+                    <TabletAndroidIcon
+                      style={{
+                        color: "white",
+                        marginLeft: "40px",
+                        marginRight: "10px",
+                      }}
+                    />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary="Devices"
+                    style={{
+                      color: "white",
+                    }}
+                    primaryTypographyProps={{ fontSize: "18px" }}
+                  />
+                </ListItemButton>
+              </LinkCustom>
+            </List>{" "}
+            <List component="div" disablePadding>
+              <LinkCustom to="/sensors">
+                <ListItemButton sx={{ pl: 4 }}>
+                  <ListItemIcon>
+                    <DeviceThermostatIcon
+                      style={{
+                        color: "white",
+                        marginLeft: "40px",
+                        marginRight: "10px",
+                      }}
+                    />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary="Sensors"
+                    style={{
+                      color: "white",
+                    }}
+                    primaryTypographyProps={{ fontSize: "18px" }}
+                  />
+                </ListItemButton>
+              </LinkCustom>
+            </List>{" "}
+            <List component="div" disablePadding>
+              <LinkCustom to="/observationproperties">
+                <ListItemButton sx={{ pl: 4 }}>
+                  <ListItemIcon>
+                    <PersonSearchIcon
+                      style={{
+                        color: "white",
+                        marginLeft: "40px",
+                        marginRight: "10px",
+                      }}
+                    />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary="ObservedProp"
+                    style={{
+                      color: "white",
+                    }}
+                    primaryTypographyProps={{ fontSize: "18px" }}
+                  />
+                </ListItemButton>
+              </LinkCustom>
+            </List>{" "}
+            <List component="div" disablePadding>
+              <LinkCustom to="/datastreams">
+                <ListItemButton sx={{ pl: 4 }}>
+                  <ListItemIcon>
+                    <FolderSpecialIcon
+                      style={{
+                        color: "white",
+                        marginLeft: "40px",
+                        marginRight: "10px",
+                      }}
+                    />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary="Datastreams"
+                    style={{
+                      color: "white",
+                    }}
+                    primaryTypographyProps={{ fontSize: "18px" }}
+                  />
+                </ListItemButton>
+              </LinkCustom>
+            </List>{" "}
+            <List component="div" disablePadding>
+              <LinkCustom to="/locations">
+                <ListItemButton sx={{ pl: 4 }}>
+                  <ListItemIcon>
+                    <LocationOnIcon
+                      style={{
+                        color: "white",
+                        marginLeft: "40px",
+                        marginRight: "10px",
+                      }}
+                    />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary="Location "
+                    style={{
+                      color: "white",
+                    }}
+                    primaryTypographyProps={{ fontSize: "18px" }}
+                  />
+                </ListItemButton>
+              </LinkCustom>
+            </List>{" "}
+            <List component="div" disablePadding>
+              <LinkCustom to="/observations">
+                <ListItemButton sx={{ pl: 4 }}>
+                  <ListItemIcon>
+                    <BiotechSharpIcon
+                      style={{
+                        color: "white",
+                        marginLeft: "40px",
+                        marginRight: "10px",
+                      }}
+                    />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary="Observations"
+                    style={{
+                      color: "white",
+                    }}
+                    primaryTypographyProps={{ fontSize: "18px" }}
+                  />
+                </ListItemButton>
+              </LinkCustom>
+            </List>
+          </Collapse>
           {nodeRedPort && process.env.REACT_APP_BACKEND_URL_ROOT && (
             <a
               href={`${process.env.REACT_APP_BACKEND_URL_ROOT}:${nodeRedPort}`}
@@ -137,9 +355,16 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
               rel="noopener noreferrer"
               style={{
                 textDecoration: "none",
+                pointerEvents: currentUrl === "/dashboard" ? "none" : "auto", // Disable pointer events if currentUrl is "/dashboard"
+                cursor: currentUrl === "/dashboard" ? "not-allowed" : "pointer", // Change cursor style if currentUrl is "/dashboard"
+              }}
+              onClick={(e) => {
+                if (currentUrl === "/dashboard") {
+                  e.preventDefault(); // Prevent redirect if currentUrl is "/dashboard"
+                }
               }}
             >
-              <ListItemButton>
+              <ListItemButton disabled={currentUrl === "/dashboard"}>
                 <ListItemIcon>
                   <WorkspacesIcon
                     style={{
@@ -157,29 +382,16 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
               </ListItemButton>
             </a>
           )}
-          <LinkCustom to="/notifications">
-            <ListItem key={"Notifications"} disablePadding>
-              <ListItemButton>
-                <ListItemIcon>
-                  <NotificationsIcon
-                    style={{
-                      color: "white",
-                    }}
-                  />
-                </ListItemIcon>
-                <ListItemText
-                  style={{
-                    color: "white",
-                  }}
-                  primaryTypographyProps={{ fontSize: "18px" }}
-                  primary={"Notifications"}
-                />
-              </ListItemButton>
-            </ListItem>
-          </LinkCustom>{" "}
-          <LinkCustom to="/reports">
+          <LinkCustom
+            to="/reports"
+            onClick={(event) => {
+              if (currentUrl === "/dashboard") {
+                event.preventDefault(); // Prevent redirect if currentUrl is "/dashboard"
+              }
+            }}
+          >
             <ListItem key={"Reports"} disablePadding>
-              <ListItemButton>
+              <ListItemButton disabled={currentUrl === "/dashboard"}>
                 <ListItemIcon>
                   <TextSnippetIcon
                     style={{
@@ -196,7 +408,7 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
                 />
               </ListItemButton>
             </ListItem>
-          </LinkCustom>{" "}
+          </LinkCustom>
           <LinkCustom to="/trainings">
             <ListItem key={"Trainings "} disablePadding>
               <ListItemButton>
