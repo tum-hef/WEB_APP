@@ -256,7 +256,7 @@ export default function DashboardPage() {
                   </Grid>
                 )}
                 <Grid item lg={6} sm={12} xl={6} xs={12}>
-                  <LinkCustom to="/devices">
+                  <LinkCustom to={`/data-spaces/${group_id}`}>
                     <Card
                       sx={{ maxWidth: 345 }}
                       style={{
@@ -282,7 +282,7 @@ export default function DashboardPage() {
                           }}
                         >
                           <Typography gutterBottom variant="h3" component="div">
-                            Devices
+                            Data Space
                           </Typography>
                         </CardContent>
                       </CardActionArea>
