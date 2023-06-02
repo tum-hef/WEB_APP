@@ -103,6 +103,9 @@ export default function ListClients() {
                         variant="contained"
                         color="primary"
                         style={{ marginLeft: "auto" }}
+                        onClick={() => {
+                          localStorage.setItem("group_id", item.id);
+                        }}
                       >
                         Select
                       </Button>

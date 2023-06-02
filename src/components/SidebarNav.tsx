@@ -62,6 +62,7 @@ type SidebarNavProps = {
 const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
   const { keycloak } = useKeycloak();
   const [nodeRedPort, setNodeRedPort] = useState<number | null>(null);
+  const [group_id, setGroup_id] = useState<string | null>(null);
   const userInfo = keycloak?.idTokenParsed;
   const location = useLocation();
   const currentUrl = location.pathname;
@@ -92,10 +93,13 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
   };
 
   useEffect(() => {
+    const group_id = localStorage.getItem("group_id");
+    setGroup_id(group_id);
     getNodeRedPort();
   }, [nodeRedPort]);
 
   const handleLogout = () => {
+    localStorage.removeItem("group_id");
     keycloak.logout();
   };
   const theme = useTheme();
@@ -109,7 +113,11 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
       <List>
         <Items>
           <LinkCustom
-            to={currentUrl === "/dashboard" ? "/dashboard" : "/data-spaces"}
+            to={
+              currentUrl === "/dashboard"
+                ? "/dashboard"
+                : `/dashboard/${group_id}`
+            }
           >
             <ListItem key={"Landing Page"} disablePadding>
               <ListItemButton>
@@ -130,7 +138,10 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
               </ListItemButton>
             </ListItem>
           </LinkCustom>
-          <ListItemButton onClick={handleDataSpace}>
+          <ListItemButton
+            onClick={handleDataSpace}
+            disabled={currentUrl === "/dashboard"}
+          >
             <ListItemIcon>
               <AccountTreeIcon
                 style={{

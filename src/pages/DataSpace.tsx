@@ -6,6 +6,8 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 import { useKeycloak } from "@react-keycloak/web";
 import { toast } from "react-toastify";
+import { useParams } from "react-router-dom";
+import { NOTFOUND } from "./404";
 
 export default function DataSpace() {
   const { keycloak } = useKeycloak();
@@ -17,6 +19,46 @@ export default function DataSpace() {
   const token = keycloak?.token;
   const [nodeRedPort, setNodeRedPort] = useState<number | null>(null);
   const [frostServerPort, setFrostServerPort] = useState<number | null>(null);
+  const [userID, setUserID] = useState<string | null>(null);
+  const [group, setGroup] = useState<any>({});
+  const { group_id } = useParams<{ group_id: string }>();
+  const [error, setError] = useState<boolean>(false);
+
+  const fetchGroups = async () => {
+    if (keycloak && userInfo && userInfo.sub) {
+      setUserID(userInfo.sub);
+
+      if (userID) {
+        try {
+          const response = await axios.get(
+            `${process.env.REACT_APP_BACKEND_URL}/get_clients?user_id=${userID}`
+          );
+
+          if (response.status === 200 && response.data.groups) {
+            // check if group_id is in groups
+            if (group_id) {
+              const group = response.data.groups.find(
+                (group: any) => group.id === group_id
+              );
+              if (!group) {
+                toast.error("Group is not valid");
+                setError(true);
+              } else {
+                setGroup(group);
+              }
+            }
+          } else if (response.status === 404 && response.data.message) {
+            toast.error(response.data.message);
+          } else {
+            toast.error("Error fetching clients");
+          }
+        } catch (error) {
+          toast.error("An error occurred while fetching clients.");
+          console.log(error);
+        }
+      }
+    }
+  };
 
   const fetchDataStreams = () => {
     console.log(frostServerPort);
@@ -117,6 +159,7 @@ export default function DataSpace() {
   useEffect(() => {
     getNodeRedPort();
     asyncGetDevices();
+    fetchGroups();
     if (frostServerPort !== null) {
       fetchDataStreams();
       fetchObservations();
@@ -127,188 +170,187 @@ export default function DataSpace() {
   }, [frostServerPort]);
 
   return (
-    // <ContentBar>
     <Dashboard>
-      {/* <DataTable
-        title="Data Space"
-        columns={columns}
-        data={projects}
-        pagination={true}
-        paginationPerPage={5}
-        paginationRowsPerPageOptions={[5, 10, 15]}
-      /> */}
+      {loading ? (
+        <p>Loading</p>
+      ) : error ? (
+        <NOTFOUND />
+      ) : (
+        <>
+          <Breadcrumbs
+            aria-label="breadcrumb"
+            style={{
+              marginBottom: "10px",
+            }}
+          >
+            {" "}
+            <Typography color="text.primary">Landing Page</Typography>
+          </Breadcrumbs>
 
-      <Breadcrumbs
-        aria-label="breadcrumb"
-        style={{
-          marginBottom: "10px",
-        }}
-      >
-        {" "}
-        <Typography color="text.primary">Landing Page</Typography>
-      </Breadcrumbs>
-
-      <Paper
-        sx={{
-          p: 2,
-          margin: "auto",
-          maxWidth: 500,
-          flexGrow: 1,
-          backgroundColor: (theme) =>
-            theme.palette.mode === "dark" ? "#1A2027" : "#fff",
-        }}
-      >
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm container>
-            <Grid item xs container direction="column" spacing={2}>
-              <Grid item xs>
-                <Typography
-                  variant="h2"
-                  component="h3"
-                  style={{
-                    alignContent: "center",
-                    textAlign: "center",
-                    justifyContent: "center",
-                    marginBottom: "20px",
-                    color: "#233044",
-                  }}
-                >
-                  Data Space Specs
-                </Typography>
-                <Typography
-                  variant="h6"
-                  gutterBottom
-                  style={{
-                    marginBottom: "20px",
-                  }}
-                >
-                  <span
-                    style={{
-                      color: "#233044",
-                    }}
-                  >
-                    ID:
-                  </span>{" "}
-                  {frostServerPort}
-                </Typography>{" "}
-                <Typography
-                  variant="h6"
-                  gutterBottom
-                  style={{
-                    marginBottom: "20px",
-                  }}
-                >
-                  <span
-                    style={{
-                      color: "#233044",
-                    }}
-                  >
-                    URL:
-                  </span>{" "}
-                  <LinkCustom
-                    style={{
-                      borderBottom: "1px solid #233044",
-                    }}
-                    to={`${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0`}
-                  >
-                    {process.env.REACT_APP_BACKEND_URL_ROOT}:{frostServerPort}
-                    /FROST-Server/v1.0
-                  </LinkCustom>
-                </Typography>{" "}
-                <Typography
-                  variant="h6"
-                  gutterBottom
-                  style={{
-                    marginBottom: "20px",
-                  }}
-                >
-                  <span
-                    style={{
-                      color: "#233044",
-                    }}
-                  >
-                    Database:
-                  </span>{" "}
-                  PostgreSQL
-                </Typography>{" "}
-                <Typography
-                  variant="h6"
-                  gutterBottom
-                  style={{
-                    marginBottom: "20px",
-                  }}
-                >
-                  <span
-                    style={{
-                      color: "#233044",
-                    }}
-                  >
-                    Server Technology:
-                  </span>{" "}
-                  The FRaunhofer Opensource SensorThings-Server
-                </Typography>{" "}
-                <Typography
-                  variant="h6"
-                  gutterBottom
-                  style={{
-                    marginBottom: "20px",
-                  }}
-                >
-                  <span
-                    style={{
-                      color: "#233044",
-                    }}
-                  >
-                    Devices{" "}
-                    <LinkCustom
+          <Paper
+            sx={{
+              p: 2,
+              margin: "auto",
+              maxWidth: 500,
+              flexGrow: 1,
+              backgroundColor: (theme) =>
+                theme.palette.mode === "dark" ? "#1A2027" : "#fff",
+            }}
+          >
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm container>
+                <Grid item xs container direction="column" spacing={2}>
+                  <Grid item xs>
+                    <Typography
+                      variant="h2"
+                      component="h3"
                       style={{
-                        borderBottom: "1px solid #233044",
+                        alignContent: "center",
+                        textAlign: "center",
+                        justifyContent: "center",
+                        marginBottom: "20px",
+                        color: "#233044",
                       }}
-                      to={`devices`}
                     >
-                      {"(URL)"}
-                    </LinkCustom>
-                    :
-                  </span>{" "}
-                  {devices}
-                </Typography>{" "}
-                <Typography
-                  variant="h6"
-                  gutterBottom
-                  style={{
-                    marginBottom: "20px",
-                  }}
-                >
-                  <span
-                    style={{
-                      color: "#233044",
-                    }}
-                  >
-                    Datastreams :
-                  </span>{" "}
-                  {datasteamSize}
-                </Typography>{" "}
-                <Typography
-                  variant="h6"
-                  gutterBottom
-                  style={{
-                    marginBottom: "20px",
-                  }}
-                >
-                  <span
-                    style={{
-                      color: "#233044",
-                    }}
-                  >
-                    Observations :{" "}
-                  </span>{" "}
-                  {observationSize}
-                </Typography>{" "}
+                      Data Space Specs
+                    </Typography>
+                    <Typography
+                      variant="h6"
+                      gutterBottom
+                      style={{
+                        marginBottom: "20px",
+                      }}
+                    >
+                      <span
+                        style={{
+                          color: "#233044",
+                        }}
+                      >
+                        ID:
+                      </span>{" "}
+                      {frostServerPort}
+                    </Typography>{" "}
+                    <Typography
+                      variant="h6"
+                      gutterBottom
+                      style={{
+                        marginBottom: "20px",
+                      }}
+                    >
+                      <span
+                        style={{
+                          color: "#233044",
+                        }}
+                      >
+                        URL:
+                      </span>{" "}
+                      <LinkCustom
+                        style={{
+                          borderBottom: "1px solid #233044",
+                        }}
+                        to={`${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0`}
+                      >
+                        {process.env.REACT_APP_BACKEND_URL_ROOT}:
+                        {frostServerPort}
+                        /FROST-Server/v1.0
+                      </LinkCustom>
+                    </Typography>{" "}
+                    <Typography
+                      variant="h6"
+                      gutterBottom
+                      style={{
+                        marginBottom: "20px",
+                      }}
+                    >
+                      <span
+                        style={{
+                          color: "#233044",
+                        }}
+                      >
+                        Database:
+                      </span>{" "}
+                      PostgreSQL
+                    </Typography>{" "}
+                    <Typography
+                      variant="h6"
+                      gutterBottom
+                      style={{
+                        marginBottom: "20px",
+                      }}
+                    >
+                      <span
+                        style={{
+                          color: "#233044",
+                        }}
+                      >
+                        Server Technology:
+                      </span>{" "}
+                      The FRaunhofer Opensource SensorThings-Server
+                    </Typography>{" "}
+                    <Typography
+                      variant="h6"
+                      gutterBottom
+                      style={{
+                        marginBottom: "20px",
+                      }}
+                    >
+                      <span
+                        style={{
+                          color: "#233044",
+                        }}
+                      >
+                        Devices{" "}
+                        <LinkCustom
+                          style={{
+                            borderBottom: "1px solid #233044",
+                          }}
+                          to={`devices`}
+                        >
+                          {"(URL)"}
+                        </LinkCustom>
+                        :
+                      </span>{" "}
+                      {devices}
+                    </Typography>{" "}
+                    <Typography
+                      variant="h6"
+                      gutterBottom
+                      style={{
+                        marginBottom: "20px",
+                      }}
+                    >
+                      <span
+                        style={{
+                          color: "#233044",
+                        }}
+                      >
+                        Datastreams :
+                      </span>{" "}
+                      {datasteamSize}
+                    </Typography>{" "}
+                    <Typography
+                      variant="h6"
+                      gutterBottom
+                      style={{
+                        marginBottom: "20px",
+                      }}
+                    >
+                      <span
+                        style={{
+                          color: "#233044",
+                        }}
+                      >
+                        Observations :{" "}
+                      </span>{" "}
+                      {observationSize}
+                    </Typography>{" "}
+                  </Grid>
+                </Grid>
               </Grid>
             </Grid>
-          </Grid>
-        </Grid>
-      </Paper>
+          </Paper>
+        </>
+      )}
     </Dashboard>
     // </ContentBar>
   );

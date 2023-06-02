@@ -1,4 +1,4 @@
-import * as React from "react";
+import { useEffect, useState } from "react";
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import { useKeycloak } from "@react-keycloak/web";
 import HomePage from "../pages/Home";
@@ -12,7 +12,7 @@ import DataSpace from "../pages/DataSpace";
 import { NOTFOUND } from "../pages/404";
 import { RotatingLines } from "react-loader-spinner";
 import { Grid } from "@material-ui/core";
-
+import axios from "axios";
 import Devices from "../pages/Devices";
 import Datastreams from "../pages/Datastream";
 import Observervation from "../pages/Observation";
@@ -29,6 +29,7 @@ import Impressum from "../pages/impressum";
 import Register from "../pages/Register";
 import StepperStore from "../pages/Stepper";
 import ListClients from "../pages/ListClients";
+import { toast } from "react-toastify";
 const styles = {
   container: {
     height: "100%",
@@ -43,10 +44,38 @@ const jss = create({
   ...jssPreset(),
   insertionPoint: document.getElementById("jss-insertion-point")!,
 });
+
 const AppRouter = (props: any) => {
-  const { initialized } = useKeycloak();
+  const { initialized, keycloak } = useKeycloak();
+  const userInfo = keycloak?.idTokenParsed;
   const { classes } = props;
   const { theme } = useTheme();
+  useEffect(() => {
+    const fetchData = async () => {
+      const group_id = localStorage.getItem("group_id");
+      if (keycloak && userInfo && userInfo.sub && group_id) {
+        try {
+          const response = await axios.get(
+            `${process.env.REACT_APP_BACKEND_URL}/get_clients?user_id=${userInfo.sub}`
+          );
+
+          if (response.status === 200 && response.data.groups) {
+            // check if group_id from localstorage is in groups
+            const group = response.data.groups.find(
+              (group: any) => group.id === group_id
+            );
+            if (!group) {
+              localStorage.removeItem("group_id");
+            }
+          }
+        } catch (error) {
+          localStorage.removeItem("group_id");
+        }
+      }
+    };
+
+    fetchData();
+  }, []);
 
   if (!initialized) {
     return (
@@ -86,7 +115,7 @@ const AppRouter = (props: any) => {
                   />
                   <PrivateRoute
                     exact
-                    path="/data-spaces"
+                    path="/data-spaces/:group_id"
                     component={DataSpace}
                   />
                   <PrivateRoute

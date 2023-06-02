@@ -190,6 +190,9 @@ export default function DashboardPage() {
                               color: "blue",
                             }}
                             to="/dashboard"
+                            onClick={() => {
+                              localStorage.removeItem("group_id");
+                            }}
                           >
                             {" "}
                             here{" "}
