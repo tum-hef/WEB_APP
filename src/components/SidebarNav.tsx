@@ -271,7 +271,7 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
               </LinkCustom>
             </List>{" "}
             <List component="div" disablePadding>
-              <LinkCustom to="/observationproperties">
+              <LinkCustom to="/observation_properties">
                 <ListItemButton sx={{ pl: 4 }}>
                   <ListItemIcon>
                     <PersonSearchIcon

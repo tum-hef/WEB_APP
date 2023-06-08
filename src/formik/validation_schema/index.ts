@@ -21,3 +21,15 @@ export const devoice_validationSchema = yup.object().shape({
     ),
 
 });
+
+export const sensor_validationSchema = yup.object().shape({
+    sensor_name: yup.string().required("Sensor name is required").min(3, "Sensor name must be at least 3 characters").max(20, "Sensor name must be at most 20 characters"),
+    sensor_description: yup.string().required("Sensor description is required").min(3, "Sensor description must be at least 3 characters").max(30, "Sensor description must be at most 30 characters"),
+    sensor_metadata: yup.string().required("Sensor metadata is required").min(3, "Sensor metadata must be at least 3 characters").max(30, "Sensor metadata must be at most 30 characters"),
+});
+
+export const observation_property_validationSchema = yup.object().shape({
+    name: yup.string().required("Observation property name is required").min(3, "Observation property name must be at least 3 characters").max(20, "Observation property name must be at most 20 characters"),
+    description: yup.string().required("Observation property description is required").min(3, "Observation property description must be at least 3 characters").max(30, "Observation property description must be at most 30 characters"),
+    definition: yup.string().required("Observation property definition is required").min(3, "Observation property definition must be at least 3 characters").max(30, "Observation property definition must be at most 30 characters"),
+});

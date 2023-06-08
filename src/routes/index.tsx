@@ -30,6 +30,12 @@ import StepperStore from "../pages/Stepper";
 import ListClients from "../pages/ListClients";
 import { toast } from "react-toastify";
 import StoreDevice from "../pages/devices/StoreDevice";
+import ListSensors from "../pages/sensors/ListSensors";
+import StoreSensor from "../pages/sensors/StoreSensor";
+import ListLocations from "../pages/location/ListLocation";
+import ListDatastream from "../pages/datastreams/ListDatastream";
+import ListObservationProperty from "../pages/observation_property/ListObservationProperty";
+import StoreObservationProerties from "../pages/observation_property/StoreObservationProerties";
 const styles = {
   container: {
     height: "100%",
@@ -131,6 +137,36 @@ const AppRouter = (props: any) => {
                     exact
                     path="/devices/store"
                     component={StoreDevice}
+                  />{" "}
+                  {/* Location */}
+                  <PrivateRoute
+                    exact
+                    path="/locations"
+                    component={ListLocations}
+                  />
+                  {/* Sensors */}
+                  <PrivateRoute exact path="/sensors" component={ListSensors} />
+                  <PrivateRoute
+                    exact
+                    path="/sensors/store"
+                    component={StoreSensor}
+                  />
+                  {/* Observation Properties */}
+                  <PrivateRoute
+                    exact
+                    path="/observation_properties"
+                    component={ListObservationProperty}
+                  />{" "}
+                  <PrivateRoute
+                    exact
+                    path="/observation_properties/store"
+                    component={StoreObservationProerties}
+                  />
+                  {/* data streams */}
+                  <PrivateRoute
+                    exact
+                    path="/datastreams"
+                    component={ListDatastream}
                   />
                   <PrivateRoute
                     exact

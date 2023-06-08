@@ -24,7 +24,7 @@ import LinkCustom from "../../components/LinkCustom";
 import { toast } from "react-toastify";
 import { t } from "i18next";
 import Swal from "sweetalert2";
-function StoreDevice() {
+function StoreDatastream() {
   const { keycloak } = useKeycloak();
   const userInfo = keycloak?.idTokenParsed;
   const [error, setError] = useState<boolean>(false);
@@ -37,7 +37,7 @@ function StoreDevice() {
       formik.resetForm();
       try {
         const response = await axios.post(
-          `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Things`,
+          `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Datastreams`,
           {
             name: values.device_name,
             description: values.device_description,
@@ -291,4 +291,4 @@ function StoreDevice() {
     </DashboardComponent>
   );
 }
-export default StoreDevice;
+export default StoreDatastream;
