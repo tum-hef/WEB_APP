@@ -1,12 +1,8 @@
 export const device_initial_values =  {
-      application_ID: "",
-      device_ID: "",
-      AppEUI: "",
-      DevEUI: "",
-      AppKey: "",
-      type: "",
-      format: "",
-      function_file: "",
-      activation_method: "",
-      lorawan_version: "",
+    device_name: '',
+    device_description: '',
+    location_name: '',
+    location_description: '',
+    location_longitude: '',
+    location_latitude: '',
     };

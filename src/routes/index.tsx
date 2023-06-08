@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import { useKeycloak } from "@react-keycloak/web";
 import HomePage from "../pages/Home";
@@ -13,11 +13,10 @@ import { NOTFOUND } from "../pages/404";
 import { RotatingLines } from "react-loader-spinner";
 import { Grid } from "@material-ui/core";
 import axios from "axios";
-import Devices from "../pages/Devices";
+import Devices from "../pages/devices/ListDevices";
 import Datastreams from "../pages/Datastream";
 import Observervation from "../pages/Observation";
 import Location from "../pages/Location";
-import Store from "../pages/Store";
 import useTheme from "../hooks/useTheme";
 import { ThemeProvider } from "styled-components/macro";
 import StylesProvider from "@mui/styles/StylesProvider";
@@ -30,6 +29,7 @@ import Register from "../pages/Register";
 import StepperStore from "../pages/Stepper";
 import ListClients from "../pages/ListClients";
 import { toast } from "react-toastify";
+import StoreDevice from "../pages/devices/StoreDevice";
 const styles = {
   container: {
     height: "100%",
@@ -66,6 +66,7 @@ const AppRouter = (props: any) => {
             );
             if (!group) {
               localStorage.removeItem("group_id");
+              toast.error("Group not found");
             }
           }
         } catch (error) {
@@ -124,8 +125,13 @@ const AppRouter = (props: any) => {
                     component={StepperStore}
                   />
                   <PrivateRoute exact path="/groups" component={Groups} />
+                  {/* Devices */}
                   <PrivateRoute exact path="/devices" component={Devices} />
-                  <PrivateRoute exact path="/devices/store" component={Store} />
+                  <PrivateRoute
+                    exact
+                    path="/devices/store"
+                    component={StoreDevice}
+                  />
                   <PrivateRoute
                     exact
                     path="/datastreams/:id"
