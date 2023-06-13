@@ -111,7 +111,7 @@ const Datastreams = () => {
     {
       name: "Observations",
       selector: (row: any) => (
-        <LinkCustom to={`/observation/${row["@iot.id"]}`}>
+        <LinkCustom to={`/observations/${row["@iot.id"]}`}>
           <Button variant="contained" color="primary">
             <SearchIcon />
           </Button>

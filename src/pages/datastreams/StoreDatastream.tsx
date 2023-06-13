@@ -14,15 +14,12 @@ import {
 import { useKeycloak } from "@react-keycloak/web";
 import { useFormik } from "formik";
 import DashboardComponent from "../../components/DashboardComponent";
-import { device_initial_values } from "../../formik/initial_values";
-import { devoice_validationSchema } from "../../formik/validation_schema";
+import { datastreams_initial_values } from "../../formik/initial_values";
+import { datastreams_validationSchema } from "../../formik/validation_schema";
 import { useEffect, useState } from "react";
 import { NOTFOUND } from "../404";
 import axios from "axios";
-import { Link } from "react-router-dom";
 import LinkCustom from "../../components/LinkCustom";
-import { toast } from "react-toastify";
-import { t } from "i18next";
 import Swal from "sweetalert2";
 function StoreDatastream() {
   const { keycloak } = useKeycloak();
@@ -30,37 +27,37 @@ function StoreDatastream() {
   const [error, setError] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [frostServerPort, setFrostServerPort] = useState<number | null>(null);
+  const [devices, setDevices] = useState<any[]>([]);
+  const [observedProperties, setObservedProperties] = useState<any[]>([]);
+  const [sensors, setSensors] = useState<any[]>([]);
   const formik = useFormik({
-    initialValues: device_initial_values,
-    validationSchema: devoice_validationSchema,
+    initialValues: datastreams_initial_values,
+    validationSchema: datastreams_validationSchema,
     onSubmit: async (values: any) => {
       formik.resetForm();
       try {
         const response = await axios.post(
-          `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Datastreams`,
+          `http://138.246.237.35:6013/FROST-Server/v1.0/Datastreams`,
           {
-            name: values.device_name,
-            description: values.device_description,
-            Locations: [
-              {
-                name: values.location_name,
-                description: values.location_description,
-                encodingType: "application/vnd.geo+json",
-                location: {
-                  type: "Point",
-                  coordinates: [
-                    values.location_longitude,
-                    values.location_latitude,
-                  ],
-                },
-              },
-            ],
-          },
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${keycloak?.token}`,
+            name: "temperature",
+            unitOfMeasurement: {
+              name: "Celsius",
+              symbol: "C",
+              definition: "https://en.wikipedia.org/wiki/Celsius",
             },
+            Thing: {
+              "@iot.id": 13,
+            },
+            description:
+              "This is a datastream for the temperature property from my_thing",
+            Sensor: {
+              "@iot.id": 1,
+            },
+            ObservedProperty: {
+              "@iot.id": 1,
+            },
+            observationType:
+              "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_Measurement",
           }
         );
 
@@ -68,24 +65,25 @@ function StoreDatastream() {
           Swal.fire({
             icon: "success",
             title: "Success",
-            text: "Device created successfully!",
+            text: "Datastream created successfully!",
           });
         } else {
           Swal.fire({
             icon: "error",
             title: "Oops...",
-            text: "Something went wrong! Device not created!",
+            text: "Something went wrong! Datastream not created!",
           });
         }
       } catch (error) {
         Swal.fire({
           icon: "error",
           title: "Oops...",
-          text: "Something went wrong! Device not created!",
+          text: "Something went wrong! Datastream not created!",
         });
       }
     },
   });
+
   const fetchData = async () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL;
     const email = userInfo?.preferred_username;
@@ -102,6 +100,51 @@ function StoreDatastream() {
 
       if (response.status === 200 && response.data.PORT) {
         setFrostServerPort(response.data.PORT);
+
+        const responseDevices = await axios.get(
+          `${process.env.REACT_APP_BACKEND_URL_ROOT}:${response.data.PORT}/FROST-Server/v1.0/Things`,
+
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${keycloak?.token}`,
+            },
+          }
+        );
+
+        if (responseDevices.status === 200) {
+          setDevices(responseDevices.data.value);
+        }
+
+        const responseObservedProperties = await axios.get(
+          `${process.env.REACT_APP_BACKEND_URL_ROOT}:${response.data.PORT}/FROST-Server/v1.0/ObservedProperties`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${keycloak?.token}`,
+            },
+          }
+        );
+
+        if (responseObservedProperties.status === 200) {
+          setObservedProperties(responseObservedProperties.data.value);
+        }
+
+        const responseSensors = await axios.get(
+          `${process.env.REACT_APP_BACKEND_URL_ROOT}:${response.data.PORT}/FROST-Server/v1.0/Sensors`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${keycloak?.token}`,
+            },
+          }
+        );
+
+        if (responseSensors.status === 200) {
+          setSensors(responseSensors.data.value);
+        }
+
+        setLoading(false);
       } else {
         setError(true);
       }
@@ -111,11 +154,6 @@ function StoreDatastream() {
   };
   useEffect(() => {
     fetchData();
-    if (frostServerPort) {
-      setLoading(false);
-    } else {
-      setLoading(false);
-    }
   }, [frostServerPort]);
   return (
     <DashboardComponent>
@@ -132,8 +170,8 @@ function StoreDatastream() {
             }}
           >
             <Typography color="text.primary">Data Space</Typography>
-            <LinkCustom to="/devices">
-              <Typography color="text.primary">Devices</Typography>
+            <LinkCustom to="/datastreams">
+              <Typography color="text.primary">Datastreams</Typography>
             </LinkCustom>
             <Typography color="text.primary">Store</Typography>
           </Breadcrumbs>
@@ -143,47 +181,60 @@ function StoreDatastream() {
               textAlign: "center",
             }}
           >
-            Store Device
+            Store Datastream
           </Typography>
           <form onSubmit={formik.handleSubmit}>
             <Typography variant="h6" gutterBottom>
-              Device Information
+              Datastream Information
             </Typography>
             <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12} sm={4}>
                 <TextField
                   required
-                  id="Device ID"
-                  name="device_name"
-                  label="Device Name"
+                  name="name"
+                  id="name"
+                  label="Name"
                   fullWidth
-                  value={formik.values.device_name}
+                  value={formik.values.name}
                   onChange={formik.handleChange}
-                  error={
-                    formik.touched.device_name &&
-                    Boolean(formik.errors.device_name)
-                  }
-                  helperText={
-                    formik.touched.device_name && formik.errors.device_name
-                  }
+                  error={formik.touched.name && Boolean(formik.errors.name)}
+                  helperText={formik.touched.name && formik.errors.name}
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12} sm={4}>
                 <TextField
                   required
-                  id="device_description"
-                  name="device_description"
-                  label="Device Description"
+                  id="description"
+                  name="description"
+                  label="Description"
                   fullWidth
-                  value={formik.values.device_description}
+                  value={formik.values.description}
                   onChange={formik.handleChange}
                   error={
-                    formik.touched.device_description &&
-                    Boolean(formik.errors.device_description)
+                    formik.touched.description &&
+                    Boolean(formik.errors.description)
                   }
                   helperText={
-                    formik.touched.device_description &&
-                    formik.errors.device_description
+                    formik.touched.description && formik.errors.description
+                  }
+                />
+              </Grid>{" "}
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  required
+                  id="observationType"
+                  name="observationType"
+                  label="observationType"
+                  fullWidth
+                  value={formik.values.observationType}
+                  onChange={formik.handleChange}
+                  error={
+                    formik.touched.observationType &&
+                    Boolean(formik.errors.observationType)
+                  }
+                  helperText={
+                    formik.touched.observationType &&
+                    formik.errors.observationType
                   }
                 />
               </Grid>
@@ -195,84 +246,142 @@ function StoreDatastream() {
               }}
             />
             <Typography variant="h6" gutterBottom>
-              Device Location
+              Unit of Measurement
             </Typography>
             <Grid container spacing={2}>
-              <Grid item xs={12} sm={3}>
+              <Grid item xs={12} sm={4}>
                 <TextField
                   required
-                  id="location_name"
-                  name="location_name"
-                  label="Location Name"
+                  id="unit_of_measurement_name"
+                  name="unit_of_measurement_name"
+                  label="Name"
                   fullWidth
-                  value={formik.values.location_name}
+                  value={formik.values.unit_of_measurement_name}
                   onChange={formik.handleChange}
                   error={
-                    formik.touched.location_name &&
-                    Boolean(formik.errors.location_name)
+                    formik.touched.unit_of_measurement_name &&
+                    Boolean(formik.errors.unit_of_measurement_name)
                   }
                   helperText={
-                    formik.touched.location_name && formik.errors.location_name
+                    formik.touched.unit_of_measurement_name &&
+                    formik.errors.unit_of_measurement_name
                   }
                 />
               </Grid>{" "}
-              <Grid item xs={12} sm={3}>
+              <Grid item xs={12} sm={4}>
                 <TextField
                   required
-                  id="location_description"
-                  name="location_description"
-                  label="Location Description"
+                  id="unit_of_measurement_symbol"
+                  name="unit_of_measurement_symbol"
+                  label="Symbol"
                   fullWidth
-                  value={formik.values.location_description}
+                  value={formik.values.unit_of_measurement_symbol}
                   onChange={formik.handleChange}
                   error={
-                    formik.touched.location_description &&
-                    Boolean(formik.errors.location_description)
+                    formik.touched.unit_of_measurement_symbol &&
+                    Boolean(formik.errors.unit_of_measurement_symbol)
                   }
                   helperText={
-                    formik.touched.location_description &&
-                    formik.errors.location_description
+                    formik.touched.unit_of_measurement_symbol &&
+                    formik.errors.unit_of_measurement_symbol
                   }
                 />
               </Grid>
-              <Grid item xs={12} sm={3}>
+              <Grid item xs={12} sm={4}>
                 <TextField
                   required
-                  id="location_longitude"
-                  name="location_longitude"
-                  label="Location Longitude"
+                  id="unit_of_measurement_definition"
+                  name="unit_of_measurement_definition"
+                  label="Definition"
                   fullWidth
-                  value={formik.values.location_longitude}
+                  value={formik.values.unit_of_measurement_definition}
                   onChange={formik.handleChange}
                   error={
-                    formik.touched.location_longitude &&
-                    Boolean(formik.errors.location_longitude)
+                    formik.touched.unit_of_measurement_definition &&
+                    Boolean(formik.errors.unit_of_measurement_definition)
                   }
                   helperText={
-                    formik.touched.location_longitude &&
-                    formik.errors.location_longitude
+                    formik.touched.unit_of_measurement_definition &&
+                    formik.errors.unit_of_measurement_definition
                   }
                 />
               </Grid>{" "}
-              <Grid item xs={12} sm={3}>
+            </Grid>{" "}
+            <Divider
+              style={{
+                marginTop: "20px",
+                marginBottom: "20px",
+              }}
+            />
+            <Typography variant="h6" gutterBottom>
+              Datastream details
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={4}>
                 <TextField
+                  select
                   required
-                  id="location_latitude"
-                  name="location_latitude"
-                  label="Location Latitude"
                   fullWidth
-                  value={formik.values.location_latitude}
+                  name="sensor_id"
+                  value={formik.values.sensor_id}
+                  onChange={(event) => {
+                    formik.setFieldValue("sensor_id", event.target.value);
+                  }}
+                  variant="outlined"
+                  label="Sensors"
+                  error={!!formik.errors.sensor_id}
+                  InputLabelProps={{ shrink: true }}
+                  helperText={formik.errors.sensor_id}
+                >
+                  {sensors.map((item: any) => (
+                    <MenuItem key={item["@iot.id"]} value={item["@iot.id"]}>
+                      {item.name}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>{" "}
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  select
+                  required
+                  fullWidth
+                  name="thing_id"
+                  value={formik.values.thing_id}
                   onChange={formik.handleChange}
-                  error={
-                    formik.touched.location_latitude &&
-                    Boolean(formik.errors.location_latitude)
-                  }
-                  helperText={
-                    formik.touched.location_latitude &&
-                    formik.errors.location_latitude
-                  }
-                />
-              </Grid>
+                  variant="outlined"
+                  label="Devices"
+                  error={!!formik.errors.thing_id}
+                  InputLabelProps={{ shrink: true }}
+                  helperText={formik.errors.thing_id}
+                >
+                  {devices.map((item: any) => (
+                    <MenuItem key={item["@iot.id"]} value={item["@iot.id"]}>
+                      {item.name}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>{" "}
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  select
+                  required
+                  fullWidth
+                  name="observation_property_id"
+                  value={formik.values.observation_property_id}
+                  onChange={formik.handleChange}
+                  variant="outlined"
+                  label="Observation Property"
+                  error={!!formik.errors.observation_property_id}
+                  InputLabelProps={{ shrink: true }}
+                  helperText={formik.errors.observation_property_id}
+                >
+                  {observedProperties.map((item: any) => (
+                    <MenuItem key={item["@iot.id"]} value={item["@iot.id"]}>
+                      {item.name}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>{" "}
             </Grid>{" "}
             <Button
               type="submit"

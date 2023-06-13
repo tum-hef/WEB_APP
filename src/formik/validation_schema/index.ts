@@ -1,6 +1,6 @@
 import * as yup from "yup";
 
-export const devoice_validationSchema = yup.object().shape({
+export const device_validationSchema = yup.object().shape({
     device_name: yup.string().required("Device name is required").min(3, "Device name must be at least 3 characters").max(20, "Device name must be at most 20 characters"),
     device_description: yup.string().required("Device description is required").min(3, "Device description must be at least 3 characters").max(30, "Device description must be at most 30 characters"),
     location_name: yup.string().required("Location name is required").min(3, "Location name must be at least 3 characters").max(20, "Location name must be at most 20 characters"),
@@ -33,3 +33,17 @@ export const observation_property_validationSchema = yup.object().shape({
     description: yup.string().required("Observation property description is required").min(3, "Observation property description must be at least 3 characters").max(30, "Observation property description must be at most 30 characters"),
     definition: yup.string().required("Observation property definition is required").min(3, "Observation property definition must be at least 3 characters").max(30, "Observation property definition must be at most 30 characters"),
 });
+
+
+export const datastreams_validationSchema = yup.object().shape({
+    name: yup.string().required("Datastream name is required").min(3, "Datastream name must be at least 3 characters").max(20, "Datastream name must be at most 20 characters"),
+    description: yup.string().required("Datastream description is required").min(3, "Datastream description must be at least 3 characters").max(30, "Datastream description must be at most 30 characters"),
+    observationType: yup.string().required("Datastream observation type is required").min(3, "Datastream observation type must be at least 3 characters").max(60, "Datastream observation type must be at most 60 characters"),
+    unit_of_measurement_name: yup.string().required("Datastream unit of measurement name is required").min(3, "Datastream unit of measurement name must be at least 3 characters").max(30, "Datastream unit of measurement name must be at most 30 characters"),
+    unit_of_measurement_symbol: yup.string().required("Datastream unit of measurement symbol is required"),
+    unit_of_measurement_definition: yup.string().required("Datastream unit of measurement definition is required").min(3, "Datastream unit of measurement definition must be at least 3 characters").max(60, "Datastream unit of measurement definition must be at most 60 characters"),
+    sensor_id: yup.string().required("Datastream sensor id is required"),
+    thing_id: yup.string().required("Datastream thing id is required"),
+    observation_property_id: yup.string().required("Datastream observation property id is required"),
+});
+

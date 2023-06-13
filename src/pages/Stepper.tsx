@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Form, Formik } from "formik";
 import Dashboard from "../components/DashboardComponent";
+import * as yup from "yup";
 import {
   Stepper,
   Step,
@@ -25,8 +26,16 @@ const steps = [
 
 const getValidationSchemaPerStep = (step: number) => {
   switch (step) {
-    case 0:
-      return null;
+    case 0: {
+      return yup.object({
+        device_name: yup.string().required("Required"),
+        device_description: yup.string().required("Required"),
+        device_location_name: yup.string().required("Required"),
+        device_location_description: yup.string().required("Required"),
+        device_latitude: yup.number().required("Required"),
+        device_longitude: yup.number().required("Required"),
+      });
+    }
     case 1:
       return null;
     case 2:
@@ -120,11 +129,8 @@ function StepperStore() {
                   marginBottom: "10px",
                 }}
               >
-                <LinkCustom to="/">MUI</LinkCustom>
-                <LinkCustom to="/material-ui/getting-started/installation/">
-                  Core
-                </LinkCustom>
-                <Typography color="text.primary">Breadcrumbs</Typography>
+                <Typography color="text.primary">Data Streams</Typography>
+                <Typography color="text.primary">Stepper</Typography>
               </Breadcrumbs>
 
               <Form
@@ -155,6 +161,10 @@ function StepperStore() {
                         onChange={handleChange}
                         value={values.device_name}
                         variant="outlined"
+                        error={touched.device_name && Boolean(errors.device_name)}
+                        helperText={touched.device_name && errors.device_name}
+                        
+
                       />
                     </Grid>
                     <Grid item xs={12} md={6}>
@@ -165,6 +175,9 @@ function StepperStore() {
                         onChange={handleChange}
                         value={values.device_description}
                         variant="outlined"
+                        error={touched.device_description && Boolean(errors.device_description)}
+                        helperText={touched.device_description && errors.device_description}
+
                       />
                     </Grid>
                     <Grid item xs={12} md={6}>
@@ -175,6 +188,8 @@ function StepperStore() {
                         onChange={handleChange}
                         value={values.device_location_name}
                         variant="outlined"
+                        error={touched.device_location_name && Boolean(errors.device_location_name)}
+                        helperText={touched.device_location_name && errors.device_location_name}
                       />
                     </Grid>
                     <Grid item xs={12} md={6}>
@@ -185,6 +200,8 @@ function StepperStore() {
                         onChange={handleChange}
                         value={values.device_location_description}
                         variant="outlined"
+                        error={touched.device_location_description && Boolean(errors.device_location_description)}
+                        helperText={touched.device_location_description && errors.device_location_description}
                       />
                     </Grid>
                     <Grid item xs={12} md={6}>
@@ -195,6 +212,8 @@ function StepperStore() {
                         onChange={handleChange}
                         value={values.device_latitude}
                         variant="outlined"
+                        error={touched.device_latitude && Boolean(errors.device_latitude)}
+                        helperText={touched.device_latitude && errors.device_latitude}
                       />
                     </Grid>
                     <Grid item xs={12} md={6}>
@@ -205,6 +224,8 @@ function StepperStore() {
                         onChange={handleChange}
                         value={values.device_longitude}
                         variant="outlined"
+                        error={touched.device_longitude && Boolean(errors.device_longitude)}
+                        helperText={touched.device_longitude && errors.device_longitude}
                       />
                     </Grid>
                   </Grid>

@@ -233,7 +233,7 @@ const ListDatastream = () => {
         <Typography color="text.primary">Datastream</Typography>
       </Breadcrumbs>
 
-      <LinkCustom to="/datastream/store">
+      <LinkCustom to="/datastreams/store">
         <Button
           variant="contained"
           color="primary"

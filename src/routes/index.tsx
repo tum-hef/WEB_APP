@@ -36,6 +36,8 @@ import ListLocations from "../pages/location/ListLocation";
 import ListDatastream from "../pages/datastreams/ListDatastream";
 import ListObservationProperty from "../pages/observation_property/ListObservationProperty";
 import StoreObservationProerties from "../pages/observation_property/StoreObservationProerties";
+import StoreDatastream from "../pages/datastreams/StoreDatastream";
+import ListObservations from "../pages/observations/ListLocation";
 const styles = {
   container: {
     height: "100%",
@@ -52,37 +54,11 @@ const jss = create({
 });
 
 const AppRouter = (props: any) => {
-  const { initialized, keycloak } = useKeycloak();
-  const userInfo = keycloak?.idTokenParsed;
+  const { initialized } = useKeycloak();
+
   const { classes } = props;
   const { theme } = useTheme();
-  useEffect(() => {
-    const fetchData = async () => {
-      const group_id = localStorage.getItem("group_id");
-      if (keycloak && userInfo && userInfo.sub && group_id) {
-        try {
-          const response = await axios.get(
-            `${process.env.REACT_APP_BACKEND_URL}/get_clients?user_id=${userInfo.sub}`
-          );
 
-          if (response.status === 200 && response.data.groups) {
-            // check if group_id from localstorage is in groups
-            const group = response.data.groups.find(
-              (group: any) => group.id === group_id
-            );
-            if (!group) {
-              localStorage.removeItem("group_id");
-              toast.error("Group not found");
-            }
-          }
-        } catch (error) {
-          localStorage.removeItem("group_id");
-        }
-      }
-    };
-
-    fetchData();
-  }, []);
 
   if (!initialized) {
     return (
@@ -144,6 +120,11 @@ const AppRouter = (props: any) => {
                     path="/locations"
                     component={ListLocations}
                   />
+                  <PrivateRoute
+                    exact
+                    path="/locations/:id"
+                    component={Location}
+                  />
                   {/* Sensors */}
                   <PrivateRoute exact path="/sensors" component={ListSensors} />
                   <PrivateRoute
@@ -162,27 +143,33 @@ const AppRouter = (props: any) => {
                     path="/observation_properties/store"
                     component={StoreObservationProerties}
                   />
-                  {/* data streams */}
+                  {/* DataStreams */}
                   <PrivateRoute
                     exact
                     path="/datastreams"
                     component={ListDatastream}
+                  />{" "}
+                  <PrivateRoute
+                    exact
+                    path="/datastreams/store"
+                    component={StoreDatastream}
                   />
                   <PrivateRoute
                     exact
                     path="/datastreams/:id"
                     component={Datastreams}
                   />
+                  {/* Observations */}
                   <PrivateRoute
                     exact
-                    path="/observation/:id"
-                    component={Observervation}
+                    path="/observations"
+                    component={ListObservations}
                   />{" "}
                   <PrivateRoute
                     exact
-                    path="/location/:id"
-                    component={Location}
-                  />
+                    path="/observations/:id"
+                    component={Observervation}
+                  />{" "}
                   <Route path="*" component={NOTFOUND} />
                 </Switch>
               </Router>

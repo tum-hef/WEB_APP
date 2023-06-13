@@ -15,7 +15,7 @@ import { useKeycloak } from "@react-keycloak/web";
 import { useFormik } from "formik";
 import DashboardComponent from "../../components/DashboardComponent";
 import { device_initial_values } from "../../formik/initial_values";
-import { devoice_validationSchema } from "../../formik/validation_schema";
+import { device_validationSchema } from "../../formik/validation_schema";
 import { useEffect, useState } from "react";
 import { NOTFOUND } from "../404";
 import axios from "axios";
@@ -32,7 +32,7 @@ function StoreDevice() {
   const [frostServerPort, setFrostServerPort] = useState<number | null>(null);
   const formik = useFormik({
     initialValues: device_initial_values,
-    validationSchema: devoice_validationSchema,
+    validationSchema: device_validationSchema,
     onSubmit: async (values: any) => {
       formik.resetForm();
       try {

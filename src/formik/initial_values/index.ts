@@ -18,3 +18,15 @@ export const observation_property_initial_values =  {
     description: '',
     definition: '',
 };
+
+export const datastreams_initial_values =  {
+    name: '',
+    description: '',
+    observationType: '',
+    unit_of_measurement_name: '',
+    unit_of_measurement_symbol: '',
+    unit_of_measurement_definition: '',
+    thing_id: '',
+    sensor_id: '',
+    observation_property_id: '',
+}

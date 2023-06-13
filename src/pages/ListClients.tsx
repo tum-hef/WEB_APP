@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import Dashboard from "../components/DashboardComponent";
 import { Breadcrumbs, Button, Grid, Typography } from "@mui/material";
 import axios from "axios";
+import { useLocation } from "react-router-dom";
+import Swal from "sweetalert2";
 
 export default function ListClients() {
   const [userID, setUserID] = useState<string | null>(null);
@@ -12,9 +14,19 @@ export default function ListClients() {
   const [loading, setLoading] = useState<boolean>(true);
   const { keycloak } = useKeycloak();
   const userInfo = keycloak?.idTokenParsed;
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const message = searchParams.get("message");
 
   useEffect(() => {
     const fetchData = async () => {
+      if (message === "no_group") {
+        Swal.fire({
+          icon: "error",
+          title: "Oops...",
+          text: "You have not selected a group. Please select a group first.",
+        });
+      }
       if (keycloak && userInfo && userInfo.sub) {
         setUserID(userInfo.sub);
 
@@ -44,7 +56,7 @@ export default function ListClients() {
     };
 
     fetchData();
-  }, [keycloak, userInfo, userID]);
+  }, [keycloak, userInfo, userID, message]);
 
   return (
     <Dashboard>

@@ -141,7 +141,7 @@ Data displayed:
 
   
 
-URL: / location/{ID}
+URL: / locations/{ID}
 
   
 
@@ -160,7 +160,7 @@ Data displayed:
 
   
 
-URL: / observation/{ID}
+URL: / observations/{ID}
 
   
 

@@ -14,14 +14,8 @@ import {
 import { useKeycloak } from "@react-keycloak/web";
 import { useFormik } from "formik";
 import DashboardComponent from "../../components/DashboardComponent";
-import {
-  device_initial_values,
-  observation_property_initial_values,
-} from "../../formik/initial_values";
-import {
-  devoice_validationSchema,
-  observation_property_validationSchema,
-} from "../../formik/validation_schema";
+import { observation_property_initial_values } from "../../formik/initial_values";
+import { observation_property_validationSchema } from "../../formik/validation_schema";
 import { useEffect, useState } from "react";
 import { NOTFOUND } from "../404";
 import axios from "axios";
@@ -62,7 +56,7 @@ function StoreObservationProerties() {
             icon: "success",
             title: "Success",
             text: "Observation Property created successfully!",
-        });
+          });
         } else {
           Swal.fire({
             icon: "error",
