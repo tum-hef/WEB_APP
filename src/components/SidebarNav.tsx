@@ -327,7 +327,7 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
                     />
                   </ListItemIcon>
                   <ListItemText
-                    primary="Location "
+                    primary="Locations"
                     style={{
                       color: "white",
                     }}

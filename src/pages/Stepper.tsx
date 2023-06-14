@@ -15,11 +15,12 @@ import {
   Breadcrumbs,
 } from "@mui/material";
 import axios from "axios";
-import LinkCustom from "../components/LinkCustom";
+import { useKeycloak } from "@react-keycloak/web";
+import Swal from "sweetalert2";
 
 const steps = [
   "Store Device",
-  "Store Sensor",
+  // "Store Sensor",
   "Store ObserveProperty",
   "Store Datastream",
 ];
@@ -28,56 +29,88 @@ const getValidationSchemaPerStep = (step: number) => {
   switch (step) {
     case 0: {
       return yup.object({
-        device_name: yup.string().required("Required"),
-        device_description: yup.string().required("Required"),
-        device_location_name: yup.string().required("Required"),
-        device_location_description: yup.string().required("Required"),
-        device_latitude: yup.number().required("Required"),
-        device_longitude: yup.number().required("Required"),
+        device_name: yup.string().required("Device Name is required"),
+        device_description: yup
+          .string()
+          .required("Device Description is required"),
+        device_location_name: yup
+          .string()
+          .required("Device Location Name is required"),
+        device_location_description: yup
+          .string()
+          .required("Device Location Description is required"),
+        device_latitude: yup
+          .string()
+          .required("Device Latitude is required")
+          .matches(
+            /^-?\d+(\.\d+)?$/,
+            "Location longitude must be a float format"
+          ),
+        device_longitude: yup
+          .string()
+          .required("Device Longitude is required")
+          .matches(
+            /^-?\d+(\.\d+)?$/,
+            "Location longitude must be a float format"
+          ),
       });
     }
     case 1:
-      return null;
+      return yup.object({
+        observeProperty_name: yup.string().required("Name is required"),
+        observeProperty_definition: yup
+          .string()
+          .required("Definition is required"),
+        observeProperty_description: yup
+          .string()
+          .required("Description is required"),
+      });
+
     case 2:
-      return null;
+      return yup.object({
+        datastream_name: yup.string().required("Name is required"),
+        datastram_description: yup.string().required("Description is required"),
+        datastream_observation_type: yup
+          .string()
+          .required("Observation Type is required"),
+        datastream_unit_of_measurement_name: yup
+          .string()
+          .required("Name is required"),
+        datastream_unit_of_measurement_symbol: yup
+          .string()
+          .required("Symbol is required"),
+        datastream_unit_of_measurement_definition: yup
+          .string()
+          .required("Definition is required"),
+      });
   }
 };
 
 function StepperStore() {
-  const fetchSensors = async () => {
-    try {
-      const response = await axios.get(
-        "https://iot.hef.tum.de/frost/v1.0/Sensors"
-      );
-      console.log(response.data);
-      setSensors(response.data.value);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  const fetchObserveProperties = async () => {
-    try {
-      const response = await axios.get(
-        "https://iot.hef.tum.de/frost/v1.0/ObservedProperties"
-      );
-      console.log(response.data);
-      setObserveProperties(response.data.value);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
   const [activeStep, setActiveStep] = useState(0);
   const isLastStep = activeStep === steps.length - 1;
-  const [sensors, setSensors] = useState<any[]>([]);
-  const [newSensor, setNewSensor] = useState(false);
-  const [newObserveProperty, setNewObserveProperty] = useState(false);
-  const [observeProperties, setObserveProperties] = useState<any[]>([]);
+  const [frostServerPort, setFrostServerPort] = useState<number | null>(null);
+  const { keycloak } = useKeycloak();
+  const userInfo = keycloak?.idTokenParsed;
+  const token = keycloak?.token;
 
+  const fetchFrostPort = async () => {
+    const backend_url = process.env.REACT_APP_BACKEND_URL;
+    const email = userInfo?.preferred_username;
+    await axios
+      .get(`${backend_url}/frost-server?email=${email}`, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+      .then((res) => {
+        if (res.status === 200 && res.data.PORT) {
+          setFrostServerPort(res.data.PORT);
+        }
+      });
+  };
   useEffect(() => {
-    fetchSensors();
-    fetchObserveProperties();
+    fetchFrostPort();
   }, []);
 
   return (
@@ -94,20 +127,17 @@ function StepperStore() {
             device_longitude: "",
 
             // Second Step
-            sensor_existing_id: "",
-            sensor_name: "",
-            sensor_metadata: "",
-            sensor_description: "",
-
-            // Third Step
-            observeProperty_existing_id: "",
             observeProperty_name: "",
             observeProperty_definition: "",
             observeProperty_description: "",
 
-            // Fourth Step
+            // Third Step
             datastream_name: "",
             datastram_description: "",
+            datastream_observation_type: "",
+            datastream_unit_of_measurement_name: "",
+            datastream_unit_of_measurement_symbol: "",
+            datastream_unit_of_measurement_definition: "",
           }}
           validationSchema={getValidationSchemaPerStep(activeStep)}
           onSubmit={async (values: any, helpers: any) => {
@@ -151,6 +181,7 @@ function StepperStore() {
                     </Step>
                   ))}
                 </Stepper>
+                {/* Device Step */}
                 {activeStep === 0 && (
                   <Grid container spacing={2}>
                     <Grid item xs={12} md={6}>
@@ -161,12 +192,52 @@ function StepperStore() {
                         onChange={handleChange}
                         value={values.device_name}
                         variant="outlined"
-                        error={touched.device_name && Boolean(errors.device_name)}
+                        error={
+                          touched.device_name && Boolean(errors.device_name)
+                        }
                         helperText={touched.device_name && errors.device_name}
-                        
-
                       />
-                    </Grid>
+                    </Grid>{" "}
+                    {values.device_name.length > 0 && (
+                      <Grid item xs={12} md={6}>
+                        <Button
+                          variant="outlined"
+                          onClick={() => {
+                            axios
+                              .get(
+                                `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Things?$filter=name eq '${values.device_name}'`,
+                                {
+                                  headers: {
+                                    "Content-Type": "application/json",
+                                    Authorization: `Bearer ${token}`,
+                                  },
+                                }
+                              )
+                              .then((response) => {
+                                console.log(response.data);
+                                if (response.data.value.length > 0) {
+                                  Swal.fire({
+                                    icon: "error",
+                                    title: "Oops...",
+                                    text: "Device name is already taken, please choose another one",
+                                  });
+                                } else {
+                                  Swal.fire({
+                                    icon: "success",
+                                    title: "Success",
+                                    text: "Device name is available",
+                                  });
+                                }
+                              })
+                              .catch((error) => {
+                                console.log(error);
+                              });
+                          }}
+                        >
+                          Check Device Availability
+                        </Button>
+                      </Grid>
+                    )}
                     <Grid item xs={12} md={6}>
                       <TextField
                         fullWidth
@@ -175,9 +246,14 @@ function StepperStore() {
                         onChange={handleChange}
                         value={values.device_description}
                         variant="outlined"
-                        error={touched.device_description && Boolean(errors.device_description)}
-                        helperText={touched.device_description && errors.device_description}
-
+                        error={
+                          touched.device_description &&
+                          Boolean(errors.device_description)
+                        }
+                        helperText={
+                          touched.device_description &&
+                          errors.device_description
+                        }
                       />
                     </Grid>
                     <Grid item xs={12} md={6}>
@@ -188,8 +264,14 @@ function StepperStore() {
                         onChange={handleChange}
                         value={values.device_location_name}
                         variant="outlined"
-                        error={touched.device_location_name && Boolean(errors.device_location_name)}
-                        helperText={touched.device_location_name && errors.device_location_name}
+                        error={
+                          touched.device_location_name &&
+                          Boolean(errors.device_location_name)
+                        }
+                        helperText={
+                          touched.device_location_name &&
+                          errors.device_location_name
+                        }
                       />
                     </Grid>
                     <Grid item xs={12} md={6}>
@@ -200,8 +282,14 @@ function StepperStore() {
                         onChange={handleChange}
                         value={values.device_location_description}
                         variant="outlined"
-                        error={touched.device_location_description && Boolean(errors.device_location_description)}
-                        helperText={touched.device_location_description && errors.device_location_description}
+                        error={
+                          touched.device_location_description &&
+                          Boolean(errors.device_location_description)
+                        }
+                        helperText={
+                          touched.device_location_description &&
+                          errors.device_location_description
+                        }
                       />
                     </Grid>
                     <Grid item xs={12} md={6}>
@@ -212,8 +300,13 @@ function StepperStore() {
                         onChange={handleChange}
                         value={values.device_latitude}
                         variant="outlined"
-                        error={touched.device_latitude && Boolean(errors.device_latitude)}
-                        helperText={touched.device_latitude && errors.device_latitude}
+                        error={
+                          touched.device_latitude &&
+                          Boolean(errors.device_latitude)
+                        }
+                        helperText={
+                          touched.device_latitude && errors.device_latitude
+                        }
                       />
                     </Grid>
                     <Grid item xs={12} md={6}>
@@ -224,195 +317,177 @@ function StepperStore() {
                         onChange={handleChange}
                         value={values.device_longitude}
                         variant="outlined"
-                        error={touched.device_longitude && Boolean(errors.device_longitude)}
-                        helperText={touched.device_longitude && errors.device_longitude}
+                        error={
+                          touched.device_longitude &&
+                          Boolean(errors.device_longitude)
+                        }
+                        helperText={
+                          touched.device_longitude && errors.device_longitude
+                        }
                       />
                     </Grid>
                   </Grid>
                 )}
+                {/* Observation Property Step */}
                 {activeStep === 1 && (
-                  <Grid container spacing={2}>
-                    <Grid item xs={12} md={6}>
-                      <TextField
-                        select
-                        fullWidth
-                        label="New Sensor"
-                        name="sensor_check"
-                        value={newSensor ? "new" : "existing"}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          setNewSensor(value === "new" ? true : false);
-                          if (value === "existing") {
-                            values.sensor_name = "";
-                            values.sensor_description = "";
-                            values.sensor_metadata = "";
-                          } else if (value === "new") {
-                            values.sensor_existing_id = "";
-                          }
-                        }}
-                        variant="outlined"
-                      >
-                        <MenuItem value="new">New Sensor</MenuItem>
-                        <MenuItem value="existing">Existing Sensor</MenuItem>
-                      </TextField>
-                    </Grid>
-                    {!newSensor && (
-                      <Grid item xs={12} md={6}>
-                        <TextField
-                          select
-                          fullWidth
-                          label="Existing Sensor"
-                          name="sensor_existing_id"
-                          value={values.sensor_existing_id}
-                          onChange={handleChange}
-                          variant="outlined"
-                        >
-                          {sensors.map((sensor) => (
-                            <MenuItem
-                              key={sensor["@iot.id"]}
-                              value={sensor["@iot.id"]}
-                            >
-                              {sensor["name"]}
-                            </MenuItem>
-                          ))}
-                        </TextField>
-                      </Grid>
-                    )}
-                    {newSensor && (
-                      <>
-                        <Grid item xs={12} md={6}>
-                          <TextField
-                            fullWidth
-                            label="Sensor Name"
-                            name="sensor_name"
-                            onChange={handleChange}
-                            value={values.sensor_name}
-                            variant="outlined"
-                          />
-                        </Grid>
-                        <Grid item xs={12} md={6}>
-                          <TextField
-                            fullWidth
-                            label="Metadata"
-                            name="sensor_metadata"
-                            onChange={handleChange}
-                            value={values.sensor_metadata}
-                            variant="outlined"
-                          />
-                        </Grid>
-                        <Grid item xs={12} md={6}>
-                          <TextField
-                            fullWidth
-                            label="Description"
-                            name="sensor_description"
-                            onChange={handleChange}
-                            value={values.sensor_description}
-                            variant="outlined"
-                          />
-                        </Grid>
-                      </>
-                    )}
-                  </Grid>
-                )}
-                {activeStep === 2 && (
-                  <Grid container spacing={2}>
-                    <Grid item xs={12} md={6}>
-                      <TextField
-                        select
-                        fullWidth
-                        label="New Observed Property"
-                        name="observeProperty_check"
-                        value={newObserveProperty ? "new" : "existing"}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          setNewObserveProperty(value === "new" ? true : false);
-                          if (value === "existing") {
-                            values.observeProperty_name = "";
-                            values.observeProperty_definition = "";
-                            values.observeProperty_description = "";
-                          } else if (value === "new") {
-                            values.observeProperty_existing_id = "";
-                          }
-                        }}
-                        variant="outlined"
-                      >
-                        <MenuItem value="new">New Observed Property</MenuItem>
-                        <MenuItem value="existing">
-                          Existing Observed Property
-                        </MenuItem>
-                      </TextField>
-                    </Grid>
-                    {!newObserveProperty && (
-                      <Grid item xs={12} md={6}>
-                        <TextField
-                          select
-                          fullWidth
-                          label="Existing Observed Property"
-                          name="observeProperty_existing_id"
-                          value={values.observeProperty_existing_id}
-                          onChange={handleChange}
-                          variant="outlined"
-                        >
-                          {observeProperties.map((observeProperty) => (
-                            <MenuItem
-                              key={observeProperty["@iot.id"]}
-                              value={observeProperty["@iot.id"]}
-                            >
-                              {observeProperty.name}
-                            </MenuItem>
-                          ))}
-                        </TextField>
-                      </Grid>
-                    )}
-
-                    {newObserveProperty && (
-                      <>
-                        <Grid item xs={12} md={6}>
-                          <TextField
-                            fullWidth
-                            label="Name"
-                            name="observeProperty_name"
-                            onChange={handleChange}
-                            value={values.observeProperty_name}
-                            variant="outlined"
-                          />
-                        </Grid>
-                        <Grid item xs={12} md={6}>
-                          <TextField
-                            fullWidth
-                            label="Definition"
-                            name="observeProperty_definition"
-                            onChange={handleChange}
-                            value={values.observeProperty_definition}
-                            variant="outlined"
-                          />
-                        </Grid>
-                        <Grid item xs={12} md={6}>
-                          <TextField
-                            fullWidth
-                            label="Description"
-                            name="observeProperty_description"
-                            onChange={handleChange}
-                            value={values.observeProperty_description}
-                            variant="outlined"
-                          />
-                        </Grid>
-                      </>
-                    )}
-                  </Grid>
-                )}
-                {activeStep === 3 && (
                   <Grid container spacing={2}>
                     <Grid item xs={12} md={6}>
                       <TextField
                         fullWidth
                         label="Name"
+                        name="observeProperty_name"
+                        onChange={handleChange}
+                        value={values.observeProperty_name}
+                        variant="outlined"
+                        error={
+                          touched.observeProperty_name &&
+                          Boolean(errors.observeProperty_name)
+                        }
+                        helperText={
+                          touched.observeProperty_name &&
+                          errors.observeProperty_name
+                        }
+                      />
+                    </Grid>
+                    {values.observeProperty_name.length > 0 && (
+                      <Grid item xs={12} md={6}>
+                        <Button
+                          variant="outlined"
+                          onClick={() => {
+                            axios
+                              .get(
+                                `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/ObservedProperties?$filter=name eq '${values.observeProperty_name}'`,
+                                {
+                                  headers: {
+                                    "Content-Type": "application/json",
+                                    Authorization: `Bearer ${token}`,
+                                  },
+                                }
+                              )
+                              .then((response) => {
+                                console.log(response.data);
+                                if (response.data.value.length > 0) {
+                                  Swal.fire({
+                                    icon: "error",
+                                    title: "Oops...",
+                                    text: "Observed Property name is already taken, please choose another one",
+                                  });
+                                } else {
+                                  Swal.fire({
+                                    icon: "success",
+                                    title: "Success",
+                                    text: "Observed Property name is available",
+                                  });
+                                }
+                              })
+                              .catch((error) => {
+                                console.log(error);
+                              });
+                          }}
+                        >
+                          Check Observed Property Availability
+                        </Button>
+                      </Grid>
+                    )}
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        label="Definition"
+                        name="observeProperty_definition"
+                        onChange={handleChange}
+                        value={values.observeProperty_definition}
+                        variant="outlined"
+                        error={
+                          touched.observeProperty_definition &&
+                          Boolean(errors.observeProperty_definition)
+                        }
+                        helperText={
+                          touched.observeProperty_definition &&
+                          errors.observeProperty_definition
+                        }
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        label="Description"
+                        name="observeProperty_description"
+                        onChange={handleChange}
+                        value={values.observeProperty_description}
+                        variant="outlined"
+                        error={
+                          touched.observeProperty_description &&
+                          Boolean(errors.observeProperty_description)
+                        }
+                        helperText={
+                          touched.observeProperty_description &&
+                          errors.observeProperty_description
+                        }
+                      />
+                    </Grid>
+                  </Grid>
+                )}
+                {/* DataStream Step */}
+                {activeStep === 2 && (
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        label="Datastream Name"
                         name="datastream_name"
                         onChange={handleChange}
                         value={values.datastream_name}
                         variant="outlined"
+                        error={
+                          touched.observeProperty_name &&
+                          Boolean(errors.observeProperty_name)
+                        }
+                        helperText={
+                          touched.observeProperty_name &&
+                          errors.observeProperty_name
+                        }
                       />
                     </Grid>
+                    {values.datastream_name.length > 0 && (
+                      <Grid item xs={12} md={6}>
+                        <Button
+                          variant="outlined"
+                          onClick={() => {
+                            axios
+                              .get(
+                                `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Datastreams?$filter=name eq '${values.datastream_name}'`,
+                                {
+                                  headers: {
+                                    "Content-Type": "application/json",
+                                    Authorization: `Bearer ${token}`,
+                                  },
+                                }
+                              )
+                              .then((response) => {
+                                console.log(response.data);
+                                if (response.data.value.length > 0) {
+                                  Swal.fire({
+                                    icon: "error",
+                                    title: "Oops...",
+                                    text: "Datastream name is already taken, please choose another one",
+                                  });
+                                } else {
+                                  Swal.fire({
+                                    icon: "success",
+                                    title: "Success",
+                                    text: "Datastream name is available",
+                                  });
+                                }
+                              })
+                              .catch((error) => {
+                                console.log(error);
+                              });
+                          }}
+                        >
+                          Check Datastream name Availability
+                        </Button>
+                      </Grid>
+                    )}
                     <Grid item xs={12} md={6}>
                       <TextField
                         fullWidth
@@ -421,6 +496,88 @@ function StepperStore() {
                         onChange={handleChange}
                         value={values.datastram_description}
                         variant="outlined"
+                        error={
+                          touched.observeProperty_name &&
+                          Boolean(errors.observeProperty_name)
+                        }
+                        helperText={
+                          touched.observeProperty_name &&
+                          errors.observeProperty_name
+                        }
+                      />
+                    </Grid>{" "}
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        name="datastream_observation_type"
+                        label="Datastream Observation Type"
+                        onChange={handleChange}
+                        value={values.datastream_observation_type}
+                        variant="outlined"
+                        error={
+                          touched.datastream_observation_type &&
+                          Boolean(errors.datastream_observation_type)
+                        }
+                        helperText={
+                          touched.datastream_observation_type &&
+                          errors.datastream_observation_type
+                        }
+                      />
+                    </Grid>{" "}
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        name="datastream_unit_of_measurement_name"
+                        label="Datastream Unit of Measurement Name"
+                        onChange={handleChange}
+                        value={values.datastream_unit_of_measurement_name}
+                        variant="outlined"
+                        error={
+                          touched.datastream_unit_of_measurement_name &&
+                          Boolean(errors.datastream_unit_of_measurement_name)
+                        }
+                        helperText={
+                          touched.datastream_unit_of_measurement_name &&
+                          errors.datastream_unit_of_measurement_name
+                        }
+                      />
+                    </Grid>{" "}
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        name="datastream_unit_of_measurement_symbol"
+                        label="Datastream Unit of Measurement Symbol"
+                        onChange={handleChange}
+                        value={values.datastream_unit_of_measurement_symbol}
+                        variant="outlined"
+                        error={
+                          touched.datastream_unit_of_measurement_symbol &&
+                          Boolean(errors.datastream_unit_of_measurement_symbol)
+                        }
+                        helperText={
+                          touched.datastream_unit_of_measurement_symbol &&
+                          errors.datastream_unit_of_measurement_symbol
+                        }
+                      />
+                    </Grid>{" "}
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        name="datastream_unit_of_measurement_definition"
+                        label="Datastream Unit of Measurement Definition"
+                        onChange={handleChange}
+                        value={values.datastream_unit_of_measurement_definition}
+                        variant="outlined"
+                        error={
+                          touched.datastream_unit_of_measurement_definition &&
+                          Boolean(
+                            errors.datastream_unit_of_measurement_definition
+                          )
+                        }
+                        helperText={
+                          touched.datastream_unit_of_measurement_definition &&
+                          errors.datastream_unit_of_measurement_definition
+                        }
                       />
                     </Grid>
                   </Grid>

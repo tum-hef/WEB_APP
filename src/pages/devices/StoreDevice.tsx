@@ -2,12 +2,7 @@ import {
   Breadcrumbs,
   Button,
   Divider,
-  FormControl,
-  FormHelperText,
   Grid,
-  InputLabel,
-  MenuItem,
-  Select,
   TextField,
   Typography,
 } from "@mui/material";
@@ -19,10 +14,8 @@ import { device_validationSchema } from "../../formik/validation_schema";
 import React, { useEffect, useState } from "react";
 import { NOTFOUND } from "../404";
 import axios from "axios";
-import { Link } from "react-router-dom";
 import LinkCustom from "../../components/LinkCustom";
-import { toast } from "react-toastify";
-import { t } from "i18next";
+
 import Swal from "sweetalert2";
 function StoreDevice() {
   const { keycloak } = useKeycloak();

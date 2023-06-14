@@ -2,12 +2,8 @@ import {
   Breadcrumbs,
   Button,
   Divider,
-  FormControl,
-  FormHelperText,
   Grid,
-  InputLabel,
   MenuItem,
-  Select,
   TextField,
   Typography,
 } from "@mui/material";
@@ -16,7 +12,7 @@ import { useFormik } from "formik";
 import DashboardComponent from "../../components/DashboardComponent";
 import { datastreams_initial_values } from "../../formik/initial_values";
 import { datastreams_validationSchema } from "../../formik/validation_schema";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { NOTFOUND } from "../404";
 import axios from "axios";
 import LinkCustom from "../../components/LinkCustom";
@@ -37,27 +33,31 @@ function StoreDatastream() {
       formik.resetForm();
       try {
         const response = await axios.post(
-          `http://138.246.237.35:6013/FROST-Server/v1.0/Datastreams`,
+          `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Datastreams`,
           {
-            name: "temperature",
+            name: values.name,
             unitOfMeasurement: {
-              name: "Celsius",
-              symbol: "C",
-              definition: "https://en.wikipedia.org/wiki/Celsius",
+              name: values.unit_of_measurement_name,
+              symbol: values.unit_of_measurement_symbol,
+              definition: values.unit_of_measurement_definition,
             },
             Thing: {
-              "@iot.id": 13,
+              "@iot.id": values.thing_id,
             },
-            description:
-              "This is a datastream for the temperature property from my_thing",
+            description: values.description,
             Sensor: {
-              "@iot.id": 1,
+              "@iot.id": values.sensor_id,
             },
             ObservedProperty: {
-              "@iot.id": 1,
+              "@iot.id": values.observation_property_id,
             },
-            observationType:
-              "http://www.opengis.net/def/observationType/OGC-OM/2.0/OM_Measurement",
+            observationType: values.observationType,
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${keycloak?.token}`,
+            },
           }
         );
 
@@ -175,6 +175,7 @@ function StoreDatastream() {
             </LinkCustom>
             <Typography color="text.primary">Store</Typography>
           </Breadcrumbs>
+          {JSON.stringify(formik.values)}
           <Typography
             variant="h4"
             style={{
