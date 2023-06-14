@@ -144,7 +144,175 @@ function StepperStore() {
             if (isLastStep) {
               helpers.resetForm();
               setActiveStep(0);
-              console.log(values);
+              try {
+                // 1: Store the Device
+                const response_post_device = await axios.post(
+                  `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Things`,
+                  {
+                    name: values.device_name,
+                    description: values.device_description,
+                    Locations: [
+                      {
+                        name: values.device_location_name,
+                        description: values.device_location_description,
+                        encodingType: "application/vnd.geo+json",
+                        location: {
+                          type: "Point",
+                          coordinates: [
+                            values.device_longitude,
+                            values.device_latitude,
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                  {
+                    headers: {
+                      "Content-Type": "application/json",
+                      Authorization: `Bearer ${keycloak?.token}`,
+                    },
+                  }
+                );
+
+                // 2: Store the Observed Property
+                const response_post_observed_property = await axios.post(
+                  `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/ObservedProperties`,
+                  {
+                    name: values.observeProperty_name,
+                    definition: values.observeProperty_definition,
+                    description: values.observeProperty_description,
+                  },
+
+                  {
+                    headers: {
+                      "Content-Type": "application/json",
+                      Authorization: `Bearer ${keycloak?.token}`,
+                    },
+                  }
+                );
+
+                // 3: Get the ID of the Device
+
+                const response_get_device = await axios.get(
+                  `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Things?$filter=name eq '${values.device_name}'`,
+                  {
+                    headers: {
+                      "Content-Type": "application/json",
+                      Authorization: `Bearer ${keycloak?.token}`,
+                    },
+                  }
+                );
+
+                const device_id = response_get_device.data.value[0]["@iot.id"];
+
+                // 4: Get the ID of the Observed Property
+
+                const response_get_observed_property = await axios.get(
+                  `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/ObservedProperties?$filter=name eq '${values.observeProperty_name}'`,
+                  {
+                    headers: {
+                      "Content-Type": "application/json",
+                      Authorization: `Bearer ${keycloak?.token}`,
+                    },
+                  }
+                );
+
+                const observed_property_id =
+                  response_get_observed_property.data.value[0]["@iot.id"];
+
+                // 5: Store the Sensor
+
+                const name_of_the_sensor = `sensor_${values.device_name}_${values.observeProperty_name}`;
+
+                const response_post_sensor = await axios.post(
+                  `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Sensors`,
+                  {
+                    name: name_of_the_sensor,
+                    description: `Sensor for ${values.device_name} and ${values.observeProperty_name}`,
+                    metadata: `Sensor MetaData for ${values.device_name} and ${values.observeProperty_name}`,
+                    encodingType: "application/pdf",
+                  },
+                  {
+                    headers: {
+                      "Content-Type": "application/json",
+                      Authorization: `Bearer ${keycloak?.token}`,
+                    },
+                  }
+                );
+
+                // 6: Get the ID of the Sensor
+
+                const response_get_sensor = await axios.get(
+                  `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Sensors?$filter=name eq '${name_of_the_sensor}'`,
+                  {
+                    headers: {
+                      "Content-Type": "application/json",
+                      Authorization: `Bearer ${keycloak?.token}`,
+                    },
+                  }
+                );
+
+                const sensor_id = response_get_sensor.data.value[0]["@iot.id"];
+
+                // 7: Store the Datastream
+                const response_post_datastream = await axios.post(
+                  `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Datastreams`,
+                  {
+                    name: values.datastream_name,
+                    unitOfMeasurement: {
+                      name: values.datastream_unit_of_measurement_name,
+                      symbol: values.datastream_unit_of_measurement_symbol,
+                      definition:
+                        values.datastream_unit_of_measurement_definition,
+                    },
+                    Thing: {
+                      "@iot.id": device_id,
+                    },
+                    description: values.datastram_description,
+                    Sensor: {
+                      "@iot.id": sensor_id,
+                    },
+                    ObservedProperty: {
+                      "@iot.id": observed_property_id,
+                    },
+                    observationType: values.datastream_observation_type,
+                  },
+                  {
+                    headers: {
+                      "Content-Type": "application/json",
+                      Authorization: `Bearer ${keycloak?.token}`,
+                    },
+                  }
+                );
+
+                if (
+                  sensor_id &&
+                  device_id &&
+                  observed_property_id &&
+                  response_post_device.status === 201 &&
+                  response_post_observed_property.status === 201 &&
+                  response_post_sensor.status === 201 &&
+                  response_post_datastream.status === 201
+                ) {
+                  Swal.fire({
+                    icon: "success",
+                    title: "Success!",
+                    text: "Device, Observed Property, Sensor and Datastream created!",
+                  });
+                } else {
+                  Swal.fire({
+                    icon: "error",
+                    title: "Oops...",
+                    text: "Something went wrong! Device, Observed Property, Sensor and Datastream not created!",
+                  });
+                }
+              } catch (error) {
+                Swal.fire({
+                  icon: "error",
+                  title: "Oops...",
+                  text: "Something went wrong! Device, Observed Property, Sensor and Datastream not created!",
+                });
+              }
             } else {
               setActiveStep((s) => s + 1);
             }
@@ -605,6 +773,7 @@ function StepperStore() {
                       // color="primary"
                       style={{
                         backgroundColor: "#233044",
+                        color: "#fff",
                       }}
                       type="submit"
                       disabled={
