@@ -16,7 +16,7 @@ import { useFormik } from "formik";
 import DashboardComponent from "../../components/DashboardComponent";
 import { device_initial_values } from "../../formik/initial_values";
 import { device_validationSchema } from "../../formik/validation_schema";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { NOTFOUND } from "../404";
 import axios from "axios";
 import { Link } from "react-router-dom";

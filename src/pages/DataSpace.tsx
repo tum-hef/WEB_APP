@@ -1,5 +1,15 @@
-import { Breadcrumbs, Grid, Paper, Typography } from "@mui/material";
-
+import {
+  Box,
+  Breadcrumbs,
+  Button,
+  Card,
+  CardActions,
+  CardContent,
+  Grid,
+  Paper,
+  Typography,
+} from "@mui/material";
+import React from "react";
 import LinkCustom from "../components/LinkCustom";
 import Dashboard from "../components/DashboardComponent";
 import axios from "axios";
@@ -8,6 +18,7 @@ import { useKeycloak } from "@react-keycloak/web";
 import { toast } from "react-toastify";
 import { useParams } from "react-router-dom";
 import { NOTFOUND } from "./404";
+import { CardDataSpace } from "../components/CardDataSpace";
 
 export default function DataSpace() {
   const { keycloak } = useKeycloak();
@@ -184,9 +195,28 @@ export default function DataSpace() {
             }}
           >
             {" "}
-            <Typography color="text.primary">Landing Page</Typography>
+            <Typography color="text.primary">Data Space</Typography>
           </Breadcrumbs>
-
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={6} md={4} lg={4}>
+              <CardDataSpace card_name="Datastreams" />
+            </Grid>
+            <Grid item xs={12} sm={6} md={4} lg={4}>
+              <CardDataSpace card_name="Card 2" />
+            </Grid>
+            <Grid item xs={12} sm={6} md={4} lg={4}>
+              <CardDataSpace card_name="Card 3" />
+            </Grid>
+            <Grid item xs={12} sm={6} md={4} lg={4}>
+              <CardDataSpace card_name="Card 4" />
+            </Grid>
+            <Grid item xs={12} sm={6} md={4} lg={4}>
+              <CardDataSpace card_name="Card 5" />
+            </Grid>
+            <Grid item xs={12} sm={6} md={4} lg={4}>
+              <CardDataSpace card_name="Card 6" />
+            </Grid>
+          </Grid>
           <Paper
             sx={{
               p: 2,

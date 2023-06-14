@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import DataTable, { ExpanderComponentProps } from "react-data-table-component";
 import { Breadcrumbs, Button, Typography } from "@mui/material";
@@ -94,28 +94,88 @@ const Devices = () => {
           }}
           onClick={() => {
             Swal.fire({
-              title: "Edit Device Description",
-              input: "text",
-              inputLabel: "New Device Description",
-              inputPlaceholder: "Enter the new device description",
-              inputValue: row.description,
+              title: "Edit Device",
+              html:
+                `<div class="swal-input-row-with-label">` +
+                `<label for="name">New Name</label>` +
+                `<div class="swal-input-field">` +
+                `<input id="name" class="swal2-input" placeholder="Enter the new device name" value="${
+                  row.name || ""
+                }">` +
+                `</div>` +
+                `</div>` +
+                `<div class="swal-input-row">` +
+                `<label for="description">New Description</label>` +
+                `<input id="description" class="swal2-input" placeholder="Enter the new device description" value="${
+                  row.description || ""
+                }">` +
+                `</div>`,
               showCancelButton: true,
               confirmButtonText: "Save",
               showLoaderOnConfirm: true,
-              preConfirm: (description) => {
-                return description;
+              preConfirm: () => {
+                const name = (
+                  document.getElementById("name") as HTMLInputElement
+                ).value;
+                const description = (
+                  document.getElementById("description") as HTMLInputElement
+                ).value;
+                if (!name) {
+                  Swal.showValidationMessage("Please enter a device name");
+                } else {
+                  return { name, description };
+                }
               },
             }).then((result) => {
               if (result.isConfirmed) {
-                const newDescription = result.value;
-                Swal.fire(`New device description: ${newDescription}`);
-                const newDevices = devices.map((device) => {
-                  if (device["@iot.id"] === row["@iot.id"]) {
-                    device.description = newDescription;
-                  }
-                  return device;
-                });
-                setDevices(newDevices);
+                const { name, description } = result.value as {
+                  name: string;
+                  description: string;
+                };
+                axios
+                  .patch(
+                    `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Things(${row["@iot.id"]})`,
+                    {
+                      name: name,
+                      description: description,
+                    },
+                    {
+                      headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${keycloak?.token}`,
+                      },
+                    }
+                  )
+                  .then((response) => {
+                    if (response.status === 200) {
+                      const newDevices = devices.map((device) => {
+                        if (device["@iot.id"] === row["@iot.id"]) {
+                          device.name = name;
+                          device.description = description;
+                        }
+                        return device;
+                      });
+                      setDevices(newDevices);
+                      Swal.fire({
+                        icon: "success",
+                        title: "Success",
+                        text: "Device edited successfully!",
+                      });
+                    } else {
+                      Swal.fire({
+                        icon: "error",
+                        title: "Oops...",
+                        text: "Something went wrong! Device not edited!",
+                      });
+                    }
+                  })
+                  .catch((error) => {
+                    Swal.fire({
+                      icon: "error",
+                      title: "Oops...",
+                      text: "Something went wrong! Device not edited!",
+                    });
+                  });
               }
             });
           }}
