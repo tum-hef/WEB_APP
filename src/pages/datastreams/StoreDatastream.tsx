@@ -225,7 +225,7 @@ function StoreDatastream() {
                   required
                   id="observationType"
                   name="observationType"
-                  label="observationType"
+                  label="Observation Type"
                   fullWidth
                   value={formik.values.observationType}
                   onChange={formik.handleChange}
@@ -388,6 +388,7 @@ function StoreDatastream() {
               type="submit"
               style={{
                 marginTop: "10px",
+                backgroundColor: "#233044",
               }}
               fullWidth
               variant="contained"

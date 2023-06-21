@@ -191,6 +191,7 @@ function StoreObservationProerties() {
               type="submit"
               style={{
                 marginTop: "10px",
+                backgroundColor: "#233044",
               }}
               fullWidth
               variant="contained"

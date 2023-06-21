@@ -2,17 +2,18 @@ import React, { useEffect, useState } from "react";
 import { Form, Formik } from "formik";
 import Dashboard from "../components/DashboardComponent";
 import * as yup from "yup";
+import CreateOutlinedIcon from "@mui/icons-material/CreateOutlined";
 import {
   Stepper,
   Step,
   StepLabel,
   CircularProgress,
   Grid,
-  MenuItem,
   TextField,
   Button,
   Typography,
   Breadcrumbs,
+  Divider,
 } from "@mui/material";
 import axios from "axios";
 import { useKeycloak } from "@react-keycloak/web";
@@ -20,9 +21,9 @@ import Swal from "sweetalert2";
 
 const steps = [
   "Store Device",
-  // "Store Sensor",
-  "Store ObserveProperty",
+  "Store Observed Property",
   "Store Datastream",
+  "Data Confirmation",
 ];
 
 const getValidationSchemaPerStep = (step: number) => {
@@ -750,6 +751,297 @@ function StepperStore() {
                     </Grid>
                   </Grid>
                 )}
+                {/* Data Confirmation Step */}
+                {activeStep === 3 && (
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} md={12}>
+                      <Typography variant="h2" gutterBottom>
+                        Device Information{" "}
+                        <Button
+                          variant="outlined"
+                          color="primary"
+                          onClick={() => {
+                            setActiveStep(0);
+                          }}
+                        >
+                          <CreateOutlinedIcon />
+                        </Button>
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} md={4}>
+                      <Typography gutterBottom>
+                        <span
+                          style={{
+                            fontWeight: "bold",
+                            color: "#233044",
+                          }}
+                        >
+                          {" "}
+                          Device Name:
+                        </span>{" "}
+                        {values.device_name}
+                      </Typography>
+                    </Grid>{" "}
+                    <Grid item xs={12} md={4}>
+                      <Typography gutterBottom>
+                        <span
+                          style={{
+                            fontWeight: "bold",
+                            color: "#233044",
+                          }}
+                        >
+                          {" "}
+                          Device Description:
+                        </span>{" "}
+                        {values.device_description}
+                      </Typography>
+                    </Grid>{" "}
+                    <Grid item xs={12} md={4}>
+                      <Typography gutterBottom>
+                        <span
+                          style={{
+                            fontWeight: "bold",
+                            color: "#233044",
+                          }}
+                        >
+                          {" "}
+                          Device Location Name:
+                        </span>{" "}
+                        {values.device_location_name}
+                      </Typography>
+                    </Grid>{" "}
+                    <Grid item xs={12} md={4}>
+                      <Typography gutterBottom>
+                        <span
+                          style={{
+                            fontWeight: "bold",
+                            color: "#233044",
+                          }}
+                        >
+                          {" "}
+                          Device Location Description:
+                        </span>{" "}
+                        {values.device_location_description}
+                      </Typography>
+                    </Grid>{" "}
+                    <Grid item xs={12} md={4}>
+                      <Typography gutterBottom>
+                        <span
+                          style={{
+                            fontWeight: "bold",
+                            color: "#233044",
+                          }}
+                        >
+                          {" "}
+                          Device Location Description:
+                        </span>{" "}
+                        {values.device_location_description}
+                      </Typography>
+                    </Grid>{" "}
+                    <Grid item xs={12} md={4}>
+                      <Typography gutterBottom>
+                        <span
+                          style={{
+                            fontWeight: "bold",
+                            color: "#233044",
+                          }}
+                        >
+                          {" "}
+                          Device Latitude:
+                        </span>{" "}
+                        {values.device_latitude}
+                      </Typography>
+                    </Grid>{" "}
+                    <Grid item xs={12} md={4}>
+                      <Typography gutterBottom>
+                        <span
+                          style={{
+                            fontWeight: "bold",
+                            color: "#233044",
+                          }}
+                        >
+                          {" "}
+                          Device Longitude:
+                        </span>{" "}
+                        {values.device_longitude}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} md={12}>
+                      <Divider
+                        style={{
+                          marginTop: "20px",
+                          marginBottom: "20px",
+                          width: "100%",
+                        }}
+                      />
+                    </Grid>{" "}
+                    <Grid item xs={12} md={12}>
+                      <Typography variant="h2" gutterBottom>
+                        Observed Property Information{" "}
+                        <Button
+                          variant="outlined"
+                          color="primary"
+                          onClick={() => {
+                            setActiveStep(1);
+                          }}
+                        >
+                          <CreateOutlinedIcon />
+                        </Button>
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} md={4}>
+                      <Typography gutterBottom>
+                        <span
+                          style={{
+                            fontWeight: "bold",
+                            color: "#233044",
+                          }}
+                        >
+                          {" "}
+                          Device Name:
+                        </span>{" "}
+                        {values.observeProperty_name}
+                      </Typography>
+                    </Grid>{" "}
+                    <Grid item xs={12} md={4}>
+                      <Typography gutterBottom>
+                        <span
+                          style={{
+                            fontWeight: "bold",
+                            color: "#233044",
+                          }}
+                        >
+                          {" "}
+                          Observed Property Name:{" "}
+                        </span>{" "}
+                        {values.observeProperty_definition}
+                      </Typography>
+                    </Grid>{" "}
+                    <Grid item xs={12} md={4}>
+                      <Typography gutterBottom>
+                        <span
+                          style={{
+                            fontWeight: "bold",
+                            color: "#233044",
+                          }}
+                        >
+                          {" "}
+                          Observed Property Name:{" "}
+                        </span>{" "}
+                        {values.observeProperty_description}
+                      </Typography>
+                    </Grid>{" "}
+                    <Grid item xs={12} md={12}>
+                      <Divider
+                        style={{
+                          marginTop: "20px",
+                          marginBottom: "20px",
+                          width: "100%",
+                        }}
+                      />
+                    </Grid>
+                    {/* Datastream */}
+                    <Grid item xs={12} md={12}>
+                      <Typography variant="h2" gutterBottom>
+                        Datastream Information{" "}
+                        <Button
+                          variant="outlined"
+                          color="primary"
+                          onClick={() => {
+                            setActiveStep(2);
+                          }}
+                        >
+                          <CreateOutlinedIcon />
+                        </Button>
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} md={4}>
+                      <Typography gutterBottom>
+                        <span
+                          style={{
+                            fontWeight: "bold",
+                            color: "#233044",
+                          }}
+                        >
+                          {" "}
+                          Datastream Name:
+                        </span>{" "}
+                        {values.datastream_name}
+                      </Typography>
+                    </Grid>{" "}
+                    <Grid item xs={12} md={4}>
+                      <Typography gutterBottom>
+                        <span
+                          style={{
+                            fontWeight: "bold",
+                            color: "#233044",
+                          }}
+                        >
+                          {" "}
+                          Datastream Description:
+                        </span>{" "}
+                        {values.datastram_description}
+                      </Typography>
+                    </Grid>{" "}
+                    <Grid item xs={12} md={4}>
+                      <Typography gutterBottom>
+                        <span
+                          style={{
+                            fontWeight: "bold",
+                            color: "#233044",
+                          }}
+                        >
+                          {" "}
+                          Datastream Observation Type:
+                        </span>{" "}
+                        {values.datastream_observation_type}
+                      </Typography>
+                    </Grid>{" "}
+                    <Grid item xs={12} md={4}>
+                      <Typography gutterBottom>
+                        <span
+                          style={{
+                            fontWeight: "bold",
+                            color: "#233044",
+                          }}
+                        >
+                          {" "}
+                          Datastream Unit of Measurement Name:
+                        </span>{" "}
+                        {values.datastream_unit_of_measurement_name}
+                      </Typography>
+                    </Grid>{" "}
+                    <Grid item xs={12} md={4}>
+                      <Typography gutterBottom>
+                        <span
+                          style={{
+                            fontWeight: "bold",
+                            color: "#233044",
+                          }}
+                        >
+                          {" "}
+                          Datastream Unit of Measurement Symbol:
+                        </span>{" "}
+                        {values.datastream_unit_of_measurement_symbol}
+                      </Typography>
+                    </Grid>{" "}
+                    <Grid item xs={12} md={4}>
+                      <Typography gutterBottom>
+                        <span
+                          style={{
+                            fontWeight: "bold",
+                            color: "#233044",
+                          }}
+                        >
+                          {" "}
+                          Datastream Unit of Measurement Definition:
+                        </span>{" "}
+                        {values.datastream_unit_of_measurement_definition}
+                      </Typography>
+                    </Grid>{" "}
+                  </Grid>
+                )}
+                {/* Stepper Controls */}
                 <Grid container spacing={2} justifyContent="center" mt={10}>
                   {activeStep > 0 && (
                     <Grid item>
