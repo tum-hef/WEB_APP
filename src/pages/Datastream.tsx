@@ -69,7 +69,6 @@ const Datastreams = () => {
     } else {
       fetchFrostPort();
     }
-    setLoading(true);
     setLoading(false);
   }, [frostServerPort]);
 

@@ -70,7 +70,6 @@ function Register() {
             // password: values.password,
           })
           .then((response) => {
-            console.log(JSON.stringify(response));
             if (response.status === 200) {
               Swal.fire(
                 "Good job!",

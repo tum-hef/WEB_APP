@@ -175,7 +175,6 @@ function StoreDatastream() {
             </LinkCustom>
             <Typography color="text.primary">Store</Typography>
           </Breadcrumbs>
-          {JSON.stringify(formik.values)}
           <Typography
             variant="h4"
             style={{

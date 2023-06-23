@@ -88,7 +88,6 @@ export default function DataSpace() {
         },
       })
       .then((res) => {
-        console.log(JSON.stringify(res.data.value.length));
         if (res.status === 200 && res.data.value.length) {
           setDatastreamSize(res.data.value.length);
         }

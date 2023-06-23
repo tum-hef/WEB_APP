@@ -21,7 +21,6 @@ const Devices = () => {
 
   const fetchThings = () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
-    console.log(backend_url);
     axios
       .get(`${backend_url}:${frostServerPort}/FROST-Server/v1.0/Things`, {
         headers: {
@@ -34,10 +33,6 @@ const Devices = () => {
           console.log(res.data.value);
           setDevices(res.data.value);
         }
-      })
-      .catch((err) => {
-        console.log(err);
-        toast.error("Error Getting Things");
       });
   };
 
