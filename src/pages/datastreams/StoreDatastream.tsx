@@ -328,7 +328,7 @@ function StoreDatastream() {
                     formik.setFieldValue("sensor_id", event.target.value);
                   }}
                   variant="outlined"
-                  label="Sensors"
+                  label="Sensor Types"
                   error={!!formik.errors.sensor_id}
                   InputLabelProps={{ shrink: true }}
                   helperText={formik.errors.sensor_id}
@@ -370,7 +370,7 @@ function StoreDatastream() {
                   value={formik.values.observation_property_id}
                   onChange={formik.handleChange}
                   variant="outlined"
-                  label="Observation Property"
+                  label="Measurement property ID"
                   error={!!formik.errors.observation_property_id}
                   InputLabelProps={{ shrink: true }}
                   helperText={formik.errors.observation_property_id}

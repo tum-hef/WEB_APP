@@ -40,7 +40,7 @@ const ListObservationProperty = () => {
       })
       .catch((err) => {
         console.log(err);
-        toast.error("Error Getting Observation Property");
+        toast.error("Error Getting Measurement Property");
       });
   };
 
@@ -103,11 +103,11 @@ const ListObservationProperty = () => {
           }}
           onClick={() => {
             Swal.fire({
-              title: "Edit Observation Property Description",
+              title: "Edit Measurement property Description",
               input: "text",
-              inputLabel: "New Observation Property Description",
+              inputLabel: "New Measurement property Description",
               inputPlaceholder:
-                "Enter the new Observation Property description",
+                "Enter the new Measurement Property description",
               inputValue: row.description,
               showCancelButton: true,
               confirmButtonText: "Save",
@@ -119,7 +119,7 @@ const ListObservationProperty = () => {
               if (result.isConfirmed) {
                 const newDescription = result.value;
                 Swal.fire(
-                  `New Observation Property description: ${newDescription}`
+                  `New Measurement Property description: ${newDescription}`
                 );
                 const newObservationProperty = observationProperty.map(
                   (observation_property) => {
@@ -149,7 +149,7 @@ const ListObservationProperty = () => {
           onClick={() => {
             Swal.fire({
               title: `Are you sure you want to delete ${row.name}?`,
-              text: "You will not be able to recover this Observation Property!",
+              text: "You will not be able to recover this Measurement Property!",
               icon: "warning",
               showCancelButton: true,
               confirmButtonColor: "#3085d6",
@@ -172,7 +172,7 @@ const ListObservationProperty = () => {
                     Swal.fire({
                       icon: "success",
                       title: "Success",
-                      text: "Observation Property deleted successfully!",
+                      text: "Measurement Property deleted successfully!",
                     });
                     const newObservationProperty = observationProperty.filter(
                       (observation_property) =>
@@ -183,14 +183,14 @@ const ListObservationProperty = () => {
                     Swal.fire({
                       icon: "error",
                       title: "Oops...",
-                      text: "Something went wrong! Observation Property not deleted!",
+                      text: "Something went wrong! Measurement Property not deleted!",
                     });
                   }
                 } catch (error) {
                   Swal.fire({
                     icon: "error",
                     title: "Oops...",
-                    text: "Something went wrong! Observation Property not deleted!",
+                    text: "Something went wrong! Measurement Property not deleted!",
                   });
                 }
               }
@@ -245,7 +245,7 @@ const ListObservationProperty = () => {
         }}
       >
         <LinkCustom to="/data-spaces">Data Streams</LinkCustom>
-        <Typography color="text.primary">Observation Property</Typography>
+        <Typography color="text.primary">Measurement Property</Typography>
       </Breadcrumbs>
 
       <LinkCustom to="/observation_properties/store">
@@ -260,7 +260,7 @@ const ListObservationProperty = () => {
         </Button>
       </LinkCustom>
       <DataTable
-        title="Observation Property"
+        title="Measurement Property"
         columns={columns}
         data={observationProperty}
         expandableRows

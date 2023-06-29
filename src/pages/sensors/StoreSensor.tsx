@@ -112,7 +112,7 @@ function StoreSensor() {
           >
             <Typography color="text.primary">Data Space</Typography>
             <LinkCustom color="inherit" to="/sensors">
-              <Typography color="text.primary">Sensors</Typography>
+              <Typography color="text.primary">Sensor Types</Typography>
             </LinkCustom>
             <Typography color="text.primary">Store</Typography>
           </Breadcrumbs>
@@ -122,7 +122,7 @@ function StoreSensor() {
               textAlign: "center",
             }}
           >
-            Store Sensor
+            Store Sensor Type
           </Typography>
           <form onSubmit={formik.handleSubmit}>
             <Typography variant="h6" gutterBottom>

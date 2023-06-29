@@ -55,20 +55,20 @@ function StoreObservationProerties() {
           Swal.fire({
             icon: "success",
             title: "Success",
-            text: "Observation Property created successfully!",
+            text: "Measurement Property created successfully!",
           });
         } else {
           Swal.fire({
             icon: "error",
             title: "Oops...",
-            text: "Something went wrong! Observation Property not created!",
+            text: "Something went wrong! Measurement Property not created!",
           });
         }
       } catch (error) {
         Swal.fire({
           icon: "error",
           title: "Oops...",
-          text: "Something went wrong! Observation Property not created!",
+          text: "Something went wrong! Measurement Property not created!",
         });
       }
     },
@@ -120,7 +120,7 @@ function StoreObservationProerties() {
           >
             <Typography color="text.primary">Data Space</Typography>
             <LinkCustom to="/observation_properties">
-              <Typography color="text.primary">Observation Property</Typography>
+              <Typography color="text.primary">Measurement Property</Typography>
             </LinkCustom>
             <Typography color="text.primary">Store</Typography>
           </Breadcrumbs>
@@ -130,11 +130,11 @@ function StoreObservationProerties() {
               textAlign: "center",
             }}
           >
-            Store Observation Property
+            Store Measurement Property
           </Typography>
           <form onSubmit={formik.handleSubmit}>
             <Typography variant="h6" gutterBottom>
-              Observation Property Information
+              Measurement Property Information
             </Typography>
             <Grid container spacing={2}>
               <Grid item xs={12} sm={4}>

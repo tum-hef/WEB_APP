@@ -236,7 +236,7 @@ const ListSensors = () => {
         }}
       >
         <LinkCustom to="/data-spaces">Data Streams</LinkCustom>
-        <Typography color="text.primary">Sensors</Typography>
+        <Typography color="text.primary">Sensor Types</Typography>
       </Breadcrumbs>
 
       <LinkCustom to="/sensors/store">
@@ -251,7 +251,7 @@ const ListSensors = () => {
         </Button>
       </LinkCustom>
       <DataTable
-        title="Sensors"
+        title="Sensor Types"
         columns={columns}
         data={sensors}
         expandableRows

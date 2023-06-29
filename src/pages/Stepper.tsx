@@ -26,7 +26,7 @@ import { toast } from "react-toastify";
 
 const steps = [
   "Store Device",
-  "Store Observed Property",
+  "Store Measurement Property",
   "Store Datastream",
   "Summary",
 ];
@@ -68,6 +68,18 @@ const getValidationSchemaPerStep = (step: number) => {
           .when("observedProperty_existing_id", {
             is: (val: any) => val === undefined,
             then: yup.string().required("Name is required"),
+          }),
+        observeProperty_description: yup
+          .string()
+          .when("observedProperty_existing_id", {
+            is: (val: any) => val === undefined,
+            then: yup.string().required("Description is required"),
+          }),
+        observeProperty_definition: yup
+          .string()
+          .when("observedProperty_existing_id", {
+            is: (val: any) => val === undefined,
+            then: yup.string().required("Definition is required"),
           }),
       });
 
@@ -168,7 +180,7 @@ function StepperStore() {
             })
             .catch((err) => {
               console.log(err);
-              toast.error("Error Getting Observed Properties");
+              toast.error("Error Getting Measurement Properties");
             });
         }
       })
@@ -462,20 +474,20 @@ function StepperStore() {
                     Swal.fire({
                       icon: "success",
                       title: "Success!",
-                      text: "Device, Observed Property, Sensor and Datastream created!",
+                      text: "Device, Measurement Property, Sensor and Datastream created!",
                     });
                   } else {
                     Swal.fire({
                       icon: "error",
                       title: "Oops...",
-                      text: "Something went wrong! Device, Observed Property, Sensor and Datastream not created!",
+                      text: "Something went wrong! Device, Measurement Property, Sensor and Datastream not created!",
                     });
                   }
                 } catch (error) {
                   Swal.fire({
                     icon: "error",
                     title: "Oops...",
-                    text: "Something went wrong! Device, Observed Property, Sensor and Datastream not created!",
+                    text: "Something went wrong! Device, Measurement Property, Sensor and Datastream not created!",
                   });
                 }
                 setLoading(false);
@@ -539,7 +551,7 @@ function StepperStore() {
                                 setUseExistingDevice(false);
                               }
                             }}
-                            label="Existing Device"
+                            label="Do you want to use a device as a reference?"
                             variant="outlined"
                           >
                             <MenuItem value={"yes"}>Yes</MenuItem>
@@ -595,6 +607,7 @@ function StepperStore() {
                               fullWidth
                               label="Device Name"
                               name="device_name"
+                              required
                               onChange={handleChange}
                               value={values.device_name}
                               variant="outlined"
@@ -610,6 +623,7 @@ function StepperStore() {
                           <Grid item xs={12} md={6}>
                             <TextField
                               fullWidth
+                              required
                               label="Device Description"
                               name="device_description"
                               onChange={handleChange}
@@ -630,6 +644,7 @@ function StepperStore() {
                               fullWidth
                               label="Device Location"
                               name="device_location_name"
+                              required
                               onChange={handleChange}
                               value={values.device_location_name}
                               variant="outlined"
@@ -648,6 +663,7 @@ function StepperStore() {
                               fullWidth
                               label="Location Description"
                               name="device_location_description"
+                              required
                               onChange={handleChange}
                               value={values.device_location_description}
                               variant="outlined"
@@ -666,6 +682,7 @@ function StepperStore() {
                               fullWidth
                               label="Latitude"
                               name="device_latitude"
+                              required
                               onChange={handleChange}
                               value={values.device_latitude}
                               variant="outlined"
@@ -683,6 +700,7 @@ function StepperStore() {
                             <TextField
                               fullWidth
                               label="Longitude"
+                              required
                               name="device_longitude"
                               onChange={handleChange}
                               value={values.device_longitude}
@@ -710,7 +728,7 @@ function StepperStore() {
                           fullWidth
                           name=""
                           value={values.observedProperty_existing_id}
-                          label="Existing Observed Property"
+                          label="Existing Measurement Property"
                           variant="outlined"
                           onChange={(event) => {
                             if (event.target.value) {
@@ -749,6 +767,7 @@ function StepperStore() {
                             <TextField
                               fullWidth
                               label="Name"
+                              required={!values.observedProperty_existing_id}
                               name="observeProperty_name"
                               onChange={handleChange}
                               value={values.observeProperty_name}
@@ -766,6 +785,7 @@ function StepperStore() {
                           <Grid item xs={12} md={6}>
                             <TextField
                               fullWidth
+                              required={!values.observedProperty_existing_id}
                               label="Definition"
                               name="observeProperty_definition"
                               onChange={handleChange}
@@ -785,6 +805,7 @@ function StepperStore() {
                             <TextField
                               fullWidth
                               label="Description"
+                              required={!values.observedProperty_existing_id}
                               name="observeProperty_description"
                               onChange={handleChange}
                               value={values.observeProperty_description}
@@ -809,6 +830,7 @@ function StepperStore() {
                       <Grid item xs={12} md={6}>
                         <TextField
                           fullWidth
+                          required
                           label="Datastream Name"
                           name="datastream_name"
                           onChange={handleChange}
@@ -822,6 +844,22 @@ function StepperStore() {
                             touched.datastream_name && errors.datastream_name
                           }
                         />
+                      </Grid>{" "}
+                      <Grid item xs={12} md={12}>
+                        {/* create a button that generates a generic datastream name */}
+                        <Button
+                          onClick={() => {
+                            setFieldValue(
+                              "datastream_name",
+                              "datastream_" +
+                                values.device_name +
+                                "_" +
+                                values.observeProperty_name
+                            );
+                          }}
+                        >
+                          Generate Datastream Name
+                        </Button>
                       </Grid>
                       <Grid item xs={12} md={12}>
                         <Button
@@ -1086,7 +1124,7 @@ function StepperStore() {
                       </Grid>{" "}
                       <Grid item xs={12} md={12}>
                         <Typography variant="h2" gutterBottom>
-                          Observed Property Information{" "}
+                          Measurement Property Information{" "}
                           <Button
                             variant="outlined"
                             color="primary"
@@ -1109,7 +1147,7 @@ function StepperStore() {
                                 }}
                               >
                                 {" "}
-                                Existing Observed Property ID:{" "}
+                                Existing Measurement Property ID:{" "}
                               </span>{" "}
                               {values.observedProperty_existing_id}
                             </Typography>
@@ -1140,7 +1178,7 @@ function StepperStore() {
                                 }}
                               >
                                 {" "}
-                                Observed Property Name:{" "}
+                                Measurement Property Name:{" "}
                               </span>{" "}
                               {values.observeProperty_definition}
                             </Typography>
@@ -1154,7 +1192,7 @@ function StepperStore() {
                                 }}
                               >
                                 {" "}
-                                Observed Property Name:{" "}
+                                Measurement Property Name:{" "}
                               </span>{" "}
                               {values.observeProperty_description}
                             </Typography>
@@ -1338,7 +1376,7 @@ function StepperStore() {
                                   Swal.fire({
                                     icon: "error",
                                     title: "Oops...",
-                                    text: "Observed Property name is already taken, please choose another one",
+                                    text: "Measurement Property name is already taken, please choose another one",
                                   });
                                   setActiveStep(1);
                                 }

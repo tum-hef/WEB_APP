@@ -38,6 +38,7 @@ import ListObservationProperty from "../pages/observation_property/ListObservati
 import StoreObservationProerties from "../pages/observation_property/StoreObservationProerties";
 import StoreDatastream from "../pages/datastreams/StoreDatastream";
 import ListObservations from "../pages/observations/ListLocation";
+import QuickDataEntry from "../pages/QuickDataEntry";
 const styles = {
   container: {
     height: "100%",
@@ -58,7 +59,6 @@ const AppRouter = (props: any) => {
 
   const { classes } = props;
   const { theme } = useTheme();
-
 
   if (!initialized) {
     return (
@@ -107,6 +107,11 @@ const AppRouter = (props: any) => {
                     component={StepperStore}
                   />
                   <PrivateRoute exact path="/groups" component={Groups} />
+                  <PrivateRoute
+                    exact
+                    path="/quick_data_entry"
+                    component={QuickDataEntry}
+                  />
                   {/* Devices */}
                   <PrivateRoute exact path="/devices" component={Devices} />
                   <PrivateRoute

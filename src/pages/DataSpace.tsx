@@ -220,7 +220,7 @@ export default function DataSpace() {
             <Grid item xs={12} sm={6} md={4} lg={4}>
               <CardDataSpace
                 redirection_path="sensors"
-                card_name="Sensors"
+                card_name="Sensor Types"
                 Icon={
                   <DeviceThermostatIcon
                     style={{
@@ -234,7 +234,7 @@ export default function DataSpace() {
             <Grid item xs={12} sm={6} md={4} lg={4}>
               <CardDataSpace
                 redirection_path="observation_properties"
-                card_name="Observed Properties"
+                card_name="Measurement property"
                 Icon={
                   <PersonSearchIcon
                     style={{

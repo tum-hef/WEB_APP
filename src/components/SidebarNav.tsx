@@ -3,7 +3,7 @@ import styled, { css } from "styled-components/macro";
 import ReactPerfectScrollbar from "react-perfect-scrollbar";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
-
+import DisplaySettingsIcon from "@mui/icons-material/DisplaySettings";
 import { SidebarItemsType } from "../types/sidebar";
 import {
   Collapse,
@@ -172,7 +172,31 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
           </ListItemButton>
           <Collapse in={openDataSpace} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
-              <LinkCustom to="/devices">
+              {group_id && (
+                <LinkCustom to={`/data-spaces/${group_id}`}>
+                  <ListItem key={"Data Specs"} disablePadding>
+                    <ListItemButton>
+                      <ListItemIcon>
+                        <DisplaySettingsIcon
+                          style={{
+                            color: "white",
+                            marginLeft: "20px",
+                          }}
+                        />
+                      </ListItemIcon>
+                      <ListItemText
+                        style={{
+                          color: "white",
+                        }}
+                        primaryTypographyProps={{ fontSize: "18px" }}
+                        primary={"Specs"}
+                      />
+                    </ListItemButton>
+                  </ListItem>
+                </LinkCustom>
+              )}
+
+              <LinkCustom to="/quick_data_entry">
                 <ListItem key={"Quick Data Entry"} disablePadding>
                   <ListItemButton>
                     <ListItemIcon>
@@ -261,7 +285,7 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
                     />
                   </ListItemIcon>
                   <ListItemText
-                    primary="Sensors"
+                    primary="Sensor Types"
                     style={{
                       color: "white",
                     }}
@@ -283,7 +307,7 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
                     />
                   </ListItemIcon>
                   <ListItemText
-                    primary="ObservedProp"
+                    primary="Measurement property"
                     style={{
                       color: "white",
                     }}
