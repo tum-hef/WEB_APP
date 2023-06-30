@@ -504,6 +504,7 @@ function StepperStore() {
               handleChange,
               values,
               setFieldValue,
+              setFieldError,
             }) => (
               <>
                 <Breadcrumbs
@@ -728,7 +729,7 @@ function StepperStore() {
                           fullWidth
                           name=""
                           value={values.observedProperty_existing_id}
-                          label="Existing Measurement Property"
+                          label="Do you want to use an existing Measurement Property?"
                           variant="outlined"
                           onChange={(event) => {
                             if (event.target.value) {
@@ -748,7 +749,7 @@ function StepperStore() {
                           }}
                         >
                           <MenuItem value="">
-                            <em>None</em>
+                            <em>No</em>
                           </MenuItem>
 
                           {ObservedProperties.map((item: any) => (
@@ -756,12 +757,13 @@ function StepperStore() {
                               key={item["@iot.id"]}
                               value={item["@iot.id"]}
                             >
-                              {item.name + " - " + item["@iot.id"]}
+                              {"Use " + item.name + " with ID: " + item["@iot.id"]}
                             </MenuItem>
                           ))}
                         </TextField>
                       </Grid>
-                      {values.observedProperty_existing_id === "" && (
+                      {(values.observedProperty_existing_id === "" ||
+                        values.observedProperty_existing_id == null) && (
                         <>
                           <Grid item xs={12} md={6}>
                             <TextField
@@ -1345,6 +1347,12 @@ function StepperStore() {
                               .then((response) => {
                                 console.log(response.data);
                                 if (response.data.value.length > 0) {
+                                  // make error on device name field name
+                                  setFieldError(
+                                    "device_name",
+                                    "Device name is already taken, please choose another one"
+                                  );
+
                                   Swal.fire({
                                     icon: "error",
                                     title: "Oops...",
@@ -1371,8 +1379,12 @@ function StepperStore() {
                                 }
                               )
                               .then((response) => {
-                                console.log(response.data);
                                 if (response.data.value.length > 0) {
+                                  setFieldError(
+                                    "observeProperty_name",
+                                    "Measurement Property name is already taken, please choose another one"
+                                  );
+
                                   Swal.fire({
                                     icon: "error",
                                     title: "Oops...",
@@ -1401,6 +1413,11 @@ function StepperStore() {
                               .then((response) => {
                                 console.log(response.data);
                                 if (response.data.value.length > 0) {
+                                  setFieldError(
+                                    "datastream_name",
+                                    "Datastream name is already taken, please choose another one"
+                                  );
+
                                   Swal.fire({
                                     icon: "error",
                                     title: "Oops...",
