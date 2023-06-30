@@ -63,23 +63,39 @@ const getValidationSchemaPerStep = (step: number) => {
     }
     case 1:
       return yup.object({
+        observed_property_using_existing: yup
+          .string()
+          .oneOf(["yes", "no"])
+          .required(),
+        observedProperty_existing_id: yup
+          .string()
+          .when("observed_property_using_existing", {
+            is: "yes",
+            then: yup
+              .string()
+              .required("The existing Measurement Property is required"),
+            otherwise: yup.string(),
+          }),
         observeProperty_name: yup
           .string()
-          .when("observedProperty_existing_id", {
-            is: (val: any) => val === undefined,
+          .when("observed_property_using_existing", {
+            is: "no",
             then: yup.string().required("Name is required"),
+            otherwise: yup.string(),
           }),
         observeProperty_description: yup
           .string()
-          .when("observedProperty_existing_id", {
-            is: (val: any) => val === undefined,
+          .when("observed_property_using_existing", {
+            is: "no",
             then: yup.string().required("Description is required"),
+            otherwise: yup.string(),
           }),
         observeProperty_definition: yup
           .string()
-          .when("observedProperty_existing_id", {
-            is: (val: any) => val === undefined,
-            then: yup.string().required("Definition is required"),
+          .when("observed_property_using_existing", {
+            is: "no",
+            then: yup.string().required("The Definition is required"),
+            otherwise: yup.string(),
           }),
       });
 
@@ -268,6 +284,7 @@ function StepperStore() {
 
               // Second Step
 
+              observed_property_using_existing: null,
               observedProperty_existing_id: "",
 
               observeProperty_name: "",
@@ -727,49 +744,101 @@ function StepperStore() {
                         <TextField
                           select
                           fullWidth
-                          name=""
-                          value={values.observedProperty_existing_id}
-                          label="Do you want to use an existing Measurement Property?"
+                          name="observed_property_using_existing"
+                          value={values.observed_property_using_existing}
+                          label="Do you want to choose an existing Measurement Property?"
                           variant="outlined"
                           onChange={(event) => {
-                            if (event.target.value) {
-                              setFieldValue(
-                                "observedProperty_existing_id",
-                                event.target.value
-                              );
+                            setFieldValue(
+                              "observed_property_using_existing",
+                              event.target.value
+                            );
+
+                            if (event.target.value === "yes") {
                               setFieldValue("observeProperty_name", "");
                               setFieldValue("observeProperty_description", "");
                               setFieldValue("observeProperty_definition", "");
-                            } else {
+                            } else if (event.target.value === "no") {
                               setFieldValue("observedProperty_existing_id", "");
-                              setFieldValue("observeProperty_name", "");
-                              setFieldValue("observeProperty_description", "");
-                              setFieldValue("observeProperty_definition", "");
                             }
                           }}
                         >
-                          <MenuItem value="">
-                            <em>No</em>
-                          </MenuItem>
-
-                          {ObservedProperties.map((item: any) => (
-                            <MenuItem
-                              key={item["@iot.id"]}
-                              value={item["@iot.id"]}
-                            >
-                              {"Use " + item.name + " with ID: " + item["@iot.id"]}
-                            </MenuItem>
-                          ))}
+                          <MenuItem value={"yes"}>Yes</MenuItem>
+                          <MenuItem value={"no"}>No</MenuItem>
                         </TextField>
-                      </Grid>
-                      {(values.observedProperty_existing_id === "" ||
-                        values.observedProperty_existing_id == null) && (
+                      </Grid>{" "}
+                      {values.observed_property_using_existing === "yes" && (
+                        <>
+                          <Grid item xs={12} md={6}>
+                            <TextField
+                              select
+                              fullWidth
+                              name="observedProperty_existing_id"
+                              value={values.observedProperty_existing_id}
+                              label="Choose the existing Measurement Property"
+                              variant="outlined"
+                              error={
+                                touched.observedProperty_existing_id &&
+                                Boolean(errors.observedProperty_existing_id)
+                              }
+                              helperText={
+                                touched.observedProperty_existing_id &&
+                                errors.observedProperty_existing_id
+                              }
+                              onChange={(event) => {
+                                if (event.target.value) {
+                                  setFieldValue(
+                                    "observedProperty_existing_id",
+                                    event.target.value
+                                  );
+                                  setFieldValue("observeProperty_name", "");
+                                  setFieldValue(
+                                    "observeProperty_description",
+                                    ""
+                                  );
+                                  setFieldValue(
+                                    "observeProperty_definition",
+                                    ""
+                                  );
+                                } else {
+                                  setFieldValue(
+                                    "observedProperty_existing_id",
+                                    ""
+                                  );
+                                  setFieldValue("observeProperty_name", "");
+                                  setFieldValue(
+                                    "observeProperty_description",
+                                    ""
+                                  );
+                                  setFieldValue(
+                                    "observeProperty_definition",
+                                    ""
+                                  );
+                                }
+                              }}
+                            >
+                              {ObservedProperties.map((item: any) => (
+                                <MenuItem
+                                  key={item["@iot.id"]}
+                                  value={item["@iot.id"]}
+                                >
+                                  {"Use " +
+                                    item.name +
+                                    " with ID: " +
+                                    item["@iot.id"]}
+                                </MenuItem>
+                              ))}
+                            </TextField>
+                          </Grid>
+                        </>
+                      )}
+                      {values.observed_property_using_existing === "no" && (
                         <>
                           <Grid item xs={12} md={6}>
                             <TextField
                               fullWidth
                               label="Name"
-                              required={!values.observedProperty_existing_id}
+                              // required={!values.observedProperty_existing_id}
                               name="observeProperty_name"
                               onChange={handleChange}
                               value={values.observeProperty_name}
@@ -787,7 +856,7 @@ function StepperStore() {
                           <Grid item xs={12} md={6}>
                             <TextField
                               fullWidth
-                              required={!values.observedProperty_existing_id}
+                              // required={!values.observedProperty_existing_id}
                               label="Definition"
                               name="observeProperty_definition"
                               onChange={handleChange}
@@ -807,7 +876,7 @@ function StepperStore() {
                             <TextField
                               fullWidth
                               label="Description"
-                              required={!values.observedProperty_existing_id}
+                              // required={!values.observedProperty_existing_id}
                               name="observeProperty_description"
                               onChange={handleChange}
                               value={values.observeProperty_description}
@@ -826,6 +895,7 @@ function StepperStore() {
                       )}
                     </Grid>
                   )}
+
                   {/* DataStream Step */}
                   {activeStep === 2 && (
                     <Grid container spacing={2}>
@@ -1138,7 +1208,8 @@ function StepperStore() {
                           </Button>
                         </Typography>
                       </Grid>
-                      {values.observedProperty_existing_id ? (
+                      {values.observedProperty_existing_id &&
+                      values.observed_property_using_existing === "yes" ? (
                         <>
                           <Grid item xs={12} md={4}>
                             <Typography gutterBottom>
@@ -1250,7 +1321,11 @@ function StepperStore() {
                             {" "}
                             Datastream Description:
                           </span>{" "}
-                          {values.datastram_description}
+                          {values.datastram_description ? (
+                            values.datastram_description
+                          ) : (
+                            <em>Not defined</em>
+                          )}
                         </Typography>
                       </Grid>{" "}
                       <Grid item xs={12} md={4}>
@@ -1264,7 +1339,11 @@ function StepperStore() {
                             {" "}
                             Datastream Observation Type:
                           </span>{" "}
-                          {values.datastream_observation_type}
+                          {values.datastream_observation_type ? (
+                            values.datastream_observation_type
+                          ) : (
+                            <em>Not defined</em>
+                          )}
                         </Typography>
                       </Grid>{" "}
                       <Grid item xs={12} md={4}>
@@ -1278,7 +1357,11 @@ function StepperStore() {
                             {" "}
                             Datastream Unit of Measurement Name:
                           </span>{" "}
-                          {values.datastream_unit_of_measurement_name}
+                          {values.datastream_unit_of_measurement_name ? (
+                            values.datastream_unit_of_measurement_name
+                          ) : (
+                            <em>Not defined</em>
+                          )}
                         </Typography>
                       </Grid>{" "}
                       <Grid item xs={12} md={4}>
@@ -1292,7 +1375,11 @@ function StepperStore() {
                             {" "}
                             Datastream Unit of Measurement Symbol:
                           </span>{" "}
-                          {values.datastream_unit_of_measurement_symbol}
+                          {values.datastream_unit_of_measurement_symbol ? (
+                            values.datastream_unit_of_measurement_symbol
+                          ) : (
+                            <em>Not defined</em>
+                          )}
                         </Typography>
                       </Grid>{" "}
                       <Grid item xs={12} md={4}>
@@ -1306,7 +1393,11 @@ function StepperStore() {
                             {" "}
                             Datastream Unit of Measurement Definition:
                           </span>{" "}
-                          {values.datastream_unit_of_measurement_definition}
+                          {values.datastream_unit_of_measurement_definition ? (
+                            values.datastream_unit_of_measurement_definition
+                          ) : (
+                            <em>Not defined</em>
+                          )}
                         </Typography>
                       </Grid>{" "}
                     </Grid>
