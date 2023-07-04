@@ -288,20 +288,10 @@ const Devices = () => {
           marginBottom: "10px",
         }}
       >
-        <LinkCustom to="/data-spaces">Data Streams</LinkCustom>
+        <LinkCustom to="/">Data Space</LinkCustom>
+        <LinkCustom to="/frost_entities">Frost Entities</LinkCustom>
         <Typography color="text.primary">Devices</Typography>
       </Breadcrumbs>
-      <LinkCustom to="/stepper">
-        <Button
-          variant="contained"
-          color="primary"
-          style={{
-            marginBottom: "10px",
-          }}
-        >
-          Stepper{" "}
-        </Button>
-      </LinkCustom>{" "}
       <LinkCustom to="/devices/store">
         <Button
           variant="contained"

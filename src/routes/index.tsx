@@ -28,7 +28,6 @@ import Impressum from "../pages/impressum";
 import Register from "../pages/Register";
 import StepperStore from "../pages/Stepper";
 import ListClients from "../pages/ListClients";
-import { toast } from "react-toastify";
 import StoreDevice from "../pages/devices/StoreDevice";
 import ListSensors from "../pages/sensors/ListSensors";
 import StoreSensor from "../pages/sensors/StoreSensor";
@@ -38,7 +37,7 @@ import ListObservationProperty from "../pages/observation_property/ListObservati
 import StoreObservationProerties from "../pages/observation_property/StoreObservationProerties";
 import StoreDatastream from "../pages/datastreams/StoreDatastream";
 import ListObservations from "../pages/observations/ListLocation";
-import QuickDataEntry from "../pages/QuickDataEntry";
+import FrostEntities from "../pages/QuickDataEntry";
 const styles = {
   container: {
     height: "100%",
@@ -109,8 +108,8 @@ const AppRouter = (props: any) => {
                   <PrivateRoute exact path="/groups" component={Groups} />
                   <PrivateRoute
                     exact
-                    path="/quick_data_entry"
-                    component={QuickDataEntry}
+                    path="/frost_entities"
+                    component={FrostEntities}
                   />
                   {/* Devices */}
                   <PrivateRoute exact path="/devices" component={Devices} />

@@ -174,7 +174,7 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
             <List component="div" disablePadding>
               {group_id && (
                 <LinkCustom to={`/data-spaces/${group_id}`}>
-                  <ListItem key={"Data Specs"} disablePadding>
+                  <ListItem key={"Data Entry"} disablePadding>
                     <ListItemButton>
                       <ListItemIcon>
                         <DisplaySettingsIcon
@@ -189,34 +189,13 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
                           color: "white",
                         }}
                         primaryTypographyProps={{ fontSize: "18px" }}
-                        primary={"Specs"}
+                        primary={"Data Entry"}
                       />
                     </ListItemButton>
                   </ListItem>
                 </LinkCustom>
               )}
 
-              <LinkCustom to="/quick_data_entry">
-                <ListItem key={"Quick Data Entry"} disablePadding>
-                  <ListItemButton>
-                    <ListItemIcon>
-                      <ElectricBoltIcon
-                        style={{
-                          color: "white",
-                          marginLeft: "20px",
-                        }}
-                      />
-                    </ListItemIcon>
-                    <ListItemText
-                      style={{
-                        color: "white",
-                      }}
-                      primaryTypographyProps={{ fontSize: "18px" }}
-                      primary={"Quick Data Entry"}
-                    />
-                  </ListItemButton>
-                </ListItem>
-              </LinkCustom>
               <ListItemButton onClick={handleFrostEntities}>
                 <ListItemIcon>
                   <MenuOutlinedIcon

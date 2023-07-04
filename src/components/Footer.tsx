@@ -70,7 +70,7 @@ function Footer() {
             </LinkCustom>
           </List>{" "}
           <List>
-            <LinkCustom to={"impressum"}>
+            <LinkCustom to={"/impressum"}>
               <ListItemButton>
                 <ListItemText
                   disableTypography

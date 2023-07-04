@@ -1,15 +1,4 @@
-import {
-  Box,
-  Breadcrumbs,
-  Button,
-  Card,
-  CardActions,
-  CardContent,
-  Grid,
-  Paper,
-  Typography,
-} from "@mui/material";
-import React from "react";
+import { Breadcrumbs, Grid, Paper, Typography } from "@mui/material";
 import LinkCustom from "../components/LinkCustom";
 import Dashboard from "../components/DashboardComponent";
 import axios from "axios";
@@ -18,14 +7,10 @@ import { useKeycloak } from "@react-keycloak/web";
 import { toast } from "react-toastify";
 import { useParams } from "react-router-dom";
 import { NOTFOUND } from "./404";
-import TabletAndroidIcon from "@mui/icons-material/TabletAndroid";
-import DeviceThermostatIcon from "@mui/icons-material/DeviceThermostat";
-import FolderSpecialIcon from "@mui/icons-material/FolderSpecial";
-import LocationOnIcon from "@mui/icons-material/LocationOn";
-import PersonSearchIcon from "@mui/icons-material/PersonSearch";
 import BiotechSharpIcon from "@mui/icons-material/BiotechSharp";
-import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
+import DriveFileRenameOutlineIcon from "@mui/icons-material/DriveFileRenameOutline";
 import CardDataSpace from "../components/CardDataSpace";
+
 export default function DataSpace() {
   const { keycloak } = useKeycloak();
   const [datasteamSize, setDatastreamSize] = useState<number>(0);
@@ -200,15 +185,16 @@ export default function DataSpace() {
             }}
           >
             {" "}
-            <Typography color="text.primary">Data Space</Typography>
+            <LinkCustom to="/">Data Space</LinkCustom>
+            <Typography color="text.primary">Specs</Typography>
           </Breadcrumbs>
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={6} md={4} lg={4}>
+            <Grid item xs={12} sm={6} md={6} lg={6}>
               <CardDataSpace
-                redirection_path="devices"
-                card_name="Devices"
+                redirection_path="stepper"
+                card_name="Stepper"
                 Icon={
-                  <TabletAndroidIcon
+                  <DriveFileRenameOutlineIcon
                     style={{
                       fontSize: 30,
                       marginTop: "10px",
@@ -217,63 +203,7 @@ export default function DataSpace() {
                 }
               />
             </Grid>
-            <Grid item xs={12} sm={6} md={4} lg={4}>
-              <CardDataSpace
-                redirection_path="sensors"
-                card_name="Sensor Types"
-                Icon={
-                  <DeviceThermostatIcon
-                    style={{
-                      fontSize: 30,
-                      marginTop: "10px",
-                    }}
-                  />
-                }
-              />
-            </Grid>
-            <Grid item xs={12} sm={6} md={4} lg={4}>
-              <CardDataSpace
-                redirection_path="observation_properties"
-                card_name="Measurement property"
-                Icon={
-                  <PersonSearchIcon
-                    style={{
-                      fontSize: 30,
-                      marginTop: "10px",
-                    }}
-                  />
-                }
-              />
-            </Grid>
-            <Grid item xs={12} sm={6} md={4} lg={4}>
-              <CardDataSpace
-                redirection_path="datastreams"
-                card_name="Datastreams"
-                Icon={
-                  <FolderSpecialIcon
-                    style={{
-                      fontSize: 30,
-                      marginTop: "10px",
-                    }}
-                  />
-                }
-              />
-            </Grid>
-            <Grid item xs={12} sm={6} md={4} lg={4}>
-              <CardDataSpace
-                redirection_path="locations"
-                card_name="Locations"
-                Icon={
-                  <LocationOnIcon
-                    style={{
-                      fontSize: 30,
-                      marginTop: "10px",
-                    }}
-                  />
-                }
-              />
-            </Grid>
-            <Grid item xs={12} sm={6} md={4} lg={4}>
+            <Grid item xs={12} sm={6} md={6} lg={6}>
               <CardDataSpace
                 redirection_path="observations"
                 card_name="Observations"
@@ -288,6 +218,7 @@ export default function DataSpace() {
               />
             </Grid>
           </Grid>
+
           <Paper
             sx={{
               p: 2,

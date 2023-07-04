@@ -530,7 +530,7 @@ function StepperStore() {
                     marginBottom: "10px",
                   }}
                 >
-                  <Typography color="text.primary">Data Streams</Typography>
+                  <Typography color="text.primary">Data Space</Typography>
                   <Typography color="text.primary">Stepper</Typography>
                 </Breadcrumbs>
 
@@ -634,7 +634,8 @@ function StepperStore() {
                                 Boolean(errors.device_name)
                               }
                               helperText={
-                                touched.device_name && errors.device_name
+                                (touched.device_name && errors.device_name) ||
+                                "Name Is Required"
                               }
                             />
                           </Grid>{" "}
@@ -652,8 +653,9 @@ function StepperStore() {
                                 Boolean(errors.device_description)
                               }
                               helperText={
-                                touched.device_description &&
-                                errors.device_description
+                                (touched.device_description &&
+                                  errors.device_description) ||
+                                "Description Is Required"
                               }
                             />
                           </Grid>
@@ -671,8 +673,9 @@ function StepperStore() {
                                 Boolean(errors.device_location_name)
                               }
                               helperText={
-                                touched.device_location_name &&
-                                errors.device_location_name
+                                (touched.device_location_name &&
+                                  errors.device_location_name) ||
+                                "Location Is Required"
                               }
                             />
                           </Grid>
@@ -690,8 +693,9 @@ function StepperStore() {
                                 Boolean(errors.device_location_description)
                               }
                               helperText={
-                                touched.device_location_description &&
-                                errors.device_location_description
+                                (touched.device_location_description &&
+                                  errors.device_location_description) ||
+                                "Description Is Required"
                               }
                             />
                           </Grid>
@@ -709,8 +713,9 @@ function StepperStore() {
                                 Boolean(errors.device_latitude)
                               }
                               helperText={
-                                touched.device_latitude &&
-                                errors.device_latitude
+                                (touched.device_latitude &&
+                                  errors.device_latitude) ||
+                                "Latitude Is Required"
                               }
                             />
                           </Grid>
@@ -728,8 +733,9 @@ function StepperStore() {
                                 Boolean(errors.device_longitude)
                               }
                               helperText={
-                                touched.device_longitude &&
-                                errors.device_longitude
+                                (touched.device_longitude &&
+                                  errors.device_longitude) ||
+                                "Longitude Is Required"
                               }
                             />
                           </Grid>
@@ -787,8 +793,9 @@ function StepperStore() {
                                 Boolean(errors.observedProperty_existing_id)
                               }
                               helperText={
-                                touched.observedProperty_existing_id &&
-                                errors.observedProperty_existing_id
+                                (touched.observedProperty_existing_id &&
+                                  errors.observedProperty_existing_id) ||
+                                "Measurement Property Is Required"
                               }
                               onChange={(event) => {
                                 if (event.target.value) {
@@ -855,8 +862,9 @@ function StepperStore() {
                                 Boolean(errors.observeProperty_name)
                               }
                               helperText={
-                                touched.observeProperty_name &&
-                                errors.observeProperty_name
+                                (touched.observeProperty_name &&
+                                  errors.observeProperty_name) ||
+                                "Name Is Required"
                               }
                             />
                           </Grid>
@@ -876,8 +884,9 @@ function StepperStore() {
                                 Boolean(errors.observeProperty_definition)
                               }
                               helperText={
-                                touched.observeProperty_definition &&
-                                errors.observeProperty_definition
+                                (touched.observeProperty_definition &&
+                                  errors.observeProperty_definition) ||
+                                "Definition Is Required"
                               }
                             />
                           </Grid>
@@ -897,8 +906,9 @@ function StepperStore() {
                                 Boolean(errors.observeProperty_description)
                               }
                               helperText={
-                                touched.observeProperty_description &&
-                                errors.observeProperty_description
+                                (touched.observeProperty_description &&
+                                  errors.observeProperty_description) ||
+                                "Description Is Required"
                               }
                             />
                           </Grid>
@@ -924,7 +934,9 @@ function StepperStore() {
                             Boolean(errors.datastream_name)
                           }
                           helperText={
-                            touched.datastream_name && errors.datastream_name
+                            (touched.datastream_name &&
+                              errors.datastream_name) ||
+                            "Datastream Name Is Required"
                           }
                         />
                       </Grid>{" "}

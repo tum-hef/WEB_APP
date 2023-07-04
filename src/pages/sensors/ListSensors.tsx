@@ -239,7 +239,8 @@ const ListSensors = () => {
           marginBottom: "10px",
         }}
       >
-        <LinkCustom to="/data-spaces">Data Streams</LinkCustom>
+        <LinkCustom to="/">Data Space</LinkCustom>
+        <LinkCustom to="/frost_entities">Frost Entities</LinkCustom>
         <Typography color="text.primary">Sensor Types</Typography>
       </Breadcrumbs>
 
