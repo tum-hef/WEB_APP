@@ -748,6 +748,7 @@ function StepperStore() {
                           value={values.observed_property_using_existing}
                           label="Do you want to choose an existing Measurement Property?"
                           variant="outlined"
+                          required
                           onChange={(event) => {
                             setFieldValue(
                               "observed_property_using_existing",
@@ -773,6 +774,10 @@ function StepperStore() {
                             <TextField
                               select
                               fullWidth
+                              required={
+                                values.observed_property_using_existing ===
+                                "yes"
+                              }
                               name="observedProperty_existing_id"
                               value={values.observedProperty_existing_id}
                               label="Choose the existing Measurement Property"
@@ -838,7 +843,9 @@ function StepperStore() {
                             <TextField
                               fullWidth
                               label="Name"
-                              // required={!values.observedProperty_existing_id}
+                              required={
+                                values.observed_property_using_existing === "no"
+                              }
                               name="observeProperty_name"
                               onChange={handleChange}
                               value={values.observeProperty_name}
@@ -856,7 +863,9 @@ function StepperStore() {
                           <Grid item xs={12} md={6}>
                             <TextField
                               fullWidth
-                              // required={!values.observedProperty_existing_id}
+                              required={
+                                values.observed_property_using_existing === "no"
+                              }
                               label="Definition"
                               name="observeProperty_definition"
                               onChange={handleChange}
@@ -876,7 +885,9 @@ function StepperStore() {
                             <TextField
                               fullWidth
                               label="Description"
-                              // required={!values.observedProperty_existing_id}
+                              required={
+                                values.observed_property_using_existing === "no"
+                              }
                               name="observeProperty_description"
                               onChange={handleChange}
                               value={values.observeProperty_description}

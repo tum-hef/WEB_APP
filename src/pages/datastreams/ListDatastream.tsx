@@ -144,12 +144,16 @@ const ListDatastream = () => {
             }).then(async (result) => {
               if (result.isConfirmed) {
                 try {
-                  const response = await axios.delete(
-                    `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Things(${row["@iot.id"]})`,
+                  const response = await axios.post(
+                    `${process.env.REACT_APP_BACKEND_URL}delete`,
+                    {
+                      url: `Datastreams(${row["@iot.id"]})`,
+                      FROST_PORT: frostServerPort,
+                    },
                     {
                       headers: {
                         "Content-Type": "application/json",
-                        Authorization: `Bearer ${token}`,
+                        Authorization: `${token}`,
                       },
                     }
                   );
