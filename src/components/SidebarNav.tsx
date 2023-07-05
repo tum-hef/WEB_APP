@@ -25,7 +25,7 @@ import axios from "axios";
 import { useLocation } from "react-router-dom";
 
 import { ExpandLess, ExpandMore } from "@mui/icons-material";
-import ElectricBoltIcon from "@mui/icons-material/ElectricBolt";
+import SchoolIcon from "@mui/icons-material/School";
 import TabletAndroidIcon from "@mui/icons-material/TabletAndroid";
 import DeviceThermostatIcon from "@mui/icons-material/DeviceThermostat";
 import FolderSpecialIcon from "@mui/icons-material/FolderSpecial";
@@ -33,6 +33,7 @@ import LocationOnIcon from "@mui/icons-material/LocationOn";
 import PersonSearchIcon from "@mui/icons-material/PersonSearch";
 import BiotechSharpIcon from "@mui/icons-material/BiotechSharp";
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
+import DnsIcon from "@mui/icons-material/Dns";
 const baseScrollbar = css`
   background-color: ${(props) => props.theme.sidebar.background};
   border-right: 1px solid rgba(0, 0, 0, 0.12);
@@ -82,10 +83,14 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
       });
   };
   const [openDataSpace, setOpenDataSpace] = useState(false);
+  const [openTraining, setOpenTraining] = useState(false);
   const [openFrostEntities, setOpenFrostEntities] = useState(false);
   const handleDataSpace = () => {
     setOpenDataSpace(!openDataSpace);
     setOpenFrostEntities(false);
+  };
+  const handleTraining = () => {
+    setOpenTraining(!openTraining);
   };
 
   const handleFrostEntities = () => {
@@ -423,26 +428,81 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
               </ListItemButton>
             </ListItem>
           </LinkCustom>
-          <LinkCustom to="/trainings">
-            <ListItem key={"Trainings "} disablePadding>
-              <ListItemButton>
-                <ListItemIcon>
-                  <TextSnippetIcon
-                    style={{
-                      color: "white",
-                    }}
-                  />
-                </ListItemIcon>
-                <ListItemText
-                  primaryTypographyProps={{ fontSize: "18px" }}
-                  primary={"Trainings"}
-                  style={{
-                    color: "white",
-                  }}
-                />
-              </ListItemButton>
-            </ListItem>
-          </LinkCustom>{" "}
+          <ListItemButton onClick={handleTraining}>
+            <ListItemIcon>
+              <SchoolIcon
+                style={{
+                  color: "white",
+                }}
+              />
+            </ListItemIcon>
+            <ListItemText
+              primary="Training"
+              style={{
+                color: "white",
+              }}
+              primaryTypographyProps={{ fontSize: "18px" }}
+            />
+            {openTraining ? (
+              <ExpandLess
+                style={{
+                  color: "white",
+                }}
+              />
+            ) : (
+              <ExpandMore
+                style={{
+                  color: "white",
+                }}
+              />
+            )}
+          </ListItemButton>
+          <Collapse in={openTraining} timeout="auto" unmountOnExit>
+            <List component="div" disablePadding>
+              <LinkCustom to={`/training/frost`}>
+                <ListItem key={"Frost"} disablePadding>
+                  <ListItemButton>
+                    <ListItemIcon>
+                      <DnsIcon
+                        style={{
+                          color: "white",
+                          marginLeft: "20px",
+                        }}
+                      />
+                    </ListItemIcon>
+                    <ListItemText
+                      style={{
+                        color: "white",
+                      }}
+                      primaryTypographyProps={{ fontSize: "18px" }}
+                      primary={"Frost"}
+                    />
+                  </ListItemButton>
+                </ListItem>
+              </LinkCustom>
+              <LinkCustom to={`/training/node_red`}>
+                <ListItem key={"Node Red"} disablePadding>
+                  <ListItemButton>
+                    <ListItemIcon>
+                      <DnsIcon
+                        style={{
+                          color: "white",
+                          marginLeft: "20px",
+                        }}
+                      />
+                    </ListItemIcon>
+                    <ListItemText
+                      style={{
+                        color: "white",
+                      }}
+                      primaryTypographyProps={{ fontSize: "18px" }}
+                      primary={"Node Red"}
+                    />
+                  </ListItemButton>
+                </ListItem>
+              </LinkCustom>
+            </List>
+          </Collapse>
           <ListItem key={"Logout"} disablePadding onClick={handleLogout}>
             <ListItemButton>
               <ListItemIcon>

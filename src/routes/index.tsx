@@ -38,6 +38,8 @@ import StoreObservationProerties from "../pages/observation_property/StoreObserv
 import StoreDatastream from "../pages/datastreams/StoreDatastream";
 import ListObservations from "../pages/observations/ListLocation";
 import FrostEntities from "../pages/QuickDataEntry";
+import FrostTraining from "../pages/training/Frost";
+import NodeRedTraining from "../pages/training/Node Red";
 const styles = {
   container: {
     height: "100%",
@@ -173,6 +175,16 @@ const AppRouter = (props: any) => {
                     exact
                     path="/observations/:id"
                     component={Observervation}
+                  />{" "}
+                  <PrivateRoute
+                    exact
+                    path="/training/frost"
+                    component={FrostTraining}
+                  />{" "}
+                  <PrivateRoute
+                    exact
+                    path="/training/node_red"
+                    component={NodeRedTraining}
                   />{" "}
                   <Route path="*" component={NOTFOUND} />
                 </Switch>
