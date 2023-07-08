@@ -305,7 +305,7 @@ const Observervation = () => {
         }}
       >
         <LinkCustom to="/">Data Space</LinkCustom>
-        <LinkCustom to="/frost_entities">Frost Entities</LinkCustom>
+        <LinkCustom to="/frost_entities">Data Items</LinkCustom>
         <Typography color="text.primary">Observations</Typography>
       </Breadcrumbs>
       <CSVLink filename="observation.csv" data={getCsvData()}>

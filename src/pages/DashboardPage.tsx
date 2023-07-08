@@ -179,7 +179,7 @@ export default function DashboardPage() {
                         component="div"
                         mt={5}
                       >
-                        TUM HEF DASHBOARD
+                        HEF sensorHUB - Dashboard
                       </Typography>
                       {group && group?.attributes?.group_name && (
                         <Typography variant="body2" gutterBottom>
@@ -247,7 +247,7 @@ export default function DashboardPage() {
                               variant="h3"
                               component="div"
                             >
-                              Node Red
+                              Node RED
                             </Typography>
                           </CardContent>
                         </CardActionArea>

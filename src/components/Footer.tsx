@@ -55,14 +55,14 @@ function Footer() {
           direction="row"
         >
           <List>
-            <LinkCustom to={"training"}>
+            <LinkCustom to={"database"}>
               <ListItemButton>
                 <ListItemText
                   disableTypography
                   primary={
                     // @ts-ignore
                     <Typography style={{ fontSize: "13px" }}>
-                      Training
+                      Database
                     </Typography>
                   }
                 />

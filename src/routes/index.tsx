@@ -178,12 +178,12 @@ const AppRouter = (props: any) => {
                   />{" "}
                   <PrivateRoute
                     exact
-                    path="/training/frost"
+                    path="/database/frost"
                     component={FrostTraining}
                   />{" "}
                   <PrivateRoute
                     exact
-                    path="/training/node_red"
+                    path="/database/node_red"
                     component={NodeRedTraining}
                   />{" "}
                   <Route path="*" component={NOTFOUND} />

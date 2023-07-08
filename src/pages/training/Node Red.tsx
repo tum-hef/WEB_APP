@@ -5,7 +5,8 @@ function NodeRedTraining() {
   return (
     <DashboardComponent>
       <TrainingCategories
-        name="Node Red Training"
+        name="Node RED Training"
+        description="Node-RED is a flow-based, low-code development tool for visual programming developed originally by IBM for wiring together hardware devices, APIs and online services as part of the Internet of Things."
         object={[
           {
             name: "Lecture",

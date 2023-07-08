@@ -71,13 +71,13 @@ export const DrawerSideBar = () => {
             </ListItemButton>
           </ListItem>
         </LinkCustom>{" "}
-        <LinkCustom to="/trainings">
-          <ListItem key={"Trainings "} disablePadding>
+        <LinkCustom to="/database">
+          <ListItem key={"Database "} disablePadding>
             <ListItemButton>
               <ListItemIcon>
                 <TextSnippetIcon />
               </ListItemIcon>
-              <ListItemText primary={"Trainings"} />
+              <ListItemText primary={"Database"} />
             </ListItemButton>
           </ListItem>
         </LinkCustom>{" "}

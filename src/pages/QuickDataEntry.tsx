@@ -19,7 +19,7 @@ function FrostEntities() {
         }}
       >
         <Typography>Data Space</Typography>
-        <Typography color="text.primary">Frost Entities</Typography>
+        <Typography color="text.primary">Data Items</Typography>
       </Breadcrumbs>
       <Grid container spacing={2}>
         <Grid item xs={12} sm={6} md={4} lg={4}>

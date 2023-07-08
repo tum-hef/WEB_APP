@@ -211,7 +211,7 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
                   />
                 </ListItemIcon>
                 <ListItemText
-                  primary="FROST Entities"
+                  primary="Data Items"
                   style={{
                     color: "white",
                   }}
@@ -396,7 +396,7 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
                   style={{
                     color: "white",
                   }}
-                  primary={"Node Red"}
+                  primary={"Node RED"}
                 />
               </ListItemButton>
             </a>
@@ -437,7 +437,7 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
               />
             </ListItemIcon>
             <ListItemText
-              primary="Training"
+              primary="Database"
               style={{
                 color: "white",
               }}
@@ -459,8 +459,8 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
           </ListItemButton>
           <Collapse in={openTraining} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
-              <LinkCustom to={`/training/frost`}>
-                <ListItem key={"Frost"} disablePadding>
+              <LinkCustom to={`/database/frost`}>
+                <ListItem key={"FROST"} disablePadding>
                   <ListItemButton>
                     <ListItemIcon>
                       <DnsIcon
@@ -475,12 +475,12 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
                         color: "white",
                       }}
                       primaryTypographyProps={{ fontSize: "18px" }}
-                      primary={"Frost"}
+                      primary={"FROST"}
                     />
                   </ListItemButton>
                 </ListItem>
               </LinkCustom>
-              <LinkCustom to={`/training/node_red`}>
+              <LinkCustom to={`/database/node_red`}>
                 <ListItem key={"Node Red"} disablePadding>
                   <ListItemButton>
                     <ListItemIcon>
@@ -496,7 +496,7 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
                         color: "white",
                       }}
                       primaryTypographyProps={{ fontSize: "18px" }}
-                      primary={"Node Red"}
+                      primary={"Node RED"}
                     />
                   </ListItemButton>
                 </ListItem>
@@ -518,6 +518,29 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
                   color: "white",
                 }}
                 primary={"Logout"}
+              />
+            </ListItemButton>
+          </ListItem>{" "}
+          <ListItem>
+            <ListItemButton
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                marginTop: "20px",
+              }}
+            >
+              <ListItemText
+                primaryTypographyProps={{ fontSize: "18px" }}
+                style={{
+                  color: "white",
+                  marginTop: "20px",
+                  alignSelf: "center",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  display: "flex",
+                }}
+                primary={"HEF sensorHUB"}
               />
             </ListItemButton>
           </ListItem>

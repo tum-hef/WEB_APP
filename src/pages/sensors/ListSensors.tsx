@@ -240,7 +240,7 @@ const ListSensors = () => {
         }}
       >
         <LinkCustom to="/">Data Space</LinkCustom>
-        <LinkCustom to="/frost_entities">Frost Entities</LinkCustom>
+        <LinkCustom to="/frost_entities">Data Items</LinkCustom>
         <Typography color="text.primary">Sensor Types</Typography>
       </Breadcrumbs>
 
