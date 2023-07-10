@@ -100,28 +100,105 @@ const ListSensors = () => {
           }}
           onClick={() => {
             Swal.fire({
-              title: "Edit Sensor Description",
-              input: "text",
-              inputLabel: "New Sensor Description",
-              inputPlaceholder: "Enter the new sensor description",
-              inputValue: row.description,
+              title: "Edit Sensor",
+              html:
+                `<div class="swal-input-row-with-label">` +
+                `<label for="name">New Name</label>` +
+                `<div class="swal-input-field">` +
+                `<input id="name" class="swal2-input" placeholder="Enter the new Sensor name" value="${
+                  row.name || ""
+                }">` +
+                `</div>` +
+                `</div>` +
+                `<div class="swal-input-row">` +
+                `<label for="description">New Description</label>` +
+                `<input id="description" class="swal2-input" placeholder="Enter the new Sensor description" value="${
+                  row.description || ""
+                }">` +
+                `</div>` +
+                `</div>` +
+                `<div class="swal-input-row">` +
+                `<label for="metadata">New metadata</label>` +
+                `<input id="metadata" class="swal2-input" placeholder="Enter the new Sensor metadata" value="${
+                  row.metadata || ""
+                }">` +
+                `</div>`,
               showCancelButton: true,
               confirmButtonText: "Save",
               showLoaderOnConfirm: true,
-              preConfirm: (description) => {
-                return description;
+              preConfirm: () => {
+                const name = (
+                  document.getElementById("name") as HTMLInputElement
+                ).value;
+                const description = (
+                  document.getElementById("description") as HTMLInputElement
+                ).value;
+                const metadata = (
+                  document.getElementById("metadata") as HTMLInputElement
+                ).value;
+                if (!name) {
+                  Swal.showValidationMessage("Please enter a Sensor name");
+                } else {
+                  return { name, description, metadata };
+                }
               },
             }).then((result) => {
               if (result.isConfirmed) {
-                const newDescription = result.value;
-                Swal.fire(`New sensor description: ${newDescription}`);
-                const newSensor = sensors.map((sensor) => {
-                  if (sensor["@iot.id"] === row["@iot.id"]) {
-                    sensor.description = newDescription;
-                  }
-                  return sensor;
-                });
-                setSensors(newSensor);
+                const { name, description, metadata } = result.value as {
+                  name: string;
+                  description: string;
+                  metadata: string;
+                };
+                axios
+                  .patch(
+                    `${process.env.REACT_APP_BACKEND_URL}update`,
+                    {
+                      url: `Sensors(${row["@iot.id"]})`,
+                      FROST_PORT: frostServerPort,
+                      body: {
+                        name,
+                        description,
+                        metadata,
+                      },
+                    },
+                    {
+                      headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${keycloak?.token}`,
+                      },
+                    }
+                  )
+                  .then((response) => {
+                    if (response.status === 200) {
+                      const newSensors = sensors.map((sensor) => {
+                        if (sensor["@iot.id"] === row["@iot.id"]) {
+                          sensor.name = name;
+                          sensor.description = description;
+                          sensor.metadata = metadata;
+                        }
+                        return sensor;
+                      });
+                      setSensors(newSensors);
+                      Swal.fire({
+                        icon: "success",
+                        title: "Success",
+                        text: "Sensor edited successfully!",
+                      });
+                    } else {
+                      Swal.fire({
+                        icon: "error",
+                        title: "Oops...",
+                        text: "Something went wrong! Sensor not edited!",
+                      });
+                    }
+                  })
+                  .catch((error) => {
+                    Swal.fire({
+                      icon: "error",
+                      title: "Oops...",
+                      text: "Something went wrong! Sensor not edited!",
+                    });
+                  });
               }
             });
           }}

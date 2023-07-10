@@ -94,28 +94,92 @@ const ListDatastream = () => {
           }}
           onClick={() => {
             Swal.fire({
-              title: "Edit Datastream Description",
-              input: "text",
-              inputLabel: "New Datastream Description",
-              inputPlaceholder: "Enter the new Datastream description",
-              inputValue: row.description,
+              title: "Edit Datastreams",
+              html:
+                `<div class="swal-input-row-with-label">` +
+                `<label for="name">New Name</label>` +
+                `<div class="swal-input-field">` +
+                `<input id="name" class="swal2-input" placeholder="Enter the new Datastreams name" value="${
+                  row.name || ""
+                }">` +
+                `</div>` +
+                `</div>` +
+                `<div class="swal-input-row">` +
+                `<label for="description">New Description</label>` +
+                `<input id="description" class="swal2-input" placeholder="Enter the new Datastreams description" value="${
+                  row.description || ""
+                }">`,
               showCancelButton: true,
               confirmButtonText: "Save",
               showLoaderOnConfirm: true,
-              preConfirm: (description) => {
-                return description;
+              preConfirm: () => {
+                const name = (
+                  document.getElementById("name") as HTMLInputElement
+                ).value;
+                const description = (
+                  document.getElementById("description") as HTMLInputElement
+                ).value;
+
+                if (!name) {
+                  Swal.showValidationMessage("Please enter a Datastreams name");
+                } else {
+                  return { name, description };
+                }
               },
             }).then((result) => {
               if (result.isConfirmed) {
-                const newDescription = result.value;
-                Swal.fire(`New Datastream description: ${newDescription}`);
-                const newData = datastreams.map((datastream) => {
-                  if (datastream["@iot.id"] === row["@iot.id"]) {
-                    datastream.description = newDescription;
-                  }
-                  return datastream;
-                });
-                setDatastreams(newData);
+                const { name, description } = result.value as {
+                  name: string;
+                  description: string;
+                };
+                axios
+                  .patch(
+                    `${process.env.REACT_APP_BACKEND_URL}update`,
+                    {
+                      url: `ObservedProperties(${row["@iot.id"]})`,
+                      FROST_PORT: frostServerPort,
+                      body: {
+                        name,
+                        description,
+                      },
+                    },
+                    {
+                      headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${keycloak?.token}`,
+                      },
+                    }
+                  )
+                  .then((response) => {
+                    if (response.status === 200) {
+                      const datastreams_list = datastreams.map((datastream) => {
+                        if (datastream["@iot.id"] === row["@iot.id"]) {
+                          datastream.name = name;
+                          datastream.description = description;
+                        }
+                        return datastream;
+                      });
+                      setDatastreams(datastreams_list);
+                      Swal.fire({
+                        icon: "success",
+                        title: "Success",
+                        text: "Datastreams edited successfully!",
+                      });
+                    } else {
+                      Swal.fire({
+                        icon: "error",
+                        title: "Oops...",
+                        text: "Something went wrong! Datastreams not edited!",
+                      });
+                    }
+                  })
+                  .catch((error) => {
+                    Swal.fire({
+                      icon: "error",
+                      title: "Oops...",
+                      text: "Something went wrong! Datastreams not edited!",
+                    });
+                  });
               }
             });
           }}

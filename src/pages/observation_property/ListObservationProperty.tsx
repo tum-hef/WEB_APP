@@ -103,33 +103,109 @@ const ListObservationProperty = () => {
           }}
           onClick={() => {
             Swal.fire({
-              title: "Edit Measurement property Description",
-              input: "text",
-              inputLabel: "New Measurement property Description",
-              inputPlaceholder:
-                "Enter the new Measurement Property description",
-              inputValue: row.description,
+              title: "Edit Measurement Property",
+              html:
+                `<div class="swal-input-row-with-label">` +
+                `<label for="name">New Name</label>` +
+                `<div class="swal-input-field">` +
+                `<input id="name" class="swal2-input" placeholder="Enter the new Measurement Property name" value="${
+                  row.name || ""
+                }">` +
+                `</div>` +
+                `</div>` +
+                `<div class="swal-input-row">` +
+                `<label for="description">New Description</label>` +
+                `<input id="description" class="swal2-input" placeholder="Enter the new Measurement Property description" value="${
+                  row.description || ""
+                }">` +
+                `</div>` +
+                `</div>` +
+                `<div class="swal-input-row">` +
+                `<label for="definition">New definition</label>` +
+                `<input id="definition" class="swal2-input" placeholder="Enter the new Measurement Property definition" value="${
+                  row.definition || ""
+                }">` +
+                `</div>`,
               showCancelButton: true,
               confirmButtonText: "Save",
               showLoaderOnConfirm: true,
-              preConfirm: (description) => {
-                return description;
+              preConfirm: () => {
+                const name = (
+                  document.getElementById("name") as HTMLInputElement
+                ).value;
+                const description = (
+                  document.getElementById("description") as HTMLInputElement
+                ).value;
+                const definition = (
+                  document.getElementById("definition") as HTMLInputElement
+                ).value;
+                if (!name) {
+                  Swal.showValidationMessage(
+                    "Please enter a Measurement Property name"
+                  );
+                } else {
+                  return { name, description, definition };
+                }
               },
             }).then((result) => {
               if (result.isConfirmed) {
-                const newDescription = result.value;
-                Swal.fire(
-                  `New Measurement Property description: ${newDescription}`
-                );
-                const newObservationProperty = observationProperty.map(
-                  (observation_property) => {
-                    if (observation_property["@iot.id"] === row["@iot.id"]) {
-                      observation_property.description = newDescription;
+                const { name, description, definition } = result.value as {
+                  name: string;
+                  description: string;
+                  definition: string;
+                };
+                axios
+                  .patch(
+                    `${process.env.REACT_APP_BACKEND_URL}update`,
+                    {
+                      url: `ObservedProperties(${row["@iot.id"]})`,
+                      FROST_PORT: frostServerPort,
+                      body: {
+                        name,
+                        description,
+                        definition,
+                      },
+                    },
+                    {
+                      headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${keycloak?.token}`,
+                      },
                     }
-                    return observation_property;
-                  }
-                );
-                setObservationProperty(newObservationProperty);
+                  )
+                  .then((response) => {
+                    if (response.status === 200) {
+                      const observedProperties = observationProperty.map(
+                        (observed_property) => {
+                          if (observed_property["@iot.id"] === row["@iot.id"]) {
+                            observed_property.name = name;
+                            observed_property.description = description;
+                            observed_property.definition = definition;
+                          }
+                          return observed_property;
+                        }
+                      );
+                      setObservationProperty(observedProperties);
+                      Swal.fire({
+                        icon: "success",
+                        title: "Success",
+                        text: "Measurement Property edited successfully!",
+                      });
+                    } else {
+                      Swal.fire({
+                        icon: "error",
+                        title: "Oops...",
+                        text: "Something went wrong! Measurement Property not edited!",
+                      });
+                    }
+                  })
+                  .catch((error) => {
+                    Swal.fire({
+                      icon: "error",
+                      title: "Oops...",
+                      text: "Something went wrong! Measurement Property not edited!",
+                    });
+                  });
               }
             });
           }}
