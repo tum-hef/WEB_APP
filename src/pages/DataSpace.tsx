@@ -384,6 +384,5 @@ export default function DataSpace() {
         </>
       )}
     </Dashboard>
-    // </ContentBar>
   );
 }

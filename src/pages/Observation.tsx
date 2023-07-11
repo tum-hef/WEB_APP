@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import DataTable from "react-data-table-component";
-import ContentBar from "../components/ContentBar";
 import { format } from "date-fns";
 import { useParams } from "react-router-dom";
 import {
@@ -15,7 +14,6 @@ import {
 import { ToastContainer, toast } from "react-toastify";
 
 import {
-  DatePicker,
   DateTimePicker,
   LocalizationProvider,
 } from "@mui/x-date-pickers";

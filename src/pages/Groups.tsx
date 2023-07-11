@@ -3,7 +3,6 @@ import axios from "axios";
 import IUserInfo from "../models/keycloak/UserInfo";
 import { useKeycloak } from "@react-keycloak/web";
 import DataTable from "react-data-table-component";
-import ContentBar from "../components/ContentBar";
 import Dashboard from "../components/DashboardComponent";
 
 const Groups = () => {

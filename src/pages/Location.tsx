@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import ContentBar from "../components/ContentBar";
 import { Grid, Typography } from "@mui/material";
 import { useKeycloak } from "@react-keycloak/web";
 import { useParams } from "react-router-dom";
