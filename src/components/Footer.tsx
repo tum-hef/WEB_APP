@@ -93,6 +93,19 @@ function Footer() {
                 primary={
                   // @ts-ignore
                   <Typography type="body2" style={{ fontSize: "13px" }}>
+                    HEF SensorHUB
+                  </Typography>
+                }
+              />
+            </ListItemButton>
+          </List>{" "}
+          <List>
+            <ListItemButton>
+              <ListItemText
+                disableTypography
+                primary={
+                  // @ts-ignore
+                  <Typography type="body2" style={{ fontSize: "13px" }}>
                     © {new Date().getFullYear()} - TUM HEF
                   </Typography>
                 }

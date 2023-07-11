@@ -179,7 +179,7 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
             <List component="div" disablePadding>
               {group_id && (
                 <LinkCustom to={`/data-spaces/${group_id}`}>
-                  <ListItem key={"Data Entry"} disablePadding>
+                  <ListItem key={"Quick Entry"} disablePadding>
                     <ListItemButton>
                       <ListItemIcon>
                         <DisplaySettingsIcon
@@ -194,7 +194,7 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
                           color: "white",
                         }}
                         primaryTypographyProps={{ fontSize: "18px" }}
-                        primary={"Data Entry"}
+                        primary={"Quick Entry"}
                       />
                     </ListItemButton>
                   </ListItem>
@@ -437,7 +437,7 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
               />
             </ListItemIcon>
             <ListItemText
-              primary="Database"
+              primary="Knowledge Section"
               style={{
                 color: "white",
               }}
@@ -460,7 +460,7 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
           <Collapse in={openTraining} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
               <LinkCustom to={`/database/frost`}>
-                <ListItem key={"FROST"} disablePadding>
+                <ListItem key={"FROST Database"} disablePadding>
                   <ListItemButton>
                     <ListItemIcon>
                       <DnsIcon
@@ -475,7 +475,7 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
                         color: "white",
                       }}
                       primaryTypographyProps={{ fontSize: "18px" }}
-                      primary={"FROST"}
+                      primary={"FROST Database"}
                     />
                   </ListItemButton>
                 </ListItem>
