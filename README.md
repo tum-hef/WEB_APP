@@ -3,6 +3,10 @@
  - Keycloak Version:  15.0.2
 
 
+Clone Application
+
+
+
 Fill .env variables: 
 
     REACT_APP_KEYCLOAK_URL=
@@ -10,6 +14,10 @@ Fill .env variables:
     REACT_APP_KEYCLOAK_CLIENT_ID=
     REACT_APP_API_URL=
     REACT_APP_BACKEND_URL=
+
+```docker build -t hefsensorhub_image_frontend .```
+
+```docker run -p 3000:80 --env-file .env  --name hefsensorhub_container_frontend -d hefsensorhub_image_frontend```
 
 # 1) Projects (Servers)
 
