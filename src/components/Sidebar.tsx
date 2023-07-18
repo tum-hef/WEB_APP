@@ -8,6 +8,7 @@ import {
   Box as MuiBox,
   Drawer as MuiDrawer,
   ListItemButton,
+  Typography,
 } from "@mui/material";
 
 import { SidebarItemsType } from "../types/sidebar";
@@ -91,11 +92,9 @@ const Sidebar: React.FC<SidebarProps> = ({
             fontSize: "1.4rem",
           }}
         >
-          <img
-            src="/images/tum_logo.png"
-            alt="logo"
-            style={{ width: "55px", marginRight: "10px" }}
-          />
+          <Typography variant="h3" style={{ fontWeight: "bold" }}>
+            HEF sensorHUB
+          </Typography>
         </Box>
       </Brand>
       <SidebarNav items={items} />

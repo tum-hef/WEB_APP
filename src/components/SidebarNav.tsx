@@ -23,7 +23,7 @@ import "../vendor/perfect-scrollbar.css";
 import { useKeycloak } from "@react-keycloak/web";
 import axios from "axios";
 import { useLocation } from "react-router-dom";
-
+import QuestionMarkIcon from "@mui/icons-material/QuestionMark";
 import { ExpandLess, ExpandMore } from "@mui/icons-material";
 import SchoolIcon from "@mui/icons-material/School";
 import TabletAndroidIcon from "@mui/icons-material/TabletAndroid";
@@ -34,6 +34,7 @@ import PersonSearchIcon from "@mui/icons-material/PersonSearch";
 import BiotechSharpIcon from "@mui/icons-material/BiotechSharp";
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 import DnsIcon from "@mui/icons-material/Dns";
+import PublicIcon from '@mui/icons-material/Public';
 const baseScrollbar = css`
   background-color: ${(props) => props.theme.sidebar.background};
   border-right: 1px solid rgba(0, 0, 0, 0.12);
@@ -428,6 +429,33 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
               </ListItemButton>
             </ListItem>
           </LinkCustom>
+          <LinkCustom
+            to="/contact"
+            onClick={(event) => {
+              if (currentUrl === "/dashboard") {
+                event.preventDefault(); // Prevent redirect if currentUrl is "/dashboard"
+              }
+            }}
+          >
+            <ListItem key={"Contact"} disablePadding>
+              <ListItemButton disabled={currentUrl === "/dashboard"}>
+                <ListItemIcon>
+                  <QuestionMarkIcon
+                    style={{
+                      color: "white",
+                    }}
+                  />
+                </ListItemIcon>
+                <ListItemText
+                  primaryTypographyProps={{ fontSize: "18px" }}
+                  style={{
+                    color: "white",
+                  }}
+                  primary={"Contact"}
+                />
+              </ListItemButton>
+            </ListItem>
+          </LinkCustom>
           <ListItemButton onClick={handleTraining}>
             <ListItemIcon>
               <SchoolIcon
@@ -500,6 +528,27 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
                     />
                   </ListItemButton>
                 </ListItem>
+              </LinkCustom>{" "}
+              <LinkCustom to={`/database/web_app`}>
+                <ListItem key={"Web App"} disablePadding>
+                  <ListItemButton>
+                    <ListItemIcon>
+                      <PublicIcon
+                        style={{
+                          color: "white",
+                          marginLeft: "20px",
+                        }}
+                      />
+                    </ListItemIcon>
+                    <ListItemText
+                      style={{
+                        color: "white",
+                      }}
+                      primaryTypographyProps={{ fontSize: "18px" }}
+                      primary={"Web App"}
+                    />
+                  </ListItemButton>
+                </ListItem>
               </LinkCustom>
             </List>
           </Collapse>
@@ -530,7 +579,7 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
                 marginTop: "20px",
               }}
             >
-              <ListItemText
+              {/* <ListItemText
                 primaryTypographyProps={{ fontSize: "18px" }}
                 style={{
                   color: "white",
@@ -541,6 +590,11 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
                   display: "flex",
                 }}
                 primary={"HEF sensorHUB"}
+              /> */}
+              <img
+                src="/images/tum_logo.png"
+                alt="logo"
+                style={{ width: "55px", marginRight: "10px" }}
               />
             </ListItemButton>
           </ListItem>

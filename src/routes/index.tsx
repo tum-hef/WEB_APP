@@ -40,6 +40,8 @@ import ListObservations from "../pages/observations/ListLocation";
 import FrostEntities from "../pages/QuickDataEntry";
 import FrostTraining from "../pages/training/Frost";
 import NodeRedTraining from "../pages/training/Node Red";
+import Contact from "../pages/Contact";
+import WebAppTraining from "../pages/training/WebApp";
 const styles = {
   container: {
     height: "100%",
@@ -186,6 +188,12 @@ const AppRouter = (props: any) => {
                     path="/database/node_red"
                     component={NodeRedTraining}
                   />{" "}
+                  <PrivateRoute
+                    exact
+                    path="/database/web_app"
+                    component={WebAppTraining}
+                  />{" "}
+                  <PrivateRoute exact path="/contact" component={Contact} />{" "}
                   <Route path="*" component={NOTFOUND} />
                 </Switch>
               </Router>

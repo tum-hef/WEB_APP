@@ -55,21 +55,6 @@ function Footer() {
           direction="row"
         >
           <List>
-            <LinkCustom to={"database"}>
-              <ListItemButton>
-                <ListItemText
-                  disableTypography
-                  primary={
-                    // @ts-ignore
-                    <Typography style={{ fontSize: "13px" }}>
-                      Database
-                    </Typography>
-                  }
-                />
-              </ListItemButton>
-            </LinkCustom>
-          </List>{" "}
-          <List>
             <LinkCustom to={"/impressum"}>
               <ListItemButton>
                 <ListItemText

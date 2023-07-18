@@ -5,7 +5,7 @@ function FrostTraining() {
   return (
     <DashboardComponent>
       <TrainingCategories
-        name="Frost Training"
+        name="Frost Database"
         description="FROST Server - A Server implementation of the OGC SensorThings API. The OGC SensorThings API is an OGC standard specification for providing an open and unified way to interconnect IoT devices, data, and applications over the Web. The FRaunhofer Opensource SensorThings-Server is the first complete, open-source official reference implementation of the OGC SensorThings "
         object={[
           {

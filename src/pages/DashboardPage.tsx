@@ -9,15 +9,16 @@ import {
   Grid,
   Typography,
 } from "@mui/material";
-import { red } from "@mui/material/colors";
 import axios from "axios";
 import LinkCustom from "../components/LinkCustom";
 import { ToastContainer, toast } from "react-toastify";
-import Stats from "../components/Stats";
+import DnsIcon from "@mui/icons-material/Dns";
 import { useKeycloak } from "@react-keycloak/web";
 import styled from "styled-components";
 import { useParams } from "react-router-dom";
 import { NOTFOUND } from "./404";
+import PublicIcon from "@mui/icons-material/Public";
+import CardDataSpace from "../components/CardDataSpace";
 const Anchor = styled.a`
   text-decoration: none;
   color: inherit;
@@ -175,14 +176,20 @@ export default function DashboardPage() {
                     <Grid item xs>
                       <Typography
                         gutterBottom
-                        variant="h4"
+                        variant="h3"
                         component="div"
                         mt={5}
                       >
                         HEF sensorHUB - Dashboard
                       </Typography>
                       {group && group?.attributes?.group_name && (
-                        <Typography variant="body2" gutterBottom>
+                        <Typography
+                          variant="body2"
+                          gutterBottom
+                          style={{
+                            fontSize: "1.0rem",
+                          }}
+                        >
                           Group selected: <b>{group.attributes.group_name} </b>,
                           click
                           <LinkCustom
@@ -289,6 +296,48 @@ export default function DashboardPage() {
                     </Card>
                   </LinkCustom>
                 </Grid>{" "}
+                <Grid item lg={4} sm={12} xl={4} xs={12}>
+                  <CardDataSpace
+                    redirection_path="database/frost"
+                    card_name="FROST Database"
+                    Icon={
+                      <DnsIcon
+                        style={{
+                          fontSize: 30,
+                          marginTop: "10px",
+                        }}
+                      />
+                    }
+                  />
+                </Grid>{" "}
+                <Grid item lg={4} sm={12} xl={4} xs={12}>
+                  <CardDataSpace
+                    redirection_path="database/node_red"
+                    card_name="Node RED"
+                    Icon={
+                      <DnsIcon
+                        style={{
+                          fontSize: 30,
+                          marginTop: "10px",
+                        }}
+                      />
+                    }
+                  />
+                </Grid>{" "}
+                <Grid item lg={4} sm={12} xl={4} xs={12}>
+                  <CardDataSpace
+                    redirection_path="database/web_app"
+                    card_name="Web App"
+                    Icon={
+                      <PublicIcon
+                        style={{
+                          fontSize: 30,
+                          marginTop: "10px",
+                        }}
+                      />
+                    }
+                  />
+                </Grid>
               </Grid>
             </>
           )}
