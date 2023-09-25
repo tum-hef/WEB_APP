@@ -22,7 +22,7 @@
 
 4) Running Application on port 3000
 
-```docker run -p 3000:80 --env-file .env  --name hefsensorhub_container_frontend -d hefsensorhub_image_frontend```
+```docker run -p 3000:80 --env-file .env --name hefsensorhub_container_frontend -d --restart always hefsensorhub_image_frontend```
 
 -----------------------------------------------------------------------------------------------------------------
 
