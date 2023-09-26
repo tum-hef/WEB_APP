@@ -42,6 +42,7 @@ import FrostTraining from "../pages/training/Frost";
 import NodeRedTraining from "../pages/training/Node Red";
 import Contact from "../pages/Contact";
 import WebAppTraining from "../pages/training/WebApp";
+import { Construction } from "../pages/Construction";
 const styles = {
   container: {
     height: "100%",
@@ -89,6 +90,7 @@ const AppRouter = (props: any) => {
                   <Route exact path="/" component={HomePage} />
                   <Route exact path="/register" component={Register} />
                   <Route exact path="/impressum" component={Impressum} />
+                  <Route exact path="/reports" component={Construction} />
                   <PrivateRoute
                     exact
                     path="/dashboard"

@@ -7,6 +7,7 @@ import {
   CardContent,
   CardMedia,
   Grid,
+  Paper,
   Typography,
 } from "@mui/material";
 import axios from "axios";
@@ -296,49 +297,66 @@ export default function DashboardPage() {
                     </Card>
                   </LinkCustom>
                 </Grid>{" "}
-                <Grid item lg={4} sm={12} xl={4} xs={12}>
-                  <CardDataSpace
-                    redirection_path="database/frost"
-                    card_name="FROST Database"
-                    Icon={
-                      <DnsIcon
-                        style={{
-                          fontSize: 30,
-                          marginTop: "10px",
-                        }}
-                      />
-                    }
-                  />
-                </Grid>{" "}
-                <Grid item lg={4} sm={12} xl={4} xs={12}>
-                  <CardDataSpace
-                    redirection_path="database/node_red"
-                    card_name="Node RED"
-                    Icon={
-                      <DnsIcon
-                        style={{
-                          fontSize: 30,
-                          marginTop: "10px",
-                        }}
-                      />
-                    }
-                  />
-                </Grid>{" "}
-                <Grid item lg={4} sm={12} xl={4} xs={12}>
-                  <CardDataSpace
-                    redirection_path="database/web_app"
-                    card_name="Web App"
-                    Icon={
-                      <PublicIcon
-                        style={{
-                          fontSize: 30,
-                          marginTop: "10px",
-                        }}
-                      />
-                    }
-                  />
-                </Grid>
               </Grid>
+
+              <Paper elevation={3} style={{ marginTop: "20px" }}>
+                <Grid container spacing={2}>
+                  <Grid xs={12} sm={12} md={12} lg={12} xl={12} item>
+                    <Typography
+                      gutterBottom
+                      variant="h3"
+                      component="div"
+                      mt={5}
+                      align="center"
+                    >
+                      Knowledge Section
+                    </Typography>
+                  </Grid>
+
+                  <Grid item lg={4} sm={12} xl={4} xs={12}>
+                    <CardDataSpace
+                      redirection_path="database/frost"
+                      card_name="Sensor Database"
+                      Icon={
+                        <DnsIcon
+                          style={{
+                            fontSize: 30,
+                            marginTop: "10px",
+                          }}
+                        />
+                      }
+                    />
+                  </Grid>
+                  <Grid item lg={4} sm={12} xl={4} xs={12}>
+                    <CardDataSpace
+                      redirection_path="database/node_red"
+                      card_name="Node RED"
+                      Icon={
+                        <DnsIcon
+                          style={{
+                            fontSize: 30,
+                            marginTop: "10px",
+                          }}
+                        />
+                      }
+                    />
+                  </Grid>
+                  <Grid item lg={4} sm={12} xl={4} xs={12}>
+                    <CardDataSpace
+                      redirection_path="database/web_app"
+                      card_name="Web App"
+                      Icon={
+                        <PublicIcon
+                          style={{
+                            fontSize: 30,
+                            marginTop: "10px",
+                          }}
+                        />
+                      }
+                    />
+                  </Grid>
+                </Grid>
+              </Paper>
             </>
           )}
         </>

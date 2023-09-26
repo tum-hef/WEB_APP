@@ -488,7 +488,7 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
           <Collapse in={openTraining} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
               <LinkCustom to={`/database/frost`}>
-                <ListItem key={"FROST Database"} disablePadding>
+                <ListItem key={"Sensor Database"} disablePadding>
                   <ListItemButton>
                     <ListItemIcon>
                       <DnsIcon
@@ -503,7 +503,7 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
                         color: "white",
                       }}
                       primaryTypographyProps={{ fontSize: "18px" }}
-                      primary={"FROST Database"}
+                      primary={"Sensor Database"}
                     />
                   </ListItemButton>
                 </ListItem>
