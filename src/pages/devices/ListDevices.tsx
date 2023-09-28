@@ -195,7 +195,7 @@ const Devices = () => {
           onClick={() => {
             Swal.fire({
               title: `Are you sure you want to delete ${row.name}?`,
-              text: "You will not be able to recover this device!",
+              text: "You will not be able to recover this device! Linked datastream might become disfunctional!",
               icon: "warning",
               showCancelButton: true,
               confirmButtonColor: "#3085d6",
