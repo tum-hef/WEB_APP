@@ -1,20 +1,17 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import DataTable, { ExpanderComponentProps } from "react-data-table-component";
-import { Breadcrumbs, Button, Typography } from "@mui/material";
+import { Breadcrumbs, Typography } from "@mui/material";
 import LinkCustom from "../../components/LinkCustom";
 
 import Dashboard from "../../components/DashboardComponent";
 import { useKeycloak } from "@react-keycloak/web";
 import { ToastContainer, toast } from "react-toastify";
-import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
-import DeleteForeverOutlinedIcon from "@mui/icons-material/DeleteForeverOutlined";
-import Swal from "sweetalert2";
+import MapIcon from "@mui/icons-material/Map";
 const ListLocations = () => {
   const { keycloak } = useKeycloak();
   const userInfo = keycloak?.idTokenParsed;
   const token = keycloak?.token;
-  console.log(token);
 
   const [frostServerPort, setFrostServerPort] = useState<number | null>(null);
   const [locations, setLocations] = useState<any[]>([]);
@@ -89,13 +86,29 @@ const ListLocations = () => {
       name: "Longitude",
       selector: (row: any) => row.location.coordinates[0],
       sortable: true,
-      width: "20%",
+      width: "10%",
     },
     {
       name: "Latitude",
       selector: (row: any) => row.location.coordinates[1],
       sortable: true,
       width: "10%",
+    },
+    {
+      name: "Location on Map",
+      selector: (row: any) => (
+        <LinkCustom
+          style={{
+            color: "#233044",
+            textDecoration: "none",
+          }}
+          to={`/locations/${row["@iot.id"]}`}
+        >
+          <MapIcon />
+        </LinkCustom>
+      ),
+      sortable: true,
+      width: "20%",
     },
     // {
     //   name: "Edit",

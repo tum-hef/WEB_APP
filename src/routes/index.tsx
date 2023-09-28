@@ -12,7 +12,6 @@ import DataSpace from "../pages/DataSpace";
 import { NOTFOUND } from "../pages/404";
 import { RotatingLines } from "react-loader-spinner";
 import { Grid } from "@material-ui/core";
-import axios from "axios";
 import Devices from "../pages/devices/ListDevices";
 import Datastreams from "../pages/Datastream";
 import Observervation from "../pages/Observation";
@@ -43,6 +42,7 @@ import NodeRedTraining from "../pages/training/Node Red";
 import Contact from "../pages/Contact";
 import WebAppTraining from "../pages/training/WebApp";
 import { Construction } from "../pages/Construction";
+import Details from "../pages/details";
 const styles = {
   container: {
     height: "100%",
@@ -91,6 +91,7 @@ const AppRouter = (props: any) => {
                   <Route exact path="/register" component={Register} />
                   <Route exact path="/impressum" component={Impressum} />
                   <Route exact path="/reports" component={Construction} />
+                  <Route exact path="/details" component={Details} />
                   <PrivateRoute
                     exact
                     path="/dashboard"

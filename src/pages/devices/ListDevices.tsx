@@ -10,6 +10,7 @@ import { ToastContainer, toast } from "react-toastify";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import DeleteForeverOutlinedIcon from "@mui/icons-material/DeleteForeverOutlined";
 import Swal from "sweetalert2";
+import MapIcon from "@mui/icons-material/Map";
 const Devices = () => {
   const { keycloak } = useKeycloak();
   const userInfo = keycloak?.idTokenParsed;
@@ -29,8 +30,8 @@ const Devices = () => {
         },
       })
       .then((res) => {
+        // TODO: Get location of each device
         if (res.status === 200 && res.data.value) {
-          console.log(res.data.value);
           setDevices(res.data.value);
         }
       });
@@ -181,7 +182,7 @@ const Devices = () => {
         />
       ),
       sortable: true,
-      width: "20%",
+      width: "10%",
     },
     {
       name: "Delete",
@@ -260,6 +261,22 @@ const Devices = () => {
             });
           }}
         />
+      ),
+      sortable: true,
+      width: "10%",
+    },
+    {
+      name: "Location on Map",
+      selector: (row: any) => (
+        <LinkCustom
+          style={{
+            color: "#233044",
+            textDecoration: "none",
+          }}
+          to={`/locations/${row["@iot.id"]}`}
+        >
+          <MapIcon />
+        </LinkCustom>
       ),
       sortable: true,
       width: "20%",

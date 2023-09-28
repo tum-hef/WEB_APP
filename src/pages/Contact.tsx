@@ -118,7 +118,7 @@ function Contact() {
               marginBottom: "30px",
             }}
           >
-            Question
+            Question Form
           </Typography>
           <form onSubmit={formik.handleSubmit}>
             <Grid container spacing={2}>
@@ -161,7 +161,7 @@ function Contact() {
                   required
                   id="details"
                   name="details"
-                  label="details"
+                  label="Details"
                   fullWidth
                   multiline
                   rows={4}
