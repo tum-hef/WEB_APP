@@ -231,25 +231,6 @@ function StoreDevice() {
               <Grid item xs={12} sm={3}>
                 <TextField
                   required
-                  id="location_longitude"
-                  name="location_longitude"
-                  label="Location Longitude"
-                  fullWidth
-                  value={formik.values.location_longitude}
-                  onChange={formik.handleChange}
-                  error={
-                    formik.touched.location_longitude &&
-                    Boolean(formik.errors.location_longitude)
-                  }
-                  helperText={
-                    formik.touched.location_longitude &&
-                    formik.errors.location_longitude
-                  }
-                />
-              </Grid>{" "}
-              <Grid item xs={12} sm={3}>
-                <TextField
-                  required
                   id="location_latitude"
                   name="location_latitude"
                   label="Location Latitude"
@@ -266,6 +247,25 @@ function StoreDevice() {
                   }
                 />
               </Grid>
+              <Grid item xs={12} sm={3}>
+                <TextField
+                  required
+                  id="location_longitude"
+                  name="location_longitude"
+                  label="Location Longitude"
+                  fullWidth
+                  value={formik.values.location_longitude}
+                  onChange={formik.handleChange}
+                  error={
+                    formik.touched.location_longitude &&
+                    Boolean(formik.errors.location_longitude)
+                  }
+                  helperText={
+                    formik.touched.location_longitude &&
+                    formik.errors.location_longitude
+                  }
+                />
+              </Grid>{" "}
             </Grid>{" "}
             <Button
               type="submit"

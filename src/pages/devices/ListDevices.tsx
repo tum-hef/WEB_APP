@@ -11,11 +11,12 @@ import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import DeleteForeverOutlinedIcon from "@mui/icons-material/DeleteForeverOutlined";
 import Swal from "sweetalert2";
 import MapIcon from "@mui/icons-material/Map";
+import { set } from "date-fns";
+import { de } from "date-fns/locale";
 const Devices = () => {
   const { keycloak } = useKeycloak();
   const userInfo = keycloak?.idTokenParsed;
   const token = keycloak?.token;
-  console.log(token);
 
   const [frostServerPort, setFrostServerPort] = useState<number | null>(null);
   const [devices, setDevices] = useState<any[]>([]);
@@ -30,12 +31,48 @@ const Devices = () => {
         },
       })
       .then((res) => {
-        // TODO: Get location of each device
         if (res.status === 200 && res.data.value) {
-          setDevices(res.data.value);
+          const devices = res.data.value;
+          // Fetch and associate locations with each device
+          setDevices(devices);
         }
       });
   };
+
+  // const fetchLocations = async (devices: any) => {
+  //   for (const device of devices) {
+  //     const locationLink = device["Locations@iot.navigationLink"];
+  //     try {
+  //       const response = await axios.get(locationLink, {
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //       });
+
+  //       if (response.status === 200 && response.data) {
+  //         // Fetching the location data is in the 'value' property
+  //         const locations = response.data.value;
+
+  //         // Find the location with matching @iot.id
+  //         const matchingLocation = locations.find(
+  //           (location: any) => location["@iot.id"] === device["@iot.id"]
+  //         );
+
+  //         if (matchingLocation) {
+  //           // Store the matching location inside the device object
+  //           device.location = matchingLocation;
+  //           setDevices([...devices]);
+  //           console.log(devices);
+  //         }
+  //       }
+  //     } catch (error) {
+  //       console.error(
+  //         `Error fetching location for device ${device["@iot.id"]}: ${error}`
+  //       );
+  //     }
+  //   }
+  // };
 
   const fetchFrostPort = async () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL;
