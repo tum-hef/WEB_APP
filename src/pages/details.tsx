@@ -23,7 +23,8 @@ function Details() {
       try {
         setIsLoading(true);
         const response = await axios.post(
-          `http://localhost:4500/reset_password`,
+          // `http://localhost:4500/reset_password`, //Local testing
+          `${process.env.REACT_APP_BACKEND_URL}reset_password`,
           {
             user_id: keycloak?.idTokenParsed?.sub,
             password: values.new_password,
