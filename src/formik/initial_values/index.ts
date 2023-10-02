@@ -30,3 +30,8 @@ export const datastreams_initial_values =  {
     sensor_id: '',
     observation_property_id: '',
 }
+
+export const update_password_initial_values =  {
+    new_password: '',
+    confirm_password: '',
+}

@@ -199,7 +199,7 @@ const ListDatastream = () => {
           onClick={() => {
             Swal.fire({
               title: `Are you sure you want to delete ${row.name}?`,
-              text: "You will not be able to recover this datastream!",
+              text: "If you delete this datastream every observation linked to this datastream will be deleted and you will not be able to recover this datastream!",
               icon: "warning",
               showCancelButton: true,
               confirmButtonColor: "#3085d6",

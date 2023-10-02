@@ -111,3 +111,22 @@ export const datastreams_validationSchema = yup.object().shape({
     .string()
     .required("Measurement property id is required"),
 });
+
+export const update_password_validationSchema = yup.object().shape({
+  //  min 8 characters, 1 uppercase, one special character
+  new_password: yup
+    .string()
+    .required("New password is required")
+    .min(8, "New password must be at least 8 characters")
+    .max(20, "New password must be at most 20 characters")
+    // must have a capital letter
+    .matches(/[A-Z]/, "New password must contain at least one capital letter")
+    .matches(
+      /[\W_]+/,
+      "New password must contain at least one special character"
+    ),
+  confirm_password: yup
+    .string()
+    .required("Confirm password is required")
+    .oneOf([yup.ref("new_password"), null], "Passwords must match"),
+});

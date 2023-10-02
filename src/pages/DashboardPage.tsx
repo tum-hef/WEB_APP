@@ -239,6 +239,7 @@ export default function DashboardPage() {
                               maxHeight: "250px",
                             }}
                             component="img"
+                            width="100%"
                             height="140"
                             image="../images/node-red-icon.png"
                             alt="Devices"
