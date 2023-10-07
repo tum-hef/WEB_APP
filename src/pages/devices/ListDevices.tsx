@@ -238,21 +238,6 @@ const Devices = () => {
               confirmButtonColor: "#3085d6",
               cancelButtonColor: "#d33",
               confirmButtonText: "Yes, delete it!",
-              preConfirm: () => {
-                const name = (
-                  document.getElementById("name") as HTMLInputElement
-                ).value;
-                const description = (
-                  document.getElementById("description") as HTMLInputElement
-                ).value;
-                if (!name) {
-                  return Swal.showValidationMessage(
-                    "Please enter a device name"
-                  );
-                } else {
-                  return { name, description };
-                }
-              },
             }).then(async (result) => {
               if (result.isConfirmed) {
                 try {
