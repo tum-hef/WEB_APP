@@ -5,19 +5,15 @@ function WebAppTraining() {
   return (
     <DashboardComponent>
       <TrainingCategories
-        name="WebAppTraining"
-        description="WebAppTrainingDescription "
+        name="Web App Training"
+        description="Documentation for the SensorHub WebApp."
         object={[
           {
             name: "General",
             urls: [
               {
-                name: "General Info 1",
-                path: "https://www.tum.de/",
-              },
-              {
-                name: "General Info 2",
-                path: "https://www.tum.de/",
+                name: "Documentation",
+                path: "/documents/2023-10-06_SensorHub_Documentation_DG.pdf",
               },
             ],
           },
