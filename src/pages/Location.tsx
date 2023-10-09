@@ -5,44 +5,26 @@ import { useKeycloak } from "@react-keycloak/web";
 import { useParams } from "react-router-dom";
 import Dashboard from "../components/DashboardComponent";
 import { ToastContainer, toast } from "react-toastify";
-
+import { MapContainer, Marker, TileLayer } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 const Location = () => {
   const { keycloak } = useKeycloak();
   const userInfo = keycloak?.idTokenParsed;
   const token = keycloak?.token;
-  const [location, setLocation] = useState<any[]>([]);
+  const [longitude, setLongitude] = useState<number | null>(null);
+  const [latitude, setLatitude] = useState<number | null>(null);
+
   const [loading, setLoading] = useState(true);
-  const [current_time, setCurrentTime] = useState<Date | null>(null);
+  // const [current_time, setCurrentTime] = useState<Date | null>(null);
   const [displayName, setDisplayName] = useState("");
   const [frostServerPort, setFrostServerPort] = useState<number | null>(null);
   const { id } = useParams<{ id: string }>();
 
-  const get_last_update_time = async () => {
-    try {
-      const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
-      const url = `${backend_url}:${frostServerPort}/FROST-Server/v1.0/HistoricalLocations(${id})`;
-      console.log(url);
-      axios
-        .get(url, {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        })
-        .then((response) => {
-          console.log(response.data.time);
-          if (response.status === 200 && response.data.time) {
-            setCurrentTime(new Date(response.data.time));
-          }
-        })
-        .catch((err) => {
-          console.log(err);
-          toast.error("Error Getting Last Update Time");
-        });
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  const customMarkerIcon = new L.Icon({
+    iconUrl: require("../assets/pinpoint.png"), // Specify the correct path to your custom icon
+    iconSize: [30, 30],
+  });
 
   const fetchFrostPort = async () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL;
@@ -65,7 +47,7 @@ const Location = () => {
       const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
       axios
         .get(
-          `${backend_url}:${frostServerPort}/FROST-Server/v1.0/Things(${id})/Locations`,
+          `${backend_url}:${frostServerPort}/FROST-Server/v1.0/Locations(${id})`,
           {
             headers: {
               "Content-Type": "application/json",
@@ -74,33 +56,23 @@ const Location = () => {
           }
         )
         .then((response) => {
-          if (response.status === 200 && response.data.value) {
-            setLocation(response.data.value);
-            const ifameData = document.getElementById(
-              "iframeId"
-            ) as HTMLIFrameElement;
-            if (ifameData) {
-              ifameData.src = `https://maps.google.com/maps?q=${response.data.value[0].location.coordinates[1]},${response.data.value[0].location.coordinates[0]}&hl=es;&output=embed`;
+          if (response.status === 200 && response.data.location.coordinates) {
+            setLatitude(response.data.location.coordinates[1]);
+            setLongitude(response.data.location.coordinates[0]);
 
-              if (
-                response.data.value[0].location.coordinates[0] &&
-                response.data.value[0].location.coordinates[1]
-              ) {
-                axios
-                  .get(
-                    `https://nominatim.openstreetmap.org/search.php?q=
-          ${response.data.value[0].location.coordinates[1]}
-          ,${response.data.value[0].location.coordinates[0]}&polygon_geojson=1&format=json`
-                  )
-                  .then((response) => {
-                    setDisplayName(response.data[0].display_name);
-                  });
-              }
-            }
+            axios
+              .get(
+                `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${response.data.location.coordinates[1]}&lon=${response.data.location.coordinates[0]}`
+              )
+              .then((response) => {
+                if (response.data.display_name) {
+                  setDisplayName(response.data.display_name);
+                }
+              });
           }
         })
         .catch((err) => {
-          toast.error("Error Getting Things");
+          toast.error("Error Getting Location");
         });
     } catch (error) {}
   };
@@ -108,7 +80,6 @@ const Location = () => {
   useEffect(() => {
     if (frostServerPort !== null) {
       getLocation();
-      get_last_update_time();
     } else {
       fetchFrostPort();
     }
@@ -131,23 +102,40 @@ const Location = () => {
         pauseOnHover
         theme="dark"
       />
-      <Grid container justifyContent="left" alignItems="left">
-        <Typography variant="h6" component="h6" m={2}>
-          <b>Location Name: </b> {displayName}
-        </Typography>{" "}
-        <Typography variant="h6" component="h6" m={2}>
-          <b>Last Update: </b> {current_time?.toLocaleString()}
-        </Typography>{" "}
-      </Grid>
-      <Grid container justifyContent="left" alignItems="left">
-        <Typography variant="h6" component="h6" m={2}>
-          <b>Location on map: </b>
-        </Typography>
-      </Grid>
+      {displayName && (
+        <Grid container justifyContent="left" alignItems="left">
+          <Typography variant="h6" component="h6" m={2}>
+            <b>Location Name: </b> {displayName}
+          </Typography>{" "}
+        </Grid>
+      )}
+      {latitude && longitude && (
+        <>
+          <Grid container justifyContent="left" alignItems="left">
+            <Typography variant="h6" component="h6" m={2}>
+              <b>Location on map: </b>
+            </Typography>
+          </Grid>
 
-      {/* add text left */}
-      {location && (
-        <iframe id="iframeId" height="500px" width="100%" title="map"></iframe>
+          {/* add text left */}
+          <Grid item xs={12} sm={12}>
+            <MapContainer
+              center={[latitude, longitude]}
+              zoom={14}
+              scrollWheelZoom={false}
+              style={{ height: "30vh", width: "30wh" }}
+            >
+              <TileLayer
+                attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+              <Marker
+                position={[latitude, longitude]}
+                icon={customMarkerIcon}
+              ></Marker>
+            </MapContainer>
+          </Grid>
+        </>
       )}
     </Dashboard>
   );
