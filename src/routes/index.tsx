@@ -181,22 +181,22 @@ const AppRouter = (props: any) => {
                     path="/observations/:id"
                     component={Observervation}
                   />{" "}
-                  <PrivateRoute
+                  <Route
                     exact
                     path="/database/frost"
                     component={FrostTraining}
                   />{" "}
-                  <PrivateRoute
+                  <Route
                     exact
                     path="/database/node_red"
                     component={NodeRedTraining}
                   />{" "}
-                  <PrivateRoute
+                  <Route
                     exact
                     path="/database/web_app"
                     component={WebAppTraining}
                   />{" "}
-                  <PrivateRoute exact path="/contact" component={Contact} />{" "}
+                  <Route exact path="/contact" component={Contact} />{" "}
                   <Route path="*" component={NOTFOUND} />
                 </Switch>
               </Router>

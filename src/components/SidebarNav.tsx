@@ -34,7 +34,7 @@ import PersonSearchIcon from "@mui/icons-material/PersonSearch";
 import BiotechSharpIcon from "@mui/icons-material/BiotechSharp";
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 import DnsIcon from "@mui/icons-material/Dns";
-import PublicIcon from '@mui/icons-material/Public';
+import PublicIcon from "@mui/icons-material/Public";
 const baseScrollbar = css`
   background-color: ${(props) => props.theme.sidebar.background};
   border-right: 1px solid rgba(0, 0, 0, 0.12);
@@ -120,8 +120,13 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
         <Items>
           <LinkCustom
             to={
-              currentUrl === "/dashboard"
-                ? "/dashboard"
+              (currentUrl === "/dashboard" ||
+                currentUrl === "/contact" ||
+                currentUrl === "/database/frost" ||
+                currentUrl === "/database/node_red" ||
+                currentUrl === "/database/web_app") &&
+              !group_id
+                ? "/dashboard?message=no_group"
                 : `/dashboard/${group_id}`
             }
           >
@@ -146,7 +151,14 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
           </LinkCustom>
           <ListItemButton
             onClick={handleDataSpace}
-            disabled={currentUrl === "/dashboard"}
+            disabled={
+              (currentUrl === "/dashboard" ||
+                currentUrl === "/contact" ||
+                currentUrl === "/database/frost" ||
+                currentUrl === "/database/node_red" ||
+                currentUrl === "/database/web_app") &&
+              !group_id
+            }
           >
             <ListItemIcon>
               <AccountTreeIcon
@@ -375,16 +387,31 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
               rel="noopener noreferrer"
               style={{
                 textDecoration: "none",
-                pointerEvents: currentUrl === "/dashboard" ? "none" : "auto", // Disable pointer events if currentUrl is "/dashboard"
-                cursor: currentUrl === "/dashboard" ? "not-allowed" : "pointer", // Change cursor style if currentUrl is "/dashboard"
+                pointerEvents: currentUrl === "/dashboard" ? "none" : "auto", 
+                cursor: currentUrl === "/dashboard" ? "not-allowed" : "pointer", 
               }}
               onClick={(e) => {
-                if (currentUrl === "/dashboard") {
-                  e.preventDefault(); // Prevent redirect if currentUrl is "/dashboard"
+                if (
+                  currentUrl === "/dashboard" ||
+                  currentUrl === "/contact" ||
+                  currentUrl === "/database/frost" ||
+                  currentUrl === "/database/node_red" ||
+                  currentUrl === "/database/web_app"
+                ) {
+                  e.preventDefault(); 
                 }
               }}
             >
-              <ListItemButton disabled={currentUrl === "/dashboard"}>
+              <ListItemButton
+                disabled={
+                  (currentUrl === "/dashboard" ||
+                    currentUrl === "/contact" ||
+                    currentUrl === "/database/frost" ||
+                    currentUrl === "/database/node_red" ||
+                    currentUrl === "/database/web_app") &&
+                  !group_id
+                }
+              >
                 <ListItemIcon>
                   <WorkspacesIcon
                     style={{
@@ -405,13 +432,29 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
           <LinkCustom
             to="/reports"
             onClick={(event) => {
-              if (currentUrl === "/dashboard") {
-                event.preventDefault(); // Prevent redirect if currentUrl is "/dashboard"
+              if (
+                (currentUrl === "/dashboard" ||
+                  currentUrl === "/contact" ||
+                  currentUrl === "/database/frost" ||
+                  currentUrl === "/database/node_red" ||
+                  currentUrl === "/database/web_app") &&
+                !group_id
+              ) {
+                event.preventDefault(); 
               }
             }}
           >
             <ListItem key={"Reports"} disablePadding>
-              <ListItemButton disabled={currentUrl === "/dashboard"}>
+              <ListItemButton
+                disabled={
+                  (currentUrl === "/dashboard" ||
+                    currentUrl === "/contact" ||
+                    currentUrl === "/database/frost" ||
+                    currentUrl === "/database/node_red" ||
+                    currentUrl === "/database/web_app") &&
+                  !group_id
+                }
+              >
                 <ListItemIcon>
                   <TextSnippetIcon
                     style={{
@@ -429,16 +472,9 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
               </ListItemButton>
             </ListItem>
           </LinkCustom>
-          <LinkCustom
-            to="/contact"
-            onClick={(event) => {
-              if (currentUrl === "/dashboard") {
-                event.preventDefault(); // Prevent redirect if currentUrl is "/dashboard"
-              }
-            }}
-          >
+          <LinkCustom to="/contact">
             <ListItem key={"Contact"} disablePadding>
-              <ListItemButton disabled={currentUrl === "/dashboard"}>
+              <ListItemButton>
                 <ListItemIcon>
                   <QuestionMarkIcon
                     style={{
