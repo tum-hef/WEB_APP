@@ -200,6 +200,7 @@ const ListSensors = () => {
                         method: "UPDATE",
                         attribute: "Sensors",
                         attribute_id: row["@iot.id"],
+                        frost_port: frostServerPort,
                       },
                       {
                         headers: {
@@ -281,6 +282,7 @@ const ListSensors = () => {
                       method: "DELETE",
                       attribute: "Sensors",
                       attribute_id: row["@iot.id"],
+                      frost_port: frostServerPort,
                     },
                     {
                       headers: {

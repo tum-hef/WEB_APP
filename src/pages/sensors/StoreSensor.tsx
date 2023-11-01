@@ -64,6 +64,7 @@ function StoreSensor() {
             keycloak_id: userInfo?.sub,
             method: "POST",
             attribute: "Sensors",
+            frost_port: frostServerPort,
           },
           {
             headers: {

@@ -75,6 +75,21 @@ function StoreDatastream() {
           });
         }
       } catch (error) {
+        await axios.post(
+          `http://localhost:4500/mutation_error_logs`,
+          {
+            keycloak_id: userInfo?.sub,
+            method: "POST",
+            attribute: "Datastream",
+            frost_port: frostServerPort,
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${keycloak?.token}`,
+            },
+          }
+        );
         Swal.fire({
           icon: "error",
           title: "Oops...",

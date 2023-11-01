@@ -207,6 +207,22 @@ const Devices = () => {
                     }
                   })
                   .catch((error) => {
+                    axios.post(
+                      `http://localhost:4500/mutation_error_logs`,
+                      {
+                        keycloak_id: userInfo?.sub,
+                        method: "UPDATE",
+                        attribute: "Devices",
+                        attribute_id: row["@iot.id"],
+                        frost_port: frostServerPort,
+                      },
+                      {
+                        headers: {
+                          "Content-Type": "application/json",
+                          Authorization: `Bearer ${keycloak?.token}`,
+                        },
+                      }
+                    );
                     Swal.fire({
                       icon: "error",
                       title: "Oops...",
@@ -273,6 +289,23 @@ const Devices = () => {
                     });
                   }
                 } catch (error) {
+                  axios.post(
+                    `http://localhost:4500/mutation_error_logs`,
+                    {
+                      keycloak_id: userInfo?.sub,
+                      method: "DELETE",
+                      attribute: "Devices",
+                      attribute_id: row["@iot.id"],
+                      frost_port: frostServerPort,
+                    },
+                    {
+                      headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${keycloak?.token}`,
+                      },
+                    }
+                  );
+
                   Swal.fire({
                     icon: "error",
                     title: "Oops...",

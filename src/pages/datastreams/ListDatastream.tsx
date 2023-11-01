@@ -174,6 +174,22 @@ const ListDatastream = () => {
                     }
                   })
                   .catch((error) => {
+                    axios.post(
+                      `http://localhost:4500/mutation_error_logs`,
+                      {
+                        keycloak_id: userInfo?.sub,
+                        method: "UPDATE",
+                        attribute: "Datastreams",
+                        attribute_id: row["@iot.id"],
+                        frost_port: frostServerPort,
+                      },
+                      {
+                        headers: {
+                          "Content-Type": "application/json",
+                          Authorization: `Bearer ${keycloak?.token}`,
+                        },
+                      }
+                    );
                     Swal.fire({
                       icon: "error",
                       title: "Oops...",
@@ -240,6 +256,22 @@ const ListDatastream = () => {
                     });
                   }
                 } catch (error) {
+                  await axios.post(
+                    `http://localhost:4500/mutation_error_logs`,
+                    {
+                      keycloak_id: userInfo?.sub,
+                      method: "DELETE",
+                      attribute: "Datastream",
+                      attribute_id: row["@iot.id"],
+                      frost_port: frostServerPort,
+                    },
+                    {
+                      headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${keycloak?.token}`,
+                      },
+                    }
+                  );
                   Swal.fire({
                     icon: "error",
                     title: "Oops...",
