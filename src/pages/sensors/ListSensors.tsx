@@ -193,6 +193,21 @@ const ListSensors = () => {
                     }
                   })
                   .catch((error) => {
+                    axios.post(
+                      `http://localhost:4500/mutation_error_logs`,
+                      {
+                        keycloak_id: userInfo?.sub,
+                        method: "UPDATE",
+                        attribute: "Sensors",
+                        attribute_id: row["@iot.id"],
+                      },
+                      {
+                        headers: {
+                          "Content-Type": "application/json",
+                          Authorization: `Bearer ${keycloak?.token}`,
+                        },
+                      }
+                    );
                     Swal.fire({
                       icon: "error",
                       title: "Oops...",
@@ -228,7 +243,7 @@ const ListSensors = () => {
               if (result.isConfirmed) {
                 try {
                   const response = await axios.post(
-                    `${process.env.REACT_APP_BACKEND_URL}delete`,
+                    `${process.env.REACT_APP_BACKEND_URL}deletes`,
                     {
                       url: `Sensors(${row["@iot.id"]})`,
                       FROST_PORT: frostServerPort,
@@ -259,6 +274,21 @@ const ListSensors = () => {
                     });
                   }
                 } catch (error) {
+                  await axios.post(
+                    `http://localhost:4500/mutation_error_logs`,
+                    {
+                      keycloak_id: userInfo?.sub,
+                      method: "DELETE",
+                      attribute: "Sensors",
+                      attribute_id: row["@iot.id"],
+                    },
+                    {
+                      headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${keycloak?.token}`,
+                      },
+                    }
+                  );
                   Swal.fire({
                     icon: "error",
                     title: "Oops...",

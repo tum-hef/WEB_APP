@@ -50,6 +50,7 @@ function StoreSensor() {
             text: "Sensor created successfully!",
           });
         } else {
+          alert("1");
           Swal.fire({
             icon: "error",
             title: "Oops...",
@@ -57,6 +58,21 @@ function StoreSensor() {
           });
         }
       } catch (error) {
+        await axios.post(
+          `http://localhost:4500/mutation_error_logs`,
+          {
+            keycloak_id: userInfo?.sub,
+            method: "POST",
+            attribute: "Sensors",
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${keycloak?.token}`,
+            },
+          }
+        );
+
         Swal.fire({
           icon: "error",
           title: "Oops...",
