@@ -160,6 +160,7 @@ const ListSensors = () => {
                         description,
                         metadata,
                       },
+                      keycloak_id: userInfo?.sub,
                     },
                     {
                       headers: {
@@ -244,10 +245,11 @@ const ListSensors = () => {
               if (result.isConfirmed) {
                 try {
                   const response = await axios.post(
-                    `${process.env.REACT_APP_BACKEND_URL}deletes`,
+                    `${process.env.REACT_APP_BACKEND_URL}delete`,
                     {
                       url: `Sensors(${row["@iot.id"]})`,
                       FROST_PORT: frostServerPort,
+                      keycloak_id: userInfo?.sub,
                     },
                     {
                       headers: {

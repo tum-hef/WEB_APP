@@ -165,6 +165,7 @@ const ListObservationProperty = () => {
                         description,
                         definition,
                       },
+                      keycloak_id: userInfo?.sub,
                     },
                     {
                       headers: {
@@ -255,6 +256,7 @@ const ListObservationProperty = () => {
                     {
                       url: `ObservedProperties(${row["@iot.id"]})`,
                       FROST_PORT: frostServerPort,
+                      keycloak_id: userInfo?.sub,
                     },
                     {
                       headers: {

@@ -175,6 +175,7 @@ const Devices = () => {
                         name,
                         description,
                       },
+                      keycloak_id: userInfo?.sub,
                     },
                     {
                       headers: {
@@ -262,6 +263,7 @@ const Devices = () => {
                     {
                       url: `Things(${row["@iot.id"]})`,
                       FROST_PORT: frostServerPort,
+                      keycloak_id: userInfo?.sub,
                     },
                     {
                       headers: {

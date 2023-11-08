@@ -136,12 +136,13 @@ const ListDatastream = () => {
                   .patch(
                     `${process.env.REACT_APP_BACKEND_URL}update`,
                     {
-                      url: `ObservedProperties(${row["@iot.id"]})`,
+                      url: `Datastreams(${row["@iot.id"]})`,
                       FROST_PORT: frostServerPort,
                       body: {
                         name,
                         description,
                       },
+                      keycloak_id: userInfo?.sub,
                     },
                     {
                       headers: {
@@ -229,6 +230,7 @@ const ListDatastream = () => {
                     {
                       url: `Datastreams(${row["@iot.id"]})`,
                       FROST_PORT: frostServerPort,
+                      keycloak_id: userInfo?.sub,
                     },
                     {
                       headers: {
