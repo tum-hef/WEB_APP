@@ -167,7 +167,7 @@ const Devices = () => {
                 };
                 axios
                   .patch(
-                    `${process.env.REACT_APP_BACKEND_URL}update`,
+                    `${process.env.REACT_APP_BACKEND_URL}/update`,
                     {
                       url: `Things(${row["@iot.id"]})`,
                       FROST_PORT: frostServerPort,
@@ -259,7 +259,7 @@ const Devices = () => {
               if (result.isConfirmed) {
                 try {
                   const response = await axios.post(
-                    `${process.env.REACT_APP_BACKEND_URL}delete`,
+                    `${process.env.REACT_APP_BACKEND_URL}/delete`,
                     {
                       url: `Things(${row["@iot.id"]})`,
                       FROST_PORT: frostServerPort,

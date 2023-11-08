@@ -151,7 +151,7 @@ const ListSensors = () => {
                 };
                 axios
                   .patch(
-                    `${process.env.REACT_APP_BACKEND_URL}update`,
+                    `${process.env.REACT_APP_BACKEND_URL}/update`,
                     {
                       url: `Sensors(${row["@iot.id"]})`,
                       FROST_PORT: frostServerPort,
@@ -245,7 +245,7 @@ const ListSensors = () => {
               if (result.isConfirmed) {
                 try {
                   const response = await axios.post(
-                    `${process.env.REACT_APP_BACKEND_URL}delete`,
+                    `${process.env.REACT_APP_BACKEND_URL}/delete`,
                     {
                       url: `Sensors(${row["@iot.id"]})`,
                       FROST_PORT: frostServerPort,

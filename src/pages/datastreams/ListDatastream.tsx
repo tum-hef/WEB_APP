@@ -134,7 +134,7 @@ const ListDatastream = () => {
                 };
                 axios
                   .patch(
-                    `${process.env.REACT_APP_BACKEND_URL}update`,
+                    `${process.env.REACT_APP_BACKEND_URL}/update`,
                     {
                       url: `Datastreams(${row["@iot.id"]})`,
                       FROST_PORT: frostServerPort,
@@ -226,7 +226,7 @@ const ListDatastream = () => {
               if (result.isConfirmed) {
                 try {
                   const response = await axios.post(
-                    `${process.env.REACT_APP_BACKEND_URL}delete`,
+                    `${process.env.REACT_APP_BACKEND_URL}/delete`,
                     {
                       url: `Datastreams(${row["@iot.id"]})`,
                       FROST_PORT: frostServerPort,

@@ -156,7 +156,7 @@ const ListObservationProperty = () => {
                 };
                 axios
                   .patch(
-                    `${process.env.REACT_APP_BACKEND_URL}update`,
+                    `${process.env.REACT_APP_BACKEND_URL}/update`,
                     {
                       url: `ObservedProperties(${row["@iot.id"]})`,
                       FROST_PORT: frostServerPort,
@@ -252,7 +252,7 @@ const ListObservationProperty = () => {
               if (result.isConfirmed) {
                 try {
                   const response = await axios.post(
-                    `${process.env.REACT_APP_BACKEND_URL}delete`,
+                    `${process.env.REACT_APP_BACKEND_URL}/delete`,
                     {
                       url: `ObservedProperties(${row["@iot.id"]})`,
                       FROST_PORT: frostServerPort,
