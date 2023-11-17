@@ -41,8 +41,11 @@ import FrostTraining from "../pages/training/Frost";
 import NodeRedTraining from "../pages/training/Node Red";
 import Contact from "../pages/Contact";
 import WebAppTraining from "../pages/training/WebApp";
-import { Construction } from "../pages/Construction";
 import Details from "../pages/details";
+import Reports from "../pages/Reports";
+import ListDatastreamPerDevice from "../pages/devices/ListDatastreamPerDevice";
+import ListObservationsPerDatastream from "../pages/devices/ListObservationPerDatastream";
+
 const styles = {
   container: {
     height: "100%",
@@ -90,7 +93,7 @@ const AppRouter = (props: any) => {
                   <Route exact path="/" component={HomePage} />
                   <Route exact path="/register" component={Register} />
                   <Route exact path="/impressum" component={Impressum} />
-                  <Route exact path="/reports" component={Construction} />
+                  <Route exact path="/reports" component={Reports} />
                   <Route exact path="/details" component={Details} />
                   <PrivateRoute
                     exact
@@ -120,6 +123,16 @@ const AppRouter = (props: any) => {
                   />
                   {/* Devices */}
                   <PrivateRoute exact path="/devices" component={Devices} />
+                  <PrivateRoute
+                    exact
+                    path="/devices/:id/datastreams"
+                    component={ListDatastreamPerDevice}
+                  />{" "}
+                  <PrivateRoute
+                    exact
+                    path="/devices/:device_id/datastreams/:id/observations"
+                    component={ListObservationsPerDatastream}
+                  />
                   <PrivateRoute
                     exact
                     path="/devices/store"

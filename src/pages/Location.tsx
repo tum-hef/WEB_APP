@@ -123,7 +123,7 @@ const Location = () => {
               center={[latitude, longitude]}
               zoom={14}
               scrollWheelZoom={false}
-              style={{ height: "30vh", width: "30wh" }}
+              style={{ height: "60vh", width: "30wh" }}
             >
               <TileLayer
                 attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'

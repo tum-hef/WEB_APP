@@ -4,7 +4,8 @@ import Dashboard from "../components/DashboardComponent";
 import * as yup from "yup";
 import CreateOutlinedIcon from "@mui/icons-material/CreateOutlined";
 import BounceLoader from "react-loading";
-
+import { format } from "date-fns";
+import { utcToZonedTime } from "date-fns-tz";
 import {
   Stepper,
   Step,
@@ -357,7 +358,11 @@ function StepperStore() {
                   // 3: Get the ID of the Device
 
                   const response_get_device = await axios.get(
-                    `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Things?$filter=name eq '${values.device_name}'`,
+                    `${
+                      process.env.REACT_APP_BACKEND_URL_ROOT
+                    }:${frostServerPort}/FROST-Server/v1.0/Things?$filter=name%20eq%20%27${encodeURIComponent(
+                      values.device_name
+                    )}%27`,
                     {
                       headers: {
                         "Content-Type": "application/json",
@@ -375,7 +380,11 @@ function StepperStore() {
 
                   if (!values.observedProperty_existing_id) {
                     const response_get_observed_property = await axios.get(
-                      `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/ObservedProperties?$filter=name eq '${values.observeProperty_name}'`,
+                      `${
+                        process.env.REACT_APP_BACKEND_URL_ROOT
+                      }:${frostServerPort}/FROST-Server/v1.0/ObservedProperties?$filter=name%20eq%20%27${encodeURIComponent(
+                        values.observeProperty_name
+                      )}%27`,
                       {
                         headers: {
                           "Content-Type": "application/json",
@@ -437,7 +446,11 @@ function StepperStore() {
                   // 6: Get the ID of the Sensor
 
                   const response_get_sensor = await axios.get(
-                    `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Sensors?$filter=name eq '${name_of_the_sensor}'`,
+                    `${
+                      process.env.REACT_APP_BACKEND_URL_ROOT
+                    }:${frostServerPort}/FROST-Server/v1.0/Sensors?$filter=name%20eq%20%27${encodeURIComponent(
+                      name_of_the_sensor
+                    )}%27`,
                     {
                       headers: {
                         "Content-Type": "application/json",
@@ -448,6 +461,23 @@ function StepperStore() {
 
                   const sensor_id =
                     response_get_sensor.data.value[0]["@iot.id"];
+
+                  // Get the current date and time
+                  const currentDate = new Date();
+
+                  // Set the target time zone to Europe/Rome
+                  const targetTimeZone = "Europe/Rome";
+
+                  // Convert the current date to the local time of Rome
+                  const localDate = utcToZonedTime(currentDate, targetTimeZone);
+
+                  // Format the local date
+                  const formattedDate = format(
+                    localDate,
+                    "yyyy-MM-dd'T'HH:mm:ss.SS'Z'"
+                  );
+
+                  const phenphenomenonTimeFormated = `${formattedDate}/${formattedDate}`;
 
                   // 7: Store the Datastream
                   const response_post_datastream = await axios.post(
@@ -471,6 +501,7 @@ function StepperStore() {
                         "@iot.id": observed_property_id,
                       },
                       observationType: values.datastream_observation_type,
+                      phenomenonTime: phenphenomenonTimeFormated,
                     },
                     {
                       headers: {
@@ -1450,7 +1481,11 @@ function StepperStore() {
                           if (activeStep === 0 && values.device_name !== "") {
                             axios
                               .get(
-                                `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Things?$filter=name eq '${values.device_name}'`,
+                                `${
+                                  process.env.REACT_APP_BACKEND_URL_ROOT
+                                }:${frostServerPort}/FROST-Server/v1.0/Things?$filter=name%20eq%20%27${encodeURIComponent(
+                                  values.device_name
+                                )}%27`,
                                 {
                                   headers: {
                                     "Content-Type": "application/json",
@@ -1484,7 +1519,11 @@ function StepperStore() {
                           ) {
                             axios
                               .get(
-                                `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/ObservedProperties?$filter=name eq '${values.observeProperty_name}'`,
+                                `${
+                                  process.env.REACT_APP_BACKEND_URL_ROOT
+                                }:${frostServerPort}/FROST-Server/v1.0/ObservedProperties?$filter=name%20eq%20%27${encodeURIComponent(
+                                  values.observeProperty_name
+                                )}%27`,
                                 {
                                   headers: {
                                     "Content-Type": "application/json",
@@ -1516,7 +1555,11 @@ function StepperStore() {
                           ) {
                             axios
                               .get(
-                                `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Datastreams?$filter=name eq '${values.datastream_name}'`,
+                                `${
+                                  process.env.REACT_APP_BACKEND_URL_ROOT
+                                }:${frostServerPort}/FROST-Server/v1.0/Datastreams?$filter=name%20eq%20%27${encodeURIComponent(
+                                  values.datastream_name
+                                )}%27`,
                                 {
                                   headers: {
                                     "Content-Type": "application/json",

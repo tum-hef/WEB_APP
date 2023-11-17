@@ -103,19 +103,35 @@ const Devices = () => {
       name: "ID",
       selector: (row: any) => `${row["@iot.id"]}`,
       sortable: true,
-      width: "10%",
+      width: "5%",
     },
     {
       name: "Name",
       selector: (row: any) => row.name,
       sortable: true,
-      width: "20%",
+      width: "15%",
     },
     {
       name: "Description",
       selector: (row: any) => row.description,
       sortable: true,
       width: "20%",
+    },
+    {
+      name: "Datastreams",
+      selector: (row: any) => (
+        <LinkCustom
+          style={{
+            color: "#233044",
+            textDecoration: "none",
+          }}
+          to={`/devices/${row["@iot.id"]}/datastreams`}
+        >
+          Datastream{" "}
+        </LinkCustom>
+      ),
+      sortable: true,
+      width: "10%",
     },
     {
       name: "Edit",

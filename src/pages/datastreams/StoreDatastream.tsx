@@ -17,6 +17,9 @@ import { NOTFOUND } from "../404";
 import axios from "axios";
 import LinkCustom from "../../components/LinkCustom";
 import Swal from "sweetalert2";
+import { format } from "date-fns";
+import { utcToZonedTime } from "date-fns-tz";
+
 function StoreDatastream() {
   const { keycloak } = useKeycloak();
   const userInfo = keycloak?.idTokenParsed;
@@ -26,12 +29,28 @@ function StoreDatastream() {
   const [devices, setDevices] = useState<any[]>([]);
   const [observedProperties, setObservedProperties] = useState<any[]>([]);
   const [sensors, setSensors] = useState<any[]>([]);
+
   const formik = useFormik({
     initialValues: datastreams_initial_values,
     validationSchema: datastreams_validationSchema,
     onSubmit: async (values: any) => {
       formik.resetForm();
       try {
+        // Get the current date and time
+        const currentDate = new Date();
+
+        // Set the target time zone to Europe/Rome
+        const targetTimeZone = "Europe/Rome";
+
+        // Convert the current date to the local time of Rome
+        const localDate = utcToZonedTime(currentDate, targetTimeZone);
+
+        // Format the local date
+        const formattedDate = format(localDate, "yyyy-MM-dd'T'HH:mm:ss.SS'Z'");
+
+        const phenphenomenonTimeFormated = `${formattedDate}/${formattedDate}`;
+
+        console.log(`Current Date and Time in Rome: ${formattedDate}`);
         const response = await axios.post(
           `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Datastreams`,
           {
@@ -52,6 +71,7 @@ function StoreDatastream() {
               "@iot.id": values.observation_property_id,
             },
             observationType: values.observationType,
+            phenomenonTime: phenphenomenonTimeFormated,
           },
           {
             headers: {
