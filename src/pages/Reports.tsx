@@ -62,7 +62,7 @@ const Reports = () => {
 
           storedDatastreams.push({
             id: datastream["@iot.id"],
-            method: "Store",
+            method: "Create",
             attribute: "Datastream",
             attribute_id: datastream["@iot.id"],
             frost_port: frostServerPort,
@@ -70,8 +70,6 @@ const Reports = () => {
           });
         });
       }
-
-      console.log(storedDatastreams);
 
       const logRes = await axios.get(`http://localhost:4500/logs`, {
         params: {
