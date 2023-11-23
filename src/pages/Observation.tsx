@@ -13,10 +13,7 @@ import {
 } from "@mui/material";
 import { ToastContainer, toast } from "react-toastify";
 
-import {
-  DateTimePicker,
-  LocalizationProvider,
-} from "@mui/x-date-pickers";
+import { DateTimePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { CSVLink } from "react-csv";
 import { Line } from "react-chartjs-2";
@@ -73,7 +70,7 @@ const Observervation = () => {
   const [end_date, setEndDate] = useState<Date | null>(null);
   const [phenomenon_times, setPhenomenonTimes] = useState([]);
   const [result_times, setResultTimes] = useState([]);
-  const history = useHistory();
+  const { device_id } = useParams<{ device_id: string }>();
   const [loading, setLoading] = useState(true);
   const handleChangeStartDate = (newValue: any) => {
     setStartDate(newValue);
@@ -304,14 +301,40 @@ const Observervation = () => {
       >
         <LinkCustom to="/">Data Space</LinkCustom>
         <LinkCustom to="/frost_entities">Data Items</LinkCustom>
-        <Typography color="text.primary">Observations</Typography>
+        <LinkCustom to="/devices">Devices</LinkCustom>
+        <LinkCustom to={`/devices/${device_id}/datastreams`}>
+          Datastreams of Device {device_id}
+        </LinkCustom>
+        <LinkCustom to={`/devices/${device_id}/datastreams/${id}/observations`}>
+          Observations for Datastream {id}
+        </LinkCustom>{" "}
+        <Typography color="text.primary">Graph</Typography>
       </Breadcrumbs>
+      {/* link to go do the table */}
+      <LinkCustom to={`/devices/${device_id}/datastreams/${id}/observations`}>
+        <Button
+          variant="contained"
+          style={{
+            backgroundColor: "#233044",
+            color: "#ffffff",
+          }}
+        >
+          Check the table
+        </Button>
+      </LinkCustom>
       <CSVLink filename="observation.csv" data={getCsvData()}>
         {" "}
-        <Button variant="contained">Download CSV</Button>
+        <Button
+          variant="contained"
+          style={{
+            backgroundColor: "#233044",
+            color: "#ffffff",
+          }}
+        >
+          Download CSV
+        </Button>
       </CSVLink>
       {result_times.length > 0 && <Line options={options} data={data} />}
-
       <LocalizationProvider dateAdapter={AdapterDateFns}>
         <Grid container justifyContent="center" alignItems="center">
           <Grid

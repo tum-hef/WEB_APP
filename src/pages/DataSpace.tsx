@@ -7,9 +7,9 @@ import { useKeycloak } from "@react-keycloak/web";
 import { toast } from "react-toastify";
 import { useParams } from "react-router-dom";
 import { NOTFOUND } from "./404";
-import BiotechSharpIcon from "@mui/icons-material/BiotechSharp";
 import DriveFileRenameOutlineIcon from "@mui/icons-material/DriveFileRenameOutline";
 import CardDataSpace from "../components/CardDataSpace";
+import TabletAndroidIcon from "@mui/icons-material/TabletAndroid";
 
 export default function DataSpace() {
   const { keycloak } = useKeycloak();
@@ -197,10 +197,10 @@ export default function DataSpace() {
             </Grid>
             <Grid item xs={12} sm={6} md={6} lg={6}>
               <CardDataSpace
-                redirection_path="observations"
-                card_name="Observations"
+                redirection_path="devices"
+                card_name="Devices & Data"
                 Icon={
-                  <BiotechSharpIcon
+                  <TabletAndroidIcon
                     style={{
                       fontSize: 30,
                       marginTop: "10px",

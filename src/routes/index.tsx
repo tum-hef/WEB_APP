@@ -191,7 +191,7 @@ const AppRouter = (props: any) => {
                   />{" "}
                   <PrivateRoute
                     exact
-                    path="/observations/:id"
+                    path="/devices/:device_id/datastreams/:id/observations/graph"
                     component={Observervation}
                   />{" "}
                   <Route

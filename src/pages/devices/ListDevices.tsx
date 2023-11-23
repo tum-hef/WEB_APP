@@ -9,10 +9,10 @@ import { useKeycloak } from "@react-keycloak/web";
 import { ToastContainer, toast } from "react-toastify";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import DeleteForeverOutlinedIcon from "@mui/icons-material/DeleteForeverOutlined";
+import FolderSpecialIcon from "@mui/icons-material/FolderSpecial";
 import Swal from "sweetalert2";
 import MapIcon from "@mui/icons-material/Map";
-import { set } from "date-fns";
-import { de } from "date-fns/locale";
+
 const Devices = () => {
   const { keycloak } = useKeycloak();
   const userInfo = keycloak?.idTokenParsed;
@@ -127,7 +127,7 @@ const Devices = () => {
           }}
           to={`/devices/${row["@iot.id"]}/datastreams`}
         >
-          Datastream{" "}
+          <FolderSpecialIcon />
         </LinkCustom>
       ),
       sortable: true,
