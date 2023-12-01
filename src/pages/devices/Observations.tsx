@@ -1,15 +1,21 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import DataTable, { ExpanderComponentProps } from "react-data-table-component";
-import { Breadcrumbs, Button, Typography } from "@mui/material";
+import {
+  Breadcrumbs,
+  Button,
+  Grid,
+  Typography,
+} from "@mui/material";
 import LinkCustom from "../../components/LinkCustom";
-import BiotechSharpIcon from "@mui/icons-material/BiotechSharp";
+
 import Dashboard from "../../components/DashboardComponent";
 import { useKeycloak } from "@react-keycloak/web";
-import { ToastContainer, toast } from "react-toastify";
+import { ToastContainer } from "react-toastify";
 import { useParams } from "react-router-dom";
+import TableObservationPerDatastream from "../../components/TableObservationPerDatastream";
+import GraphObservationsPerDatastream from "../../components/GraphObservationsPerDatastream";
 
-const ListDatastreamPerDevice = () => {
+const Observations = () => {
   const { keycloak } = useKeycloak();
   const userInfo = keycloak?.idTokenParsed;
   const token = keycloak?.token;
@@ -18,12 +24,16 @@ const ListDatastreamPerDevice = () => {
   const [datastream, setDataStream] = useState<any[]>([]);
 
   const { id } = useParams<{ id: string }>();
+  const { device_id } = useParams<{ device_id: string }>();
 
-  const fetchThings = () => {
+  const [observations, setObservations] = useState<any[]>([]);
+  const [isGraphButtonSelected, setIsGraphButtonSelected] = useState(false);
+
+  const fetchObservations = () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
     axios
       .get(
-        `${backend_url}:${frostServerPort}/FROST-Server/v1.0/Things(${id})/Datastreams`,
+        `${backend_url}:${frostServerPort}/FROST-Server/v1.0/Datastreams(${id})/Observations`,
         {
           headers: {
             "Content-Type": "application/json",
@@ -56,48 +66,11 @@ const ListDatastreamPerDevice = () => {
 
   useEffect(() => {
     if (frostServerPort !== null) {
-      fetchThings();
+      fetchObservations();
     } else {
       fetchFrostPort();
     }
   }, [frostServerPort]);
-
-  const columns = [
-    {
-      name: "ID",
-      selector: (row: any) => `${row["@iot.id"]}`,
-      sortable: true,
-      width: "5%",
-    },
-    {
-      name: "Name",
-      selector: (row: any) => row.name,
-      sortable: true,
-      width: "25%",
-    },
-    {
-      name: "Description",
-      selector: (row: any) => row.description,
-      sortable: true,
-      width: "40%",
-    },
-    {
-      name: "Observations",
-      selector: (row: any) => (
-        <LinkCustom
-          style={{
-            color: "#233044",
-            textDecoration: "none",
-          }}
-          to={`/devices/${id}/datastreams/${row["@iot.id"]}/observations`}
-        >
-          <BiotechSharpIcon />
-        </LinkCustom>
-      ),
-      sortable: true,
-      width: "20%",
-    },
-  ];
 
   return (
     <Dashboard>
@@ -122,22 +95,37 @@ const ListDatastreamPerDevice = () => {
         <LinkCustom to="/">Data Space</LinkCustom>
         <LinkCustom to="/frost_entities">Data Items</LinkCustom>
         <LinkCustom to="/devices">Devices</LinkCustom>
+        <LinkCustom to={`/devices/${device_id}/datastreams`}>
+          Datastreams of Device #{device_id}
+        </LinkCustom>
         <Typography color="text.primary">
-          Datastream of Device #{id}{" "}
-          {datastream[0]?.name && `(${datastream[0]?.name})`}
+          Observations for Datastream #{id}{" "}
         </Typography>
       </Breadcrumbs>
 
-      <DataTable
-        title={`Datastreams for Device #${id} ${datastream[0]?.name}`}
-        columns={columns}
-        data={datastream}
-        pagination={true}
-        paginationPerPage={5}
-        paginationRowsPerPageOptions={[5, 10, 15]}
-      />
+      {isGraphButtonSelected ? (
+        <GraphObservationsPerDatastream
+          token={token}
+          id={id}
+          frostServerPort={frostServerPort}
+          fetchFrostPort={fetchFrostPort}
+          isGraphButtonSelected={isGraphButtonSelected}
+          setIsGraphButtonSelected={setIsGraphButtonSelected}
+        />
+      ) : (
+        <TableObservationPerDatastream
+          datastream={datastream}
+          observations={observations}
+          id={id}
+          frostServerPort={frostServerPort}
+          token={token}
+          setObservations={setObservations}
+          isGraphButtonSelected={isGraphButtonSelected}
+          setIsGraphButtonSelected={setIsGraphButtonSelected}
+        />
+      )}
     </Dashboard>
   );
 };
 
-export default ListDatastreamPerDevice;
+export default Observations;

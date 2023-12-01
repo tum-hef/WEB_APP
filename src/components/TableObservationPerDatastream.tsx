@@ -1,36 +1,72 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
-import DataTable from "react-data-table-component";
-import {
-  Box,
-  Breadcrumbs,
-  Button,
-  Grid,
-  Modal,
-  TextField,
-  Typography,
-} from "@mui/material";
-import LinkCustom from "../../components/LinkCustom";
-
-import Dashboard from "../../components/DashboardComponent";
-import { useKeycloak } from "@react-keycloak/web";
-import { ToastContainer } from "react-toastify";
-import { useParams } from "react-router-dom";
+import { Box, Button, Grid, Modal, TextField, Typography } from "@mui/material";
+import React, { useEffect, useState } from "react";
 import { DateTimePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { CSVLink } from "react-csv";
+import DataTable from "react-data-table-component";
 import { format } from "date-fns-tz";
+import axios from "axios";
+import SaveAltIcon from "@mui/icons-material/SaveAlt";
 
-const ListObservationsPerDatastream = () => {
-  const { keycloak } = useKeycloak();
-  const userInfo = keycloak?.idTokenParsed;
-  const token = keycloak?.token;
+const style = {
+  position: "absolute",
+  top: "50%",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
+  width: 400,
+  bgcolor: "background.paper",
+  border: "2px solid #000",
+  boxShadow: 24,
+  p: 4,
+  height: "50%",
+  margin: "auto",
+  marginTop: "5%",
+};
 
-  const [frostServerPort, setFrostServerPort] = useState<number | null>(null);
-  const [datastream, setDataStream] = useState<any[]>([]);
+interface TableObservationPerDatastreamProps {
+  datastream: any[];
+  observations: any[];
+  id: string;
+  frostServerPort: number | null;
+  token: any;
+  setObservations: any;
+  isGraphButtonSelected: boolean;
+  setIsGraphButtonSelected: any;
+}
 
-  const { id } = useParams<{ id: string }>();
-  const { device_id } = useParams<{ device_id: string }>();
+function TableObservationPerDatastream({
+  datastream,
+  observations,
+  id,
+  frostServerPort,
+  token,
+  setObservations,
+  isGraphButtonSelected,
+  setIsGraphButtonSelected,
+}: TableObservationPerDatastreamProps) {
+  const [start_date, setStartDate] = useState<Date | null>(null);
+  const [end_date, setEndDate] = useState<Date | null>(null);
+
+  useEffect(() => {
+    if (start_date && end_date && start_date < end_date) {
+      const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
+      axios
+        .get(
+          `${backend_url}:${frostServerPort}/FROST-Server/v1.0/Datastreams(${id})/Observations`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        )
+        .then((res) => {
+          if (res.status === 200 && res.data.value) {
+            setObservations(res.data.value);
+          }
+        });
+    }
+  }, [start_date, end_date]);
 
   const [openModal, setOpenModal] = useState(false);
   const handleOpenModal = () => setOpenModal(true);
@@ -39,48 +75,6 @@ const ListObservationsPerDatastream = () => {
     setStartDate(null);
     setEndDate(null);
   };
-
-  const [start_date, setStartDate] = useState<Date | null>(null);
-  const [end_date, setEndDate] = useState<Date | null>(null);
-
-  const [observations, setObservations] = useState<any[]>([]);
-
-  const fetchObservations = () => {
-    const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
-    axios
-      .get(
-        `${backend_url}:${frostServerPort}/FROST-Server/v1.0/Datastreams(${id})/Observations`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      )
-      .then((res) => {
-        if (res.status === 200 && res.data.value) {
-          setDataStream(res.data.value);
-        }
-      });
-  };
-
-  const fetchFrostPort = async () => {
-    const backend_url = process.env.REACT_APP_BACKEND_URL;
-    const email = userInfo?.preferred_username;
-    await axios
-      .get(`${backend_url}/frost-server?email=${email}`, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
-      .then((res) => {
-        if (res.status === 200 && res.data.PORT) {
-          setFrostServerPort(res.data.PORT);
-        }
-      });
-  };
-
-  // Assuming observations is an array of objects containing timestamps like "2020-06-02T16:04:18.812Z"
 
   const getCsvData = () => {
     const csvData = [["ID", "Result", "Phenomenon Time"]];
@@ -134,35 +128,6 @@ const ListObservationsPerDatastream = () => {
     return csvData;
   };
 
-  useEffect(() => {
-    if (frostServerPort !== null) {
-      fetchObservations();
-    } else {
-      fetchFrostPort();
-    }
-  }, [frostServerPort]);
-
-  useEffect(() => {
-    if (start_date && end_date && start_date < end_date) {
-      const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
-      axios
-        .get(
-          `${backend_url}:${frostServerPort}/FROST-Server/v1.0/Datastreams(${id})/Observations`,
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        )
-        .then((res) => {
-          if (res.status === 200 && res.data.value) {
-            setObservations(res.data.value);
-          }
-        });
-    }
-  }, [start_date, end_date]);
-
   const columns = [
     {
       name: "ID",
@@ -184,79 +149,74 @@ const ListObservationsPerDatastream = () => {
       sortable: true,
     },
   ];
-  const style = {
-    position: "absolute",
-    top: "50%",
-    left: "50%",
-    transform: "translate(-50%, -50%)",
-    width: 400,
-    bgcolor: "background.paper",
-    border: "2px solid #000",
-    boxShadow: 24,
-    p: 4,
-    height: "50%", // Adjust the height as needed
-    margin: "auto", // Center the modal horizontally
-    marginTop: "5%", // Adjust the top margin as needed
-  };
 
   return (
-    <Dashboard>
-      <ToastContainer
-        position="bottom-right"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="dark"
-      />
-      <Breadcrumbs
-        aria-label="breadcrumb"
-        style={{
-          marginBottom: "10px",
-        }}
-      >
-        <LinkCustom to="/">Data Space</LinkCustom>
-        <LinkCustom to="/frost_entities">Data Items</LinkCustom>
-        <LinkCustom to="/devices">Devices</LinkCustom>
-        <LinkCustom to={`/devices/${device_id}/datastreams`}>
-          Datastreams of Device {device_id}
-        </LinkCustom>
-        <Typography color="text.primary">
-          Observations for Datastream {id}
-        </Typography>
-      </Breadcrumbs>
-      {/* Add button on right side */}
-      <Grid item xs={12} sm={6} md={4} lg={3} mt={4} mb={4}>
-        <LinkCustom
-          to={`/devices/${device_id}/datastreams/${id}/observations/graph`}
+    <>
+      <Grid container spacing={2}>
+        {/* Left side buttons */}
+        <Grid
+          item
+          xs={12}
+          sm={6}
+          md={4}
+          lg={3}
+          mt={4}
+          mb={4}
+          style={{ display: "flex" }}
+        >
+          <Button
+            disabled={isGraphButtonSelected ? false : true}
+            variant="contained"
+            onClick={() => {
+              setIsGraphButtonSelected(false);
+            }}
+            style={{
+              backgroundColor: isGraphButtonSelected ? "#233044" : "#cccccc",
+              color: isGraphButtonSelected ? "#ffffff" : "#000000",
+              marginRight: "8px",
+            }}
+          >
+            Table View
+          </Button>
+          <Button
+            disabled={isGraphButtonSelected ? true : false}
+            variant="contained"
+            onClick={() => {
+              setIsGraphButtonSelected(true);
+            }}
+            style={{
+              backgroundColor: isGraphButtonSelected ? "#cccccc" : "#233044",
+              color: isGraphButtonSelected ? "#000000" : "#ffffff",
+            }}
+          >
+            Graph View
+          </Button>
+        </Grid>
+
+        {/* Right side buttons */}
+        <Grid
+          item
+          xs={12}
+          sm={6}
+          md={4}
+          lg={3}
+          mt={4}
+          mb={4}
+          style={{ marginLeft: "auto" }}
         >
           <Button
             variant="contained"
             style={{
-              backgroundColor: "#233044",
               color: "#ffffff",
             }}
+            endIcon={<SaveAltIcon />}
+            onClick={handleOpenModal}
           >
-            Check graph
+            Download CSV
           </Button>
-        </LinkCustom>
-      </Grid>{" "}
-      <Grid item xs={12} sm={6} md={4} lg={3} mt={4} mb={4}>
-        <Button
-          variant="contained"
-          style={{
-            backgroundColor: "#233044",
-            color: "#ffffff",
-          }}
-          onClick={handleOpenModal}
-        >
-          Download CSV
-        </Button>
+        </Grid>
       </Grid>
+
       <Modal
         open={openModal}
         onClose={handleCloseModal}
@@ -345,9 +305,15 @@ const ListObservationsPerDatastream = () => {
           </LocalizationProvider>
 
           {/* create a helper text */}
-          <Typography variant="body1" color="secondary">
-            Note: If you don't select any date, all observations will be
-            downloaded.
+          <Typography
+            variant="body1"
+            color="secondary"
+            style={{
+              margin: "10px",
+            }}
+          >
+            Note: Both start and end date must be selected and start date must
+            be before end date
           </Typography>
 
           <Grid item xs={12} md={12}>
@@ -387,8 +353,8 @@ const ListObservationsPerDatastream = () => {
         paginationPerPage={5}
         paginationRowsPerPageOptions={[5, 10, 15]}
       />
-    </Dashboard>
+    </>
   );
-};
+}
 
-export default ListObservationsPerDatastream;
+export default TableObservationPerDatastream;
