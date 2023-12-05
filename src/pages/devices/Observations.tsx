@@ -33,7 +33,7 @@ const Observations = () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
     axios
       .get(
-        `${backend_url}:${frostServerPort}/FROST-Server/v1.0/Datastreams(${id})/Observations`,
+        `${backend_url}:${frostServerPort}/FROST-Server/v1.0/Datastreams(${id})/Observations?$orderby=phenomenonTime%20desc`,
         {
           headers: {
             "Content-Type": "application/json",
