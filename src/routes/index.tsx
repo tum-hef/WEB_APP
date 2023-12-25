@@ -44,6 +44,8 @@ import Details from "../pages/details";
 import Reports from "../pages/Reports";
 import ListDatastreamPerDevice from "../pages/devices/ListDatastreamPerDevice";
 import Observations from "../pages/devices/Observations";
+import ReactGA from "react-ga4";
+
 
 const styles = {
   container: {
@@ -65,6 +67,10 @@ const AppRouter = (props: any) => {
 
   const { classes } = props;
   const { theme } = useTheme();
+
+    if (process.env.REACT_APP_GOOGLE_ANALYTICS_ID) {
+      ReactGA.initialize(process.env.REACT_APP_GOOGLE_ANALYTICS_ID);
+    }
 
   if (!initialized) {
     return (
