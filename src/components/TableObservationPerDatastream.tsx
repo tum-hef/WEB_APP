@@ -25,6 +25,7 @@ const style = {
 
 interface TableObservationPerDatastreamProps {
   datastream: any[];
+  setDataStream: any;
   observations: any[];
   id: string;
   frostServerPort: number | null;
@@ -36,6 +37,7 @@ interface TableObservationPerDatastreamProps {
 
 function TableObservationPerDatastream({
   datastream,
+  setDataStream,
   observations,
   id,
   frostServerPort,
@@ -46,6 +48,7 @@ function TableObservationPerDatastream({
 }: TableObservationPerDatastreamProps) {
   const [start_date, setStartDate] = useState<Date | null>(null);
   const [end_date, setEndDate] = useState<Date | null>(null);
+  const [isDataFiltered, setIsDataFiltered] = useState(false);  
 
   useEffect(() => {
     if (start_date && end_date && start_date < end_date) {
@@ -72,8 +75,6 @@ function TableObservationPerDatastream({
   const handleOpenModal = () => setOpenModal(true);
   const handleCloseModal = () => {
     setOpenModal(false);
-    setStartDate(null);
-    setEndDate(null);
   };
 
   const getCsvData = () => {
@@ -126,6 +127,42 @@ function TableObservationPerDatastream({
     }
 
     return csvData;
+  };
+
+  const resetFilter = () => {
+    const orderedObservations = observations.sort((a, b) => {
+      return (
+        new Date(b.phenomenonTime).getTime() -
+        new Date(a.phenomenonTime).getTime()
+      );
+    });
+    setDataStream(orderedObservations);
+    setIsDataFiltered(false);
+    setStartDate(null);
+    setEndDate(null);
+  };
+
+  const filterData = () => {
+    console.log(start_date, end_date);
+
+    if (start_date && end_date) {
+      const filteredObservations = observations.filter(
+        (item) =>
+          format(new Date(item.phenomenonTime), "dd.MM.yyyy HH:mm", {
+            timeZone: "Europe/Rome",
+          }) >=
+            format(start_date, "dd.MM.yyyy HH:mm", {
+              timeZone: "Europe/Rome",
+            }) &&
+          format(new Date(item.phenomenonTime), "dd.MM.yyyy HH:mm", {
+            timeZone: "Europe/Rome",
+          }) <=
+            format(end_date, "dd.MM.yyyy HH:mm", { timeZone: "Europe/Rome" })
+      );
+
+      setIsDataFiltered(true);
+      setDataStream(filteredObservations);
+    }
   };
 
   const columns = [
@@ -192,8 +229,30 @@ function TableObservationPerDatastream({
             Graph View
           </Button>
         </Grid>
+        {start_date && end_date && isDataFiltered && (
+          <Grid
+            item
+            xs={12}
+            sm={6}
+            md={4}
+            lg={3}
+            mt={4}
+            mb={4}
+            style={{ marginLeft: "auto" }}
+          >
+            <Button
+              variant="contained"
+              style={{
+                color: "#ffffff",
+                backgroundColor: "#233044",
+              }}
+              onClick={resetFilter}
+            >
+              Reset Data
+            </Button>
+          </Grid>
+        )}
 
-        {/* Right side buttons */}
         <Grid
           item
           xs={12}
@@ -212,7 +271,7 @@ function TableObservationPerDatastream({
             endIcon={<SaveAltIcon />}
             onClick={handleOpenModal}
           >
-            Download CSV
+            Filter Data & Download CSV
           </Button>
         </Grid>
       </Grid>
@@ -236,9 +295,8 @@ function TableObservationPerDatastream({
           >
             Close Window
           </Button>
-
           <Typography id="modal-modal-title" variant="h6" component="h2">
-            Download CSV
+            Filter Data & Download CSV
           </Typography>
           <LocalizationProvider dateAdapter={AdapterDateFns}>
             <Grid container justifyContent="center" alignItems="center">
@@ -289,11 +347,7 @@ function TableObservationPerDatastream({
                       style={{
                         color: "red",
                       }}
-                      onClick={() => {
-                        setStartDate(null);
-                        setEndDate(null);
-                        // fetchObservations();
-                      }}
+                      onClick={resetFilter}
                     >
                       Clear Filter
                     </Button>
@@ -303,7 +357,6 @@ function TableObservationPerDatastream({
               <Grid item xs={12} md={12} mt={2}></Grid>
             </Grid>
           </LocalizationProvider>
-
           {/* create a helper text */}
           <Typography
             variant="body1"
@@ -315,8 +368,8 @@ function TableObservationPerDatastream({
             Note: Both start and end date must be selected and start date must
             be before end date
           </Typography>
-
-          <Grid item xs={12} md={12}>
+          {/* Download CSV Button */}
+          <Grid item xs={12} md={12} mb={2}>
             <Box sx={{ display: "flex", justifyContent: "center" }}>
               <Button
                 disabled={
@@ -342,9 +395,47 @@ function TableObservationPerDatastream({
                 </CSVLink>
               </Button>
             </Box>
-          </Grid>
+          </Grid>{" "}
+          {/* Filter Data Button*/}
+          <Grid item xs={12} md={12} mb={2}>
+            <Box sx={{ display: "flex", justifyContent: "center" }}>
+              <Button
+                disabled={
+                  !start_date || !end_date || start_date > end_date
+                    ? true
+                    : false
+                }
+                variant="contained"
+                style={{
+                  backgroundColor: !start_date || !end_date ? "#cccccc" : "",
+                  color: !start_date || !end_date ? "#000000" : "",
+                }}
+                onClick={filterData}
+              >
+                Filter Data
+              </Button>
+            </Box>
+          </Grid>{" "}
         </Box>
       </Modal>
+      {start_date && end_date && isDataFiltered && (
+        <Typography
+          variant="body1"
+          color="secondary"
+          style={{
+            margin: "10px",
+          }}
+        >
+          Showing data from{" "}
+          {format(start_date, "dd.MM.yyyy HH:mm", {
+            timeZone: "Europe/Rome",
+          })}{" "}
+          to{" "}
+          {format(end_date, "dd.MM.yyyy HH:mm", {
+            timeZone: "Europe/Rome",
+          })}
+        </Typography>
+      )}
       <DataTable
         title={`Observations for Datastream ${id}`}
         columns={columns}

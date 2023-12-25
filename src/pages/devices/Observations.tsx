@@ -2,8 +2,6 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import {
   Breadcrumbs,
-  Button,
-  Grid,
   Typography,
 } from "@mui/material";
 import LinkCustom from "../../components/LinkCustom";
@@ -115,6 +113,7 @@ const Observations = () => {
       ) : (
         <TableObservationPerDatastream
           datastream={datastream}
+          setDataStream={setDataStream}
           observations={observations}
           id={id}
           frostServerPort={frostServerPort}
