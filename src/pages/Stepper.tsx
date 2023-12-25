@@ -24,6 +24,8 @@ import axios from "axios";
 import { useKeycloak } from "@react-keycloak/web";
 import Swal from "sweetalert2";
 import { toast } from "react-toastify";
+import { GAactionStepper } from "../utils/GA";
+import ReactGA from "react-ga4";
 
 const steps = [
   "Store Device",
@@ -246,6 +248,11 @@ function StepperStore() {
   };
 
   useEffect(() => {
+    ReactGA.event({
+      category: GAactionStepper.category,
+      action: GAactionStepper.action,
+      label: GAactionStepper.label,
+    });
     setLoading(true);
     fetchFrostPort();
     setLoading(false);

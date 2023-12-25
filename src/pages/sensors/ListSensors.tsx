@@ -10,11 +10,13 @@ import { ToastContainer, toast } from "react-toastify";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import DeleteForeverOutlinedIcon from "@mui/icons-material/DeleteForeverOutlined";
 import Swal from "sweetalert2";
+import ReactGA from "react-ga4";
+import { GAactionsSensors } from "../../utils/GA";
+
 const ListSensors = () => {
   const { keycloak } = useKeycloak();
   const userInfo = keycloak?.idTokenParsed;
   const token = keycloak?.token;
-  console.log(token);
 
   const [frostServerPort, setFrostServerPort] = useState<number | null>(null);
   const [sensors, setSensors] = useState<any[]>([]);
@@ -58,6 +60,12 @@ const ListSensors = () => {
   };
 
   useEffect(() => {
+    ReactGA.event({
+      category: GAactionsSensors.category,
+      action: GAactionsSensors.action,
+      label: GAactionsSensors.label,
+    });
+
     if (frostServerPort !== null) {
       fetchSensors();
     } else {

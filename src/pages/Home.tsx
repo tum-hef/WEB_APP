@@ -12,14 +12,15 @@ import {
   createTheme,
 } from "@mui/material";
 import ReactGA from "react-ga4";
+import { GAactionsDashboard } from "../utils/GA";
 
 const HomePage = () => {
     useEffect(() => {
     ReactGA.event({
-      category: "Dashboard",
-      action: "ACTION",
-      label:"LABEL"
-    })
+      category: GAactionsDashboard.category,
+      action: GAactionsDashboard.action,
+      label: GAactionsDashboard.label,
+    });
   }, []);
   const location = useLocation<{ [key: string]: unknown }>();
   const currentLocationState = location.state || {
