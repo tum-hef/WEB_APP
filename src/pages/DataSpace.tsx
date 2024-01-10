@@ -7,9 +7,11 @@ import { useKeycloak } from "@react-keycloak/web";
 import { toast } from "react-toastify";
 import { useParams } from "react-router-dom";
 import { NOTFOUND } from "./404";
-import BiotechSharpIcon from "@mui/icons-material/BiotechSharp";
 import DriveFileRenameOutlineIcon from "@mui/icons-material/DriveFileRenameOutline";
 import CardDataSpace from "../components/CardDataSpace";
+import TabletAndroidIcon from "@mui/icons-material/TabletAndroid";
+import ReactGA from "react-ga4";
+import { GAactionsDataSpace } from "../utils/GA";
 
 export default function DataSpace() {
   const { keycloak } = useKeycloak();
@@ -24,6 +26,7 @@ export default function DataSpace() {
   const [group, setGroup] = useState<any>({});
   const { group_id } = useParams<{ group_id: string }>();
   const [error, setError] = useState<boolean>(false);
+  
 
   const fetchGroups = async () => {
     if (keycloak && userInfo && userInfo.sub) {
@@ -136,6 +139,12 @@ export default function DataSpace() {
       });
   };
   useEffect(() => {
+    ReactGA.event({
+      category: GAactionsDataSpace.category,
+      action: GAactionsDataSpace.action,
+      label: GAactionsDataSpace.label,
+    });
+
     getNodeRedPort();
     asyncGetDevices();
     fetchGroups();
@@ -197,10 +206,10 @@ export default function DataSpace() {
             </Grid>
             <Grid item xs={12} sm={6} md={6} lg={6}>
               <CardDataSpace
-                redirection_path="observations"
-                card_name="Observations"
+                redirection_path="devices"
+                card_name="Devices & Data"
                 Icon={
-                  <BiotechSharpIcon
+                  <TabletAndroidIcon
                     style={{
                       fontSize: 30,
                       marginTop: "10px",

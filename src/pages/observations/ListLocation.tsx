@@ -10,18 +10,18 @@ import { ToastContainer, toast } from "react-toastify";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import DeleteForeverOutlinedIcon from "@mui/icons-material/DeleteForeverOutlined";
 import Swal from "sweetalert2";
+import ReactGA from "react-ga4";
+import { GAactionsObservations } from "../../utils/GA";
 const ListObservations = () => {
   const { keycloak } = useKeycloak();
   const userInfo = keycloak?.idTokenParsed;
   const token = keycloak?.token;
-  console.log(token);
 
   const [frostServerPort, setFrostServerPort] = useState<number | null>(null);
   const [observations, setObservations] = useState<any[]>([]);
 
   const fetchObservations = () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
-    console.log(backend_url);
     axios
       .get(`${backend_url}:${frostServerPort}/FROST-Server/v1.0/Observations`, {
         headers: {
@@ -58,6 +58,12 @@ const ListObservations = () => {
   };
 
   useEffect(() => {
+    ReactGA.event({
+      category: GAactionsObservations.category,
+      action: GAactionsObservations.action,
+      label: GAactionsObservations.label,
+    });
+
     if (frostServerPort !== null) {
       fetchObservations();
     } else {

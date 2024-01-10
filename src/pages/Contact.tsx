@@ -9,12 +9,13 @@ import {
   Button,
   MenuItem,
 } from "@mui/material";
-import LinkCustom from "../components/LinkCustom";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { useKeycloak } from "@react-keycloak/web";
 import axios from "axios";
 import Swal from "sweetalert2";
+import ReactGA from "react-ga4";
+import { GAactionsContact } from "../utils/GA";
 
 function Contact() {
   const [error, setError] = useState<boolean>(false);
@@ -27,6 +28,13 @@ function Contact() {
   });
 
   useEffect(() => {
+
+    ReactGA.event({
+      category: GAactionsContact.category,
+      action: GAactionsContact.action,
+      label: GAactionsContact.label,
+    });
+
     setLoading(true);
     if (keycloak.authenticated) {
       keycloak.loadUserProfile().then((profile: any) => {

@@ -10,6 +10,9 @@ import { ToastContainer, toast } from "react-toastify";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import DeleteForeverOutlinedIcon from "@mui/icons-material/DeleteForeverOutlined";
 import Swal from "sweetalert2";
+import ReactGA from "react-ga4";
+
+import { GAactionsObservationProperties } from "../../utils/GA";
 const ListObservationProperty = () => {
   const { keycloak } = useKeycloak();
   const userInfo = keycloak?.idTokenParsed;
@@ -61,6 +64,12 @@ const ListObservationProperty = () => {
   };
 
   useEffect(() => {
+    ReactGA.event({
+      category: GAactionsObservationProperties.category,
+      action: GAactionsObservationProperties.action,
+      label: GAactionsObservationProperties.label,
+    });
+
     if (frostServerPort !== null) {
       fetchObservationProperty();
     } else {

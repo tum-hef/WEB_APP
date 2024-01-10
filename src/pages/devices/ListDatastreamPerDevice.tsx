@@ -3,7 +3,7 @@ import axios from "axios";
 import DataTable, { ExpanderComponentProps } from "react-data-table-component";
 import { Breadcrumbs, Button, Typography } from "@mui/material";
 import LinkCustom from "../../components/LinkCustom";
-
+import BiotechSharpIcon from "@mui/icons-material/BiotechSharp";
 import Dashboard from "../../components/DashboardComponent";
 import { useKeycloak } from "@react-keycloak/web";
 import { ToastContainer, toast } from "react-toastify";
@@ -73,13 +73,13 @@ const ListDatastreamPerDevice = () => {
       name: "Name",
       selector: (row: any) => row.name,
       sortable: true,
-      width: "15%",
+      width: "25%",
     },
     {
       name: "Description",
       selector: (row: any) => row.description,
       sortable: true,
-      width: "20%",
+      width: "40%",
     },
     {
       name: "Observations",
@@ -91,11 +91,11 @@ const ListDatastreamPerDevice = () => {
           }}
           to={`/devices/${id}/datastreams/${row["@iot.id"]}/observations`}
         >
-          Observation{" "}
+          <BiotechSharpIcon />
         </LinkCustom>
       ),
       sortable: true,
-      width: "10%",
+      width: "20%",
     },
   ];
 
@@ -122,11 +122,14 @@ const ListDatastreamPerDevice = () => {
         <LinkCustom to="/">Data Space</LinkCustom>
         <LinkCustom to="/frost_entities">Data Items</LinkCustom>
         <LinkCustom to="/devices">Devices</LinkCustom>
-        <Typography color="text.primary">Datastream of Device {id}</Typography>
+        <Typography color="text.primary">
+          Datastream of Device #{id}{" "}
+          {datastream[0]?.name && `(${datastream[0]?.name})`}
+        </Typography>
       </Breadcrumbs>
 
       <DataTable
-        title={`Datastreams for Device ${id}`}
+        title={`Datastreams for Device #${id} ${datastream[0]?.name}`}
         columns={columns}
         data={datastream}
         pagination={true}

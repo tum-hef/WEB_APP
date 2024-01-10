@@ -8,6 +8,9 @@ import Dashboard from "../../components/DashboardComponent";
 import { useKeycloak } from "@react-keycloak/web";
 import { ToastContainer, toast } from "react-toastify";
 import MapIcon from "@mui/icons-material/Map";
+import ReactGA from "react-ga4";
+import { GAactionsLocations } from "../../utils/GA";
+
 const ListLocations = () => {
   const { keycloak } = useKeycloak();
   const userInfo = keycloak?.idTokenParsed;
@@ -55,6 +58,13 @@ const ListLocations = () => {
   };
 
   useEffect(() => {
+
+    ReactGA.event({
+      category: GAactionsLocations.category,
+      action: GAactionsLocations.action,
+      label: GAactionsLocations.label,
+    });
+
     if (frostServerPort !== null) {
       fetchLocations();
     } else {

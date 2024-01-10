@@ -48,7 +48,7 @@ const Reports = () => {
           // filter if they are two dates separated by /
 
           const iso8601Pattern =
-            /(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z)\/(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z)/;
+            /(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z)\/(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z)/;
 
           if (iso8601Pattern.test(phenomenonTime)) {
             phenomenonTime = phenomenonTime.split("/")[0];
@@ -62,7 +62,7 @@ const Reports = () => {
 
           storedDatastreams.push({
             id: datastream["@iot.id"],
-            method: "Create",
+            method: "CREATE",
             attribute: "Datastream",
             attribute_id: datastream["@iot.id"],
             frost_port: frostServerPort,
@@ -158,7 +158,7 @@ const Reports = () => {
       width: "20%",
     },
     {
-      name: "Created at",
+      name: "Timestamp",
       selector: (row: any) => row.created_at,
       sortable: true,
       width: "40%",

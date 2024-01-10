@@ -1,16 +1,19 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import DataTable, { ExpanderComponentProps } from "react-data-table-component";
-import { Breadcrumbs, Button, Typography } from "@mui/material";
+import {
+  Breadcrumbs,
+  Typography,
+} from "@mui/material";
 import LinkCustom from "../../components/LinkCustom";
 
 import Dashboard from "../../components/DashboardComponent";
 import { useKeycloak } from "@react-keycloak/web";
-import { ToastContainer, toast } from "react-toastify";
+import { ToastContainer } from "react-toastify";
 import { useParams } from "react-router-dom";
-import { format } from "date-fns";
+import TableObservationPerDatastream from "../../components/TableObservationPerDatastream";
+import GraphObservationsPerDatastream from "../../components/GraphObservationsPerDatastream";
 
-const ListObservationsPerDatastream = () => {
+const Observations = () => {
   const { keycloak } = useKeycloak();
   const userInfo = keycloak?.idTokenParsed;
   const token = keycloak?.token;
@@ -21,11 +24,14 @@ const ListObservationsPerDatastream = () => {
   const { id } = useParams<{ id: string }>();
   const { device_id } = useParams<{ device_id: string }>();
 
-  const fetchThings = () => {
+  const [observations, setObservations] = useState<any[]>([]);
+  const [isGraphButtonSelected, setIsGraphButtonSelected] = useState(false);
+
+  const fetchObservations = () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
     axios
       .get(
-        `${backend_url}:${frostServerPort}/FROST-Server/v1.0/Datastreams(${id})/Observations`,
+        `${backend_url}:${frostServerPort}/FROST-Server/v1.0/Datastreams(${id})/Observations?$orderby=phenomenonTime%20desc`,
         {
           headers: {
             "Content-Type": "application/json",
@@ -58,31 +64,11 @@ const ListObservationsPerDatastream = () => {
 
   useEffect(() => {
     if (frostServerPort !== null) {
-      fetchThings();
+      fetchObservations();
     } else {
       fetchFrostPort();
     }
   }, [frostServerPort]);
-
-  const columns = [
-    {
-      name: "ID",
-      selector: (row: any) => `${row["@iot.id"]}`,
-
-      sortable: true,
-    },
-    {
-      name: "Phenomenon Time",
-      selector: (row: any) =>
-        format(new Date(row.phenomenonTime), "dd.MM.yyyy hh:mm:ss"),
-      sortable: true,
-    },
-    {
-      name: "Result",
-      selector: (row: any) => row.result,
-      sortable: true,
-    },
-  ];
 
   return (
     <Dashboard>
@@ -108,23 +94,37 @@ const ListObservationsPerDatastream = () => {
         <LinkCustom to="/frost_entities">Data Items</LinkCustom>
         <LinkCustom to="/devices">Devices</LinkCustom>
         <LinkCustom to={`/devices/${device_id}/datastreams`}>
-          Datastreams of Device {device_id}
+          Datastreams of Device #{device_id}
         </LinkCustom>
         <Typography color="text.primary">
-          Observations for Datastream {id}
+          Observations for Datastream #{id}{" "}
         </Typography>
       </Breadcrumbs>
 
-      <DataTable
-        title={`Observations for Datastream ${id}`}
-        columns={columns}
-        data={datastream}
-        pagination={true}
-        paginationPerPage={5}
-        paginationRowsPerPageOptions={[5, 10, 15]}
-      />
+      {isGraphButtonSelected ? (
+        <GraphObservationsPerDatastream
+          token={token}
+          id={id}
+          frostServerPort={frostServerPort}
+          fetchFrostPort={fetchFrostPort}
+          isGraphButtonSelected={isGraphButtonSelected}
+          setIsGraphButtonSelected={setIsGraphButtonSelected}
+        />
+      ) : (
+        <TableObservationPerDatastream
+          datastream={datastream}
+          setDataStream={setDataStream}
+          observations={observations}
+          id={id}
+          frostServerPort={frostServerPort}
+          token={token}
+          setObservations={setObservations}
+          isGraphButtonSelected={isGraphButtonSelected}
+          setIsGraphButtonSelected={setIsGraphButtonSelected}
+        />
+      )}
     </Dashboard>
   );
 };
 
-export default ListObservationsPerDatastream;
+export default Observations;

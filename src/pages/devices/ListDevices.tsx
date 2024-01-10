@@ -6,13 +6,14 @@ import LinkCustom from "../../components/LinkCustom";
 
 import Dashboard from "../../components/DashboardComponent";
 import { useKeycloak } from "@react-keycloak/web";
-import { ToastContainer, toast } from "react-toastify";
+import { ToastContainer } from "react-toastify";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import DeleteForeverOutlinedIcon from "@mui/icons-material/DeleteForeverOutlined";
+import FolderSpecialIcon from "@mui/icons-material/FolderSpecial";
 import Swal from "sweetalert2";
 import MapIcon from "@mui/icons-material/Map";
-import { set } from "date-fns";
-import { de } from "date-fns/locale";
+import { GAactionsDevices } from "../../utils/GA";
+import ReactGA from "react-ga4";
 const Devices = () => {
   const { keycloak } = useKeycloak();
   const userInfo = keycloak?.idTokenParsed;
@@ -91,6 +92,12 @@ const Devices = () => {
   };
 
   useEffect(() => {
+    ReactGA.event({
+      category: GAactionsDevices.category,
+      action: GAactionsDevices.action,
+      label: GAactionsDevices.label,
+    });
+
     if (frostServerPort !== null) {
       fetchThings();
     } else {
@@ -127,7 +134,7 @@ const Devices = () => {
           }}
           to={`/devices/${row["@iot.id"]}/datastreams`}
         >
-          Datastream{" "}
+          <FolderSpecialIcon />
         </LinkCustom>
       ),
       sortable: true,

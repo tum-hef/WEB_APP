@@ -14,7 +14,6 @@ import { RotatingLines } from "react-loader-spinner";
 import { Grid } from "@material-ui/core";
 import Devices from "../pages/devices/ListDevices";
 import Datastreams from "../pages/Datastream";
-import Observervation from "../pages/Observation";
 import Location from "../pages/Location";
 import useTheme from "../hooks/useTheme";
 import { ThemeProvider } from "styled-components/macro";
@@ -44,7 +43,9 @@ import WebAppTraining from "../pages/training/WebApp";
 import Details from "../pages/details";
 import Reports from "../pages/Reports";
 import ListDatastreamPerDevice from "../pages/devices/ListDatastreamPerDevice";
-import ListObservationsPerDatastream from "../pages/devices/ListObservationPerDatastream";
+import Observations from "../pages/devices/Observations";
+import ReactGA from "react-ga4";
+
 
 const styles = {
   container: {
@@ -66,6 +67,10 @@ const AppRouter = (props: any) => {
 
   const { classes } = props;
   const { theme } = useTheme();
+
+    if (process.env.REACT_APP_GOOGLE_ANALYTICS_ID) {
+      ReactGA.initialize(process.env.REACT_APP_GOOGLE_ANALYTICS_ID);
+    }
 
   if (!initialized) {
     return (
@@ -131,7 +136,7 @@ const AppRouter = (props: any) => {
                   <PrivateRoute
                     exact
                     path="/devices/:device_id/datastreams/:id/observations"
-                    component={ListObservationsPerDatastream}
+                    component={Observations}
                   />
                   <PrivateRoute
                     exact
@@ -189,11 +194,11 @@ const AppRouter = (props: any) => {
                     path="/observations"
                     component={ListObservations}
                   />{" "}
-                  <PrivateRoute
+                  {/* <PrivateRoute
                     exact
-                    path="/observations/:id"
+                    path="/devices/:device_id/datastreams/:id/observations/graph"
                     component={Observervation}
-                  />{" "}
+                  />{" "} */}
                   <Route
                     exact
                     path="/database/frost"
