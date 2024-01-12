@@ -26,7 +26,7 @@ function GraphObservationsPerDatastream({
   id,
   fetchFrostPort,
   isGraphButtonSelected,
-  setIsGraphButtonSelected, 
+  setIsGraphButtonSelected,
 }: any) {
   const [start_date, setStartDate] = useState<Date | null>(null);
   const [end_date, setEndDate] = useState<Date | null>(null);
@@ -113,7 +113,7 @@ function GraphObservationsPerDatastream({
     try {
       const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
       const obs_fetched = await axios.get(
-        `${backend_url}:${frostServerPort}/FROST-Server/v1.0/Datastreams(${id})/Observations?$orderby=phenomenonTime%20desc`,
+        `${backend_url}:${frostServerPort}/FROST-Server/v1.0/Datastreams(${id})/Observations?$orderby=phenomenonTime`,
         {
           headers: {
             "Content-Type": "application/json",
@@ -149,13 +149,13 @@ function GraphObservationsPerDatastream({
             )
             .slice(0, 50)
         );
+
         setResultTimes(
           filteredObservations.map((item: any) => item.result).slice(0, 50)
         );
       }
     } catch (error) {
       console.error("Error fetching observations:", error);
-      // Handle the error as needed, e.g., show a user-friendly message
     }
   };
 
@@ -278,7 +278,7 @@ function GraphObservationsPerDatastream({
                 disabled={
                   start_date && end_date && start_date > end_date ? true : false
                 }
-                variant="contained" 
+                variant="contained"
                 endIcon={<SaveAltIcon />}
                 style={{
                   backgroundColor:
@@ -300,7 +300,7 @@ function GraphObservationsPerDatastream({
                     backgroundColor: "#1976D2",
                   }}
                 >
-                  Download CSV 
+                  Download CSV
                 </CSVLink>
               </Button>
             </Grid>
