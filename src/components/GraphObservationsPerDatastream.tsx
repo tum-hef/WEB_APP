@@ -1,7 +1,6 @@
 import { Box, Button, Grid, TextField } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { CSVLink } from "react-csv";
-import DataTable from "react-data-table-component";
 import { DateTimePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import {
   Chart as ChartJS,
@@ -76,7 +75,7 @@ function GraphObservationsPerDatastream({
     const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
     axios
       .get(
-        `${backend_url}:${frostServerPort}/FROST-Server/v1.0/Datastreams(${id})/Observations?$orderby=phenomenonTime%20desc`,
+        `${backend_url}:${frostServerPort}/FROST-Server/v1.0/Datastreams(${id})/Observations?$orderby=phenomenonTime`,
         {
           headers: {
             "Content-Type": "application/json",
