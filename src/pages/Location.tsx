@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { Grid, Typography } from "@mui/material";
+import { Button, Grid, Typography } from "@mui/material";
 import { useKeycloak } from "@react-keycloak/web";
 import { useParams } from "react-router-dom";
 import Dashboard from "../components/DashboardComponent";
@@ -8,6 +8,7 @@ import { ToastContainer, toast } from "react-toastify";
 import { MapContainer, Marker, TileLayer } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import LinkCustom from "../components/LinkCustom";
 const Location = () => {
   const { keycloak } = useKeycloak();
   const userInfo = keycloak?.idTokenParsed;
@@ -102,6 +103,18 @@ const Location = () => {
         pauseOnHover
         theme="dark"
       />
+      <LinkCustom to="/devices">
+        <Button
+          variant="contained"
+          color="primary"
+          style={{
+            marginBottom: "10px",
+          }}
+        >
+          Devices
+        </Button>
+      </LinkCustom>
+
       {displayName && (
         <Grid container justifyContent="left" alignItems="left">
           <Typography variant="h6" component="h6" m={2}>
