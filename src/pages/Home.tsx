@@ -15,7 +15,7 @@ import ReactGA from "react-ga4";
 import { GAactionsDashboard } from "../utils/GA";
 
 const HomePage = () => {
-    useEffect(() => {
+  useEffect(() => {
     ReactGA.event({
       category: GAactionsDashboard.category,
       action: GAactionsDashboard.action,
@@ -145,6 +145,34 @@ const HomePage = () => {
 
           <Box
             sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              marginTop: "50px",
+              marginBottom: "-90px",
+            }}
+          >
+            <Typography
+              component="h1"
+              variant="h5"
+              style={{
+                alignSelf: "flex-end",
+                alignContent: "flex-end",
+                alignItems: "flex-end",
+                color: "white",
+                marginTop: "15px",
+                marginRight: "20px",
+                fontWeight: "bold",
+                fontSize: "30px",
+              }}
+            >
+              SensorHUB
+            </Typography>
+          </Box>
+
+          <Box
+            sx={{
               my: 8,
               mx: 4,
               display: "flex",
@@ -195,7 +223,7 @@ const HomePage = () => {
                     textTransform: "none",
                   }}
                 >
-                  Login
+                  Log in
                 </Button>
               </Grid>
 
@@ -230,7 +258,8 @@ const HomePage = () => {
               flexDirection: "row",
               justifyContent: "flex-end",
               marginRight: "20px",
-              padding: "20px",
+              padding: "10px",
+              marginTop: "-80px",
             }}
           >
             <img
