@@ -50,23 +50,60 @@ const HomePage = () => {
         }}
       >
         <CssBaseline />
-        <Grid
-          item
-          xs={false}
-          sm={3}
-          md={6}
-          sx={{
-            backgroundColor: "#003359",
-            backgroundImage:
-              "linear-gradient(to left, transparent 100%, #003359 50%), url(/images/design_element.png)",
-            backgroundRepeat: "no-repeat",
-            backgroundPosition: "220% center",
-            backgroundSize: "130% auto",
-            border: "none",
-            height: "100%",
-            position: "relative",
-          }}
-        />
+        {/* Left Part */}
+        <Grid item xs={false} sm={3} md={6}>
+          <Grid
+            container
+            direction="row"
+            alignItems="center"
+            sx={{
+              height: "100%",
+            }}
+            style={{
+              backgroundColor: "#003359",
+            }}
+          >
+            <Grid
+              item
+              md={6}
+              sx={{
+                display: "flex",
+                justifyContent: "center", // Center the content horizontally
+                backgroundColor: "#003359",
+                backgroundImage:
+                  "linear-gradient(to left, transparent 100%, #003359 50%), url(/images/design_element.png)",
+                backgroundRepeat: "no-repeat",
+                backgroundPosition: "50% center",
+                backgroundSize: "90% auto",
+                border: "none",
+                height: "100%",
+              }}
+            />
+            <Grid
+              item
+              md={6}
+              sx={{ backgroundColor: "#003359", border: "none" }}
+            >
+              <Typography
+                component="h1"
+                variant="h5"
+                style={{
+                  color: "white",
+                  marginTop: "20px",
+                  marginRight: "20px",
+                  fontWeight: "bold",
+                  fontSize: "30px",
+                  textAlign: "center",
+                  backgroundColor: "#003359",
+                  marginLeft: "-90px",
+                }}
+              >
+                HEF sensorHUB
+              </Typography>
+            </Grid>
+          </Grid>
+        </Grid>
+        {/* Right Part */}
         <Grid
           item
           xs={12}
@@ -145,34 +182,6 @@ const HomePage = () => {
 
           <Box
             sx={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              marginTop: "50px",
-              marginBottom: "-90px",
-            }}
-          >
-            <Typography
-              component="h1"
-              variant="h5"
-              style={{
-                alignSelf: "flex-end",
-                alignContent: "flex-end",
-                alignItems: "flex-end",
-                color: "white",
-                marginTop: "15px",
-                marginRight: "20px",
-                fontWeight: "bold",
-                fontSize: "30px",
-              }}
-            >
-              SensorHUB
-            </Typography>
-          </Box>
-
-          <Box
-            sx={{
               my: 8,
               mx: 4,
               display: "flex",
@@ -201,7 +210,7 @@ const HomePage = () => {
                   style={{
                     maxWidth: "150px",
                     maxHeight: "400px",
-                    marginRight: "300px",
+                    marginRight: "580px",
                   }}
                 />
               </Grid>
