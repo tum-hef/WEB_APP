@@ -201,7 +201,7 @@ const HomePage = () => {
                   style={{
                     maxWidth: "150px",
                     maxHeight: "400px",
-                    marginRight: "400px",
+                    marginRight: "300px",
                   }}
                 />
               </Grid>
@@ -209,7 +209,7 @@ const HomePage = () => {
                 <Button
                   fullWidth
                   variant="contained"
-                  sx={{ mt: 3, mb: 2, ml: "-3" }}
+                  sx={{ mt: 3, mb: 2, ml: -10 }}
                   onClick={login}
                   style={{
                     maxWidth: "100px",
@@ -251,7 +251,7 @@ const HomePage = () => {
               </Grid>
             </Box>
           </Box>
-          <Box
+          {/* <Box
             sx={{ mt: -2, mb: 0 }}
             style={{
               display: "flex",
@@ -267,7 +267,7 @@ const HomePage = () => {
               alt="logo"
               style={{ width: "150px", height: "150px" }}
             />
-          </Box>
+          </Box> */}
         </Grid>
       </Grid>
     </ThemeProvider>
