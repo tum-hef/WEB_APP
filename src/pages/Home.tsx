@@ -13,6 +13,7 @@ import {
 } from "@mui/material";
 import ReactGA from "react-ga4";
 import { GAactionsDashboard } from "../utils/GA";
+import Footer from "../components/Footer";
 
 const HomePage = () => {
   useEffect(() => {
@@ -95,7 +96,7 @@ const HomePage = () => {
                   fontSize: "30px",
                   textAlign: "center",
                   backgroundColor: "#003359",
-                  marginLeft: "-90px",
+                  marginLeft: "-30px",
                 }}
               >
                 HEF sensorHUB
@@ -119,85 +120,16 @@ const HomePage = () => {
         >
           <Grid
             container
-            justifyContent="flex-end"
-            style={{
-              textAlign: "right",
-              paddingRight: "20px",
-              paddingTop: "20px",
-            }}
-          >
-            <Grid item>
-              <Typography
-                component="h1"
-                variant="h6"
-                style={{
-                  alignSelf: "flex-end",
-                  alignContent: "flex-end",
-                  alignItems: "flex-end",
-                  color: "white",
-                  marginTop: "15px",
-                  marginRight: "20px",
-                  fontWeight: "bold",
-                  fontSize: "30px",
-                }}
-              >
-                HEF
-              </Typography>{" "}
-              <Typography
-                component="h1"
-                variant="h6"
-                style={{
-                  color: "white",
-                  marginRight: "20px",
-                  marginTop: "-10px",
-                }}
-              >
-                Hans Eisenmann-Forum
-              </Typography>{" "}
-              <Typography
-                component="h1"
-                variant="h6"
-                style={{
-                  color: "white",
-                  marginRight: "20px",
-                  marginTop: "-10px",
-                }}
-              >
-                für Agrarwissenschaften
-              </Typography>
-            </Grid>{" "}
-            <Grid item>
-              <img
-                src="/images/tum_logo.png"
-                alt="logo"
-                style={{
-                  width: "150px",
-                  height: "80px",
-                  marginTop: "20px",
-                  marginRight: "20px",
-                }}
-              />
-            </Grid>
-          </Grid>
-
-          <Box
+            direction="row"
+            alignItems="center"
             sx={{
-              my: 8,
-              mx: 4,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              marginBottom: "0px",
+              height: "100%",
+            }}
+            style={{
+              backgroundColor: "#003359",
             }}
           >
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
+            <Grid item md={6}>
               <Grid
                 item
                 sx={{
@@ -213,70 +145,203 @@ const HomePage = () => {
                     marginRight: "580px",
                   }}
                 />
-              </Grid>
-              <Grid item>
-                <Button
-                  fullWidth
-                  variant="contained"
-                  sx={{ mt: 3, mb: 2, ml: -10 }}
-                  onClick={login}
-                  style={{
-                    maxWidth: "100px",
-                    maxHeight: "100px",
-                    minWidth: "150px",
-                    minHeight: "50px",
-                    backgroundColor: "white",
-                    color: "#003359",
-                    fontWeight: "bold",
-                    fontSize: "26px",
-                    textTransform: "none",
-                  }}
-                >
-                  Log in
-                </Button>
-              </Grid>
-
-              <Grid item>
-                <Link to={"/register"} style={{ textDecoration: "none" }}>
-                  <Button
-                    fullWidth
-                    variant="contained"
-                    sx={{ mt: 3, mb: 2, ml: 2, mr: 2 }}
+              </Grid>{" "}
+            </Grid>{" "}
+            <Grid item md={6}>
+              {/* <Grid container justifyContent="flex-end">
+                <Grid item>
+                  <Typography
+                    component="h1"
+                    variant="h6"
                     style={{
-                      maxWidth: "100px",
-                      maxHeight: "100px",
-                      minWidth: "150px",
-                      minHeight: "50px",
-                      backgroundColor: "white",
-                      color: "#003359",
+                      color: "white",
+                      marginRight: "20px",
+                      marginTop: "15px",
                       fontWeight: "bold",
-                      fontSize: "26px",
-                      textTransform: "none",
+                      fontSize: "30px",
+                      marginLeft: "-50px",
                     }}
                   >
-                    Register
-                  </Button>
-                </Link>
-              </Grid>
-            </Box>
-          </Box>
-          {/* <Box
-            sx={{ mt: -2, mb: 0 }}
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              justifyContent: "flex-end",
-              marginRight: "20px",
-              padding: "10px",
-              marginTop: "-80px",
-            }}
+                    HEF
+                  </Typography>
+                  <Typography
+                    component="h1"
+                    variant="h6"
+                    style={{
+                      color: "white",
+                      marginRight: "20px",
+                      marginTop: "-10px",
+                      marginLeft: "-50px",
+                    }}
+                  >
+                    Hans Eisenmann-Forum
+                  </Typography>
+                  <Typography
+                    component="h1"
+                    variant="h6"
+                    style={{
+                      color: "white",
+                      marginRight: "20px",
+                      marginTop: "-10px",
+                      marginLeft: "-50px",
+                    }}
+                  >
+                    für Agrarwissenschaften
+                  </Typography>
+                </Grid>
+
+                <Grid item>
+                  <img
+                    src="/images/tum_logo.png"
+                    alt="logo"
+                    style={{
+                      width: "150px",
+                      height: "80px",
+                      marginTop: "20px",
+                      marginRight: "40px",
+                    }}
+                  />
+                </Grid>
+              </Grid> */}
+              <Box
+                sx={{
+                  my: 8,
+                  mx: 4,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  marginBottom: "70px",
+                  marginLeft: "-230px",
+                }}
+              >
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  {/* Buttons */}
+                  <Grid item>
+                    <Button
+                      fullWidth
+                      variant="contained"
+                      sx={{ mt: 3, mb: 2, ml: -10 }}
+                      onClick={login}
+                      style={{
+                        maxWidth: "100px",
+                        maxHeight: "100px",
+                        minWidth: "150px",
+                        minHeight: "50px",
+                        backgroundColor: "white",
+                        color: "#003359",
+                        fontWeight: "bold",
+                        fontSize: "26px",
+                        textTransform: "none",
+                      }}
+                    >
+                      Log in
+                    </Button>
+                  </Grid>
+
+                  <Grid item>
+                    <Link to={"/register"} style={{ textDecoration: "none" }}>
+                      <Button
+                        fullWidth
+                        variant="contained"
+                        sx={{ mt: 3, mb: 2, ml: 2, mr: 2 }}
+                        style={{
+                          maxWidth: "100px",
+                          maxHeight: "100px",
+                          minWidth: "150px",
+                          minHeight: "50px",
+                          backgroundColor: "white",
+                          color: "#003359",
+                          fontWeight: "bold",
+                          fontSize: "26px",
+                          textTransform: "none",
+                        }}
+                      >
+                        Register
+                      </Button>
+                    </Link>
+                  </Grid>
+                </Box>
+              </Box>
+            </Grid>{" "}
+          </Grid>
+        </Grid>
+        <Grid
+          item
+          xs={12}
+          sx={{
+            backgroundColor: "#003359",
+            textAlign: "center",
+            padding: "20px 0",
+            position: "absolute",
+            bottom: 0,
+            width: "100%",
+          }}
+        >
+          <Grid
+            container
+            justifyContent="center" // Center the content horizontally
           >
-            <img
-              src="/images/hef_circle.png"
-              alt="logo"
-              style={{ width: "150px", height: "150px" }}
-            />
-          </Box> */}
+            <Grid item>
+              <Typography
+                component="h1"
+                variant="h6"
+                style={{
+                  color: "white",
+                  marginRight: "20px",
+                  marginTop: "15px",
+                  fontWeight: "bold",
+                  fontSize: "17px",
+                  marginLeft: "-50px",
+                }}
+              >
+                HEF
+              </Typography>
+              <Typography
+                component="h1"
+                variant="h6"
+                style={{
+                  color: "white",
+                  marginRight: "20px",
+                  marginTop: "-10px",
+                  fontSize: "17px",
+                  marginLeft: "-50px",
+                }}
+              >
+                Hans Eisenmann-Forum
+              </Typography>
+              <Typography
+                style={{
+                  color: "white",
+                  marginRight: "20px",
+                  marginTop: "-10px",
+                  marginLeft: "-50px",
+                  fontSize: "17px",
+                }}
+              >
+                für Agrarwissenschaften
+              </Typography>
+            </Grid>
+
+            <Grid item>
+              <img
+                src="/images/tum_logo.png"
+                alt="logo"
+                style={{
+                  width: "100px",
+                  height: "50px",
+                  marginTop: "20px",
+                  marginRight: "40px",
+                }}
+              />
+            </Grid>
+          </Grid>{" "}
         </Grid>
       </Grid>
     </ThemeProvider>

@@ -46,7 +46,6 @@ import ListDatastreamPerDevice from "../pages/devices/ListDatastreamPerDevice";
 import Observations from "../pages/devices/Observations";
 import ReactGA from "react-ga4";
 
-
 const styles = {
   container: {
     height: "100%",
@@ -68,9 +67,9 @@ const AppRouter = (props: any) => {
   const { classes } = props;
   const { theme } = useTheme();
 
-    if (process.env.REACT_APP_GOOGLE_ANALYTICS_ID) {
-      ReactGA.initialize(process.env.REACT_APP_GOOGLE_ANALYTICS_ID);
-    }
+  if (process.env.REACT_APP_GOOGLE_ANALYTICS_ID) {
+    ReactGA.initialize(process.env.REACT_APP_GOOGLE_ANALYTICS_ID);
+  }
 
   if (!initialized) {
     return (
@@ -97,14 +96,15 @@ const AppRouter = (props: any) => {
                 <Switch>
                   <Route exact path="/" component={HomePage} />
                   <Route exact path="/register" component={Register} />
-                  <Route exact path="/impressum" component={Impressum} />
-                  <Route exact path="/reports" component={Reports} />
-                  <Route exact path="/details" component={Details} />
+    
                   <PrivateRoute
                     exact
                     path="/dashboard"
                     component={ListClients}
                   />
+                  <PrivateRoute exact path="/impressum" component={Impressum} />
+                  <PrivateRoute exact path="/reports" component={Reports} />
+                  <PrivateRoute exact path="/details" component={Details} />
                   <PrivateRoute
                     exact
                     path="/dashboard/:group_id"
