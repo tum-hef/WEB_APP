@@ -127,7 +127,7 @@ function StepperStore() {
 
   const fetchFrostPort = async () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL;
-    const backend_url_root = process.env.REACT_APP_BACKEND_URL_ROOT;
+    const backend_url_root = process.env.REACT_APP_FROST_URL;
     const email = userInfo?.preferred_username;
     await axios
       .get(`${backend_url}/frost-server?email=${email}`, {
@@ -140,7 +140,7 @@ function StepperStore() {
           setFrostServerPort(res.data.PORT);
           axios
             .get(
-              `${backend_url_root}:${res.data.PORT}/FROST-Server/v1.0/Things`,
+              `https://${res.data.PORT}-${backend_url_root}/FROST-Server/v1.0/Things`,
               {
                 headers: {
                   "Content-Type": "application/json",
@@ -154,7 +154,7 @@ function StepperStore() {
                 for (let i = 0; i < result.data.value.length; i++) {
                   axios
                     .get(
-                      `${backend_url_root}:${res.data.PORT}/FROST-Server/v1.0/Things(${result.data.value[i]["@iot.id"]})/Locations`,
+                      `https://${res.data.PORT}-${backend_url_root}/FROST-Server/v1.0/Things(${result.data.value[i]["@iot.id"]})/Locations`,
                       {
                         headers: {
                           "Content-Type": "application/json",
@@ -183,7 +183,7 @@ function StepperStore() {
 
           axios
             .get(
-              `${backend_url_root}:${res.data.PORT}/FROST-Server/v1.0/ObservedProperties`,
+              `https://${res.data.PORT}-${backend_url_root}/FROST-Server/v1.0/ObservedProperties`,
               {
                 headers: {
                   "Content-Type": "application/json",
@@ -316,7 +316,7 @@ function StepperStore() {
                 try {
                   // 1: Store the Device
                   const response_post_device = await axios.post(
-                    `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Things`,
+                    `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Things`,
                     {
                       name: values.device_name,
                       description: values.device_description,
@@ -346,7 +346,7 @@ function StepperStore() {
                   if (!values.observedProperty_existing_id) {
                     // 2: Store the Observed Property
                     const response_post_observed_property = await axios.post(
-                      `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/ObservedProperties`,
+                      `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/ObservedProperties`,
                       {
                         name: values.observeProperty_name,
                         definition: values.observeProperty_definition,
@@ -365,9 +365,7 @@ function StepperStore() {
                   // 3: Get the ID of the Device
 
                   const response_get_device = await axios.get(
-                    `${
-                      process.env.REACT_APP_BACKEND_URL_ROOT
-                    }:${frostServerPort}/FROST-Server/v1.0/Things?$filter=name%20eq%20%27${encodeURIComponent(
+                    `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Things?$filter=name%20eq%20%27${encodeURIComponent(
                       values.device_name
                     )}%27`,
                     {
@@ -387,9 +385,7 @@ function StepperStore() {
 
                   if (!values.observedProperty_existing_id) {
                     const response_get_observed_property = await axios.get(
-                      `${
-                        process.env.REACT_APP_BACKEND_URL_ROOT
-                      }:${frostServerPort}/FROST-Server/v1.0/ObservedProperties?$filter=name%20eq%20%27${encodeURIComponent(
+                      `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}}/FROST-Server/v1.0/ObservedProperties?$filter=name%20eq%20%27${encodeURIComponent(
                         values.observeProperty_name
                       )}%27`,
                       {
@@ -413,7 +409,7 @@ function StepperStore() {
                   if (values.observedProperty_existing_id) {
                     // 5.1: Get the name of the Observed Property from the ID
                     const response_get_observed_property = await axios.get(
-                      `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/ObservedProperties(${values.observedProperty_existing_id})`,
+                      `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/ObservedProperties(${values.observedProperty_existing_id})`,
                       {
                         headers: {
                           "Content-Type": "application/json",
@@ -435,7 +431,7 @@ function StepperStore() {
                   }
 
                   const response_post_sensor = await axios.post(
-                    `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Sensors`,
+                    `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Sensors`,
                     {
                       name: name_of_the_sensor,
                       description: description_of_the_sensor,
@@ -453,9 +449,7 @@ function StepperStore() {
                   // 6: Get the ID of the Sensor
 
                   const response_get_sensor = await axios.get(
-                    `${
-                      process.env.REACT_APP_BACKEND_URL_ROOT
-                    }:${frostServerPort}/FROST-Server/v1.0/Sensors?$filter=name%20eq%20%27${encodeURIComponent(
+                    `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}}/FROST-Server/v1.0/Sensors?$filter=name%20eq%20%27${encodeURIComponent(
                       name_of_the_sensor
                     )}%27`,
                     {
@@ -488,7 +482,7 @@ function StepperStore() {
 
                   // 7: Store the Datastream
                   const response_post_datastream = await axios.post(
-                    `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Datastreams`,
+                    `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Datastreams`,
                     {
                       name: values.datastream_name,
                       unitOfMeasurement: {
@@ -1488,9 +1482,7 @@ function StepperStore() {
                           if (activeStep === 0 && values.device_name !== "") {
                             axios
                               .get(
-                                `${
-                                  process.env.REACT_APP_BACKEND_URL_ROOT
-                                }:${frostServerPort}/FROST-Server/v1.0/Things?$filter=name%20eq%20%27${encodeURIComponent(
+                                `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Things?$filter=name%20eq%20%27${encodeURIComponent(
                                   values.device_name
                                 )}%27`,
                                 {
@@ -1526,9 +1518,7 @@ function StepperStore() {
                           ) {
                             axios
                               .get(
-                                `${
-                                  process.env.REACT_APP_BACKEND_URL_ROOT
-                                }:${frostServerPort}/FROST-Server/v1.0/ObservedProperties?$filter=name%20eq%20%27${encodeURIComponent(
+                                `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/ObservedProperties?$filter=name%20eq%20%27${encodeURIComponent(
                                   values.observeProperty_name
                                 )}%27`,
                                 {
@@ -1562,9 +1552,7 @@ function StepperStore() {
                           ) {
                             axios
                               .get(
-                                `${
-                                  process.env.REACT_APP_BACKEND_URL_ROOT
-                                }:${frostServerPort}/FROST-Server/v1.0/Datastreams?$filter=name%20eq%20%27${encodeURIComponent(
+                                `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Datastreams?$filter=name%20eq%20%27${encodeURIComponent(
                                   values.datastream_name
                                 )}%27`,
                                 {

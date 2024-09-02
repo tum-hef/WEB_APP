@@ -28,7 +28,7 @@ function StoreSensor() {
       formik.resetForm();
       try {
         const response = await axios.post(
-          `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Sensors`,
+          `$https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Sensors`,
           {
             name: values.sensor_name,
             description: values.sensor_description,

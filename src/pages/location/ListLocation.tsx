@@ -23,7 +23,7 @@ const ListLocations = () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
     console.log(backend_url);
     axios
-      .get(`${backend_url}:${frostServerPort}/FROST-Server/v1.0/Locations`, {
+      .get(`https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Locations`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,

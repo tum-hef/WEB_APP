@@ -66,9 +66,9 @@ export default function DataSpace() {
 
   const fetchDataStreams = () => {
     console.log(frostServerPort);
-    const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
+    const backend_url = process.env.REACT_APP_FROST_URL;
     axios
-      .get(`${backend_url}:${frostServerPort}/FROST-Server/v1.0/Datastreams`, {
+      .get(`https://${frostServerPort}-${backend_url}/FROST-Server/v1.0/Datastreams`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -103,9 +103,9 @@ export default function DataSpace() {
 
   const asyncGetDevices = async () => {
     try {
-      const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
+      const backend_url = process.env.REACT_APP_FROST_URL;
       axios
-        .get(`${backend_url}:${frostServerPort}/FROST-Server/v1.0/Things`, {
+        .get(`https://${frostServerPort}-${backend_url}/FROST-Server/v1.0/Things`, {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
@@ -251,9 +251,9 @@ export default function DataSpace() {
                       style={{
                         borderBottom: "1px solid #233044",
                       }}
-                      to={`${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0`}
+                      to={`https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0`}
                     >
-                      {process.env.REACT_APP_BACKEND_URL_ROOT}:{frostServerPort}
+                      {`https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0`}
                       /FROST-Server/v1.0
                     </LinkCustom>
                   </Typography>{" "}

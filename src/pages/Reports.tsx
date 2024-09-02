@@ -27,7 +27,7 @@ const Reports = () => {
 
       // First request
       const datastreamRes = await axios.get(
-        `${backend_url}:${frostServerPort}/FROST-Server/v1.0/Datastreams`,
+        `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Datastreams`,
         {
           headers: {
             "Content-Type": "application/json",

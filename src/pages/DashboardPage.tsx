@@ -121,9 +121,10 @@ export default function DashboardPage() {
 
   const asyncGetDevices = async () => {
     try {
-      const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
-      axios
-        .get(`${backend_url}:${frostServerPort}/FROST-Server/v1.0/Things`, {
+      const backend_url = process.env.REACT_APP_FROST_URL;
+      if(frostServerPort){
+        axios
+        .get(`https://${frostServerPort}-${backend_url}/FROST-Server/v1.0/Things`, {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
@@ -135,6 +136,7 @@ export default function DashboardPage() {
             setDevices(res.data.value.length);
           }
         });
+      }
     } catch (err) {
       console.log(err);
       toast.error("Error Getting Devices");
@@ -223,7 +225,7 @@ export default function DashboardPage() {
                 {nodeRedPort && (
                   <Grid item lg={6} sm={12} xl={6} xs={12}>
                     <Anchor
-                      href={`${process.env.REACT_APP_BACKEND_URL_ROOT}:${nodeRedPort}`}
+                      href={`https://${nodeRedPort}-nodered-dev.hef.tum.de`}
                       target="_blank"
                     >
                       <Card

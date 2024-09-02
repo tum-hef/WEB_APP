@@ -11,7 +11,7 @@ const eventLogger = (event: unknown, error: unknown) => {
 const tokenLogger = (tokens: unknown) => {
   console.log("onKeycloakTokens", tokens);
 };
-
+ console.log("process.env.REACT_APP_BACKEND_URL",process.env)
 ReactDOM.render(
   <React.StrictMode>
     <ReactKeycloakProvider

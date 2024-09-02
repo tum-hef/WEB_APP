@@ -22,9 +22,9 @@ const ListDatastream = () => {
   const [datastreams, setDatastreams] = useState<any[]>([]);
 
   const fetchDatastreams = () => {
-    const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
+    const backend_url = process.env.REACT_APP_FROST_URL;
     axios
-      .get(`${backend_url}:${frostServerPort}/FROST-Server/v1.0/Datastreams`, {
+      .get(`https://${frostServerPort}-${backend_url}/FROST-Server/v1.0/Datastreams`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,

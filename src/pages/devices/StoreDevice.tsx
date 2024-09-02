@@ -30,7 +30,7 @@ function StoreDevice() {
       formik.resetForm();
       try {
         const response = await axios.post(
-          `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Things`,
+          `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Things`,
           {
             name: values.device_name,
             description: values.device_description,

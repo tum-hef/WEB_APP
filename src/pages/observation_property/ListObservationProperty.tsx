@@ -27,7 +27,7 @@ const ListObservationProperty = () => {
     console.log(backend_url);
     axios
       .get(
-        `${backend_url}:${frostServerPort}/FROST-Server/v1.0/ObservedProperties`,
+        `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/ObservedProperties`,
         {
           headers: {
             "Content-Type": "application/json",

@@ -23,7 +23,7 @@ const ListObservations = () => {
   const fetchObservations = () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
     axios
-      .get(`${backend_url}:${frostServerPort}/FROST-Server/v1.0/Observations`, {
+      .get(`https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Observations`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,

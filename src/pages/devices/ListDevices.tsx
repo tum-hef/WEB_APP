@@ -23,9 +23,9 @@ const Devices = () => {
   const [devices, setDevices] = useState<any[]>([]);
 
   const fetchThings = () => {
-    const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
+    const backend_url = process.env.REACT_APP_FROST_URL;
     axios
-      .get(`${backend_url}:${frostServerPort}/FROST-Server/v1.0/Things`, {
+      .get(`https://${frostServerPort}-${backend_url}/FROST-Server/v1.0/Things`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,

@@ -39,10 +39,10 @@ function Register() {
         .string()
         .email("Invalid email address")
         .required("Email is required")
-        .matches(
-          /^([a-zA-Z0-9_\-\.]+)@tum\.de$/,
-          "Email must be a TUM email address"
-        ),
+        // .matches(
+        //   /^([a-zA-Z0-9_\-\.]+)@tum\.de$/,
+        //   "Email must be a TUM email address"
+        // ),
       // password: yup
       //   .string()
       //   .required("Password is required")
@@ -61,7 +61,8 @@ function Register() {
         return;
       }
 
-      try {
+      try { 
+        console.log("url",`${process.env.REACT_APP_BACKEND_URL}/register`)
         await axios
           .post(`${process.env.REACT_APP_BACKEND_URL}/register`, {
             firstName: values.firstName,

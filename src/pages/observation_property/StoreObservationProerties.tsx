@@ -37,7 +37,7 @@ function StoreObservationProerties() {
       formik.resetForm();
       try {
         const response = await axios.post(
-          `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/ObservedProperties`,
+          `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/ObservedProperties`,
           {
             name: values.name,
             description: values.description,

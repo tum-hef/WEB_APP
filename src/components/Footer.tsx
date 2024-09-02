@@ -1,4 +1,5 @@
 import styled from "styled-components/macro";
+import { ElementType } from 'react';
 
 import {
   Grid,
@@ -11,7 +12,7 @@ import {
 import LinkCustom from "./LinkCustom";
 
 interface ListItemButtonProps extends MuiListItemButtonProps {
-  component?: string;
+  component?: ElementType<any>;
   href?: string;
 }
 
