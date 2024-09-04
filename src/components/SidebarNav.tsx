@@ -380,9 +380,9 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
               </LinkCustom>
             </List>
           </Collapse>
-          {nodeRedPort && process.env.REACT_APP_BACKEND_URL_ROOT && (
+          {nodeRedPort && process.env.REACT_APP_NODERED_URL && (
             <a
-              href={`${process.env.REACT_APP_BACKEND_URL_ROOT}:${nodeRedPort}`}
+              href={`https://${nodeRedPort}-${process.env.REACT_APP_NODERED_URL}`}
               target="_blank"
               rel="noopener noreferrer"
               style={{
