@@ -35,6 +35,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<boolean>(false);
   const [nodeRedPort, setNodeRedPort] = useState<number | null>(null);
+  const [hasFetched, setHasFetched] = useState(false);
 
   const { keycloak } = useKeycloak();
   const userInfo = keycloak?.idTokenParsed;
@@ -94,14 +95,17 @@ export default function DashboardPage() {
       });
   };
   useEffect(() => {
-    fetchGroups();
-    getNodeRedPort();
-    asyncGetDevices();
-    if (frostServerPort == null) {
+    if (frostServerPort !== null && !hasFetched) {
+      fetchGroups();
+      getNodeRedPort();
+      asyncGetDevices();
+      setHasFetched(true);  // Set this to true so it doesn't run again
+      setLoading(false);
+    } else if (frostServerPort === null) {
       fetchData();
+      setLoading(false);
     }
-    setLoading(false);
-  }, [frostServerPort]);
+  }, [frostServerPort, hasFetched]);
 
   const getNodeRedPort = async () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL;
@@ -225,7 +229,7 @@ export default function DashboardPage() {
                 {nodeRedPort && (
                   <Grid item lg={6} sm={12} xl={6} xs={12}>
                     <Anchor
-                      href={`https://${nodeRedPort}-nodered-dev.hef.tum.de`}
+                      href={`https://${nodeRedPort}-${process.env.REACT_APP_NODERED_URL}`}
                       target="_blank"
                     >
                       <Card

@@ -52,10 +52,10 @@ function TableObservationPerDatastream({
 
   useEffect(() => {
     if (start_date && end_date && start_date < end_date) {
-      const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
+      const backend_url = process.env.REACT_APP_FROST_URL;
       axios
         .get(
-          `${backend_url}:${frostServerPort}/FROST-Server/v1.0/Datastreams(${id})/Observations`,
+          `https://${frostServerPort}-${backend_url}/FROST-Server/v1.0/Datastreams(${id})/Observations`,
           {
             headers: {
               "Content-Type": "application/json",

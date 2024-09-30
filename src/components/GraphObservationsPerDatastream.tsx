@@ -72,10 +72,10 @@ function GraphObservationsPerDatastream({
   };
 
   const fetchObservations = () => {
-    const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
+    const backend_url = process.env.REACT_APP_FROST_URL;
     axios
       .get(
-        `${backend_url}:${frostServerPort}/FROST-Server/v1.0/Datastreams(${id})/Observations?$orderby=phenomenonTime`,
+        `https://${frostServerPort}-${backend_url}/FROST-Server/v1.0/Datastreams(${id})/Observations?$orderby=phenomenonTime`,
         {
           headers: {
             "Content-Type": "application/json",
@@ -110,9 +110,9 @@ function GraphObservationsPerDatastream({
 
   const filterObservations = async () => {
     try {
-      const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
+      const backend_url = process.env.REACT_APP_FROST_URL;
       const obs_fetched = await axios.get(
-        `${backend_url}:${frostServerPort}/FROST-Server/v1.0/Datastreams(${id})/Observations?$orderby=phenomenonTime`,
+        `https://${frostServerPort}-${backend_url}/FROST-Server/v1.0/Datastreams(${id})/Observations?$orderby=phenomenonTime`,
         {
           headers: {
             "Content-Type": "application/json",

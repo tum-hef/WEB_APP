@@ -53,13 +53,13 @@ const HomePage = () => {
           sm={6}
           md={6}
           sx={{
-            display: "flex", 
+            display: "flex",
             backgroundColor: "#003359",
             backgroundImage:
               "linear-gradient(to left, transparent 100%, #003359 50%), url(/images/design_element.png)",
             backgroundRepeat: "no-repeat",
-            backgroundPosition: "center center", 
-            backgroundSize: { xs: "cover", sm: "contain" }, 
+            backgroundPosition: "center center",
+            backgroundSize: { xs: "cover", sm: "contain" },
           }}
         >
           <Grid
@@ -75,7 +75,7 @@ const HomePage = () => {
               sx={{
                 color: "white",
                 fontWeight: "bold",
-                fontSize: { xs: "20px", md: "30px" }, 
+                fontSize: { xs: "20px", md: "30px" },
                 textAlign: "center",
                 mt: 3,
               }}
@@ -85,7 +85,6 @@ const HomePage = () => {
           </Grid>
         </Grid>
 
-        {/* Right Part */}
         <Grid
           item
           xs={12}
@@ -94,47 +93,53 @@ const HomePage = () => {
           component={Paper}
           elevation={6}
           square
-          sx={{ backgroundColor: "#003359", borderLeft: "1px solid #003359" }}
+          sx={{
+            backgroundColor: "#003359",
+            borderLeft: "1px solid #003359",
+            display: "flex",  // Ensures the grid stretches and the content can be centered
+            alignItems: "center",  // Centers the content vertically
+            justifyContent: "center",  // Centers the content horizontally
+          }}
         >
-         <Grid container justifyContent="center" spacing={2}>
-  <Grid item xs={12} sm={6}>
-    <Button
-      fullWidth
-      variant="contained"
-      onClick={login}
-      sx={{
-        mt: { xs: 2, sm: 3 },  // Adjust margin for mobile
-        mb: { xs: 1, sm: 2 },
-        backgroundColor: "white",
-        color: "#003359",
-        fontWeight: "bold",
-        fontSize: { xs: "18px", sm: "26px" }, // Responsive font size
-        textTransform: "none",
-      }}
-    >
-      Log in
-    </Button>
-  </Grid>
-  <Grid item xs={12} sm={6}>
-    <Link to={"/register"} style={{ textDecoration: "none", width: "100%" }}>
-      <Button
-        fullWidth
-        variant="contained"
-        sx={{
-          mt: { xs: 2, sm: 3 },  // Adjust margin for mobile
-          mb: { xs: 1, sm: 2 },
-          backgroundColor: "white",
-          color: "#003359",
-          fontWeight: "bold",
-          fontSize: { xs: "18px", sm: "26px" }, // Responsive font size
-          textTransform: "none",
-        }}
-      >
-        Register
-      </Button>
-    </Link>
-  </Grid>
-</Grid>
+          <Grid container justifyContent="center" spacing={2} sx={{ width: "100%", padding: "0 20px" }}>
+            <Grid item xs={12} sm={6}>
+              <Button
+                fullWidth
+                variant="contained"
+                onClick={login}
+                sx={{
+                  mt: { xs: 2, sm: 3 },  // Adjust margin for mobile
+                  mb: { xs: 1, sm: 2 },
+                  backgroundColor: "white",
+                  color: "#003359",
+                  fontWeight: "bold",
+                  fontSize: { xs: "18px", sm: "26px" }, // Responsive font size
+                  textTransform: "none",
+                }}
+              >
+                Log in
+              </Button>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Link to={"/register"} style={{ textDecoration: "none", width: "100%" }}>
+                <Button
+                  fullWidth
+                  variant="contained"
+                  sx={{
+                    mt: { xs: 2, sm: 3 },  // Adjust margin for mobile
+                    mb: { xs: 1, sm: 2 },
+                    backgroundColor: "white",
+                    color: "#003359",
+                    fontWeight: "bold",
+                    fontSize: { xs: "18px", sm: "26px" }, // Responsive font size
+                    textTransform: "none",
+                  }}
+                >
+                  Register
+                </Button>
+              </Link>
+            </Grid>
+          </Grid>
         </Grid>
 
         {/* Footer */}
