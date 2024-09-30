@@ -96,64 +96,45 @@ const HomePage = () => {
           square
           sx={{ backgroundColor: "#003359", borderLeft: "1px solid #003359" }}
         >
-          <Grid
-            container
-            alignItems="center"
-            justifyContent="center"
-            sx={{ height: "100%" }}
-          >
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                mx: { xs: 2, sm: 4 },
-                mt: { xs: 4, sm: 8 },
-              }}
-            >
-              {/* Buttons */}
-              <Grid container justifyContent="center" spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <Button
-                    fullWidth
-                    variant="contained"
-                    onClick={login}
-                    sx={{
-                      mt: 3,
-                      mb: 2,
-                      backgroundColor: "white",
-                      color: "#003359",
-                      fontWeight: "bold",
-                      fontSize: { xs: "20px", sm: "26px" },
-                      textTransform: "none",
-                    }}
-                  >
-                    Log in
-                  </Button>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Link to={"/register"} style={{ textDecoration: "none" }}>
-                    <Button
-                      fullWidth
-                      variant="contained"
-                      sx={{
-                        mt: 3,
-                        mb: 2,
-                        backgroundColor: "white",
-                        color: "#003359",
-                        fontWeight: "bold",
-                        fontSize: { xs: "20px", sm: "26px" },
-                        textTransform: "none",
-                      }}
-                    >
-                      Register
-                    </Button>
-                  </Link>
-                </Grid>
-              </Grid>
-            </Box>
-          </Grid>
+         <Grid container justifyContent="center" spacing={2}>
+  <Grid item xs={12} sm={6}>
+    <Button
+      fullWidth
+      variant="contained"
+      onClick={login}
+      sx={{
+        mt: { xs: 2, sm: 3 },  // Adjust margin for mobile
+        mb: { xs: 1, sm: 2 },
+        backgroundColor: "white",
+        color: "#003359",
+        fontWeight: "bold",
+        fontSize: { xs: "18px", sm: "26px" }, // Responsive font size
+        textTransform: "none",
+      }}
+    >
+      Log in
+    </Button>
+  </Grid>
+  <Grid item xs={12} sm={6}>
+    <Link to={"/register"} style={{ textDecoration: "none", width: "100%" }}>
+      <Button
+        fullWidth
+        variant="contained"
+        sx={{
+          mt: { xs: 2, sm: 3 },  // Adjust margin for mobile
+          mb: { xs: 1, sm: 2 },
+          backgroundColor: "white",
+          color: "#003359",
+          fontWeight: "bold",
+          fontSize: { xs: "18px", sm: "26px" }, // Responsive font size
+          textTransform: "none",
+        }}
+      >
+        Register
+      </Button>
+    </Link>
+  </Grid>
+</Grid>
         </Grid>
 
         {/* Footer */}
