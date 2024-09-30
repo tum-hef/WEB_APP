@@ -3,7 +3,6 @@ import { Link, Redirect, useLocation } from "react-router-dom";
 import Button from "@mui/material/Button";
 import { useKeycloak } from "@react-keycloak/web";
 import {
-  Box,
   CssBaseline,
   Grid,
   Paper,
@@ -85,6 +84,7 @@ const HomePage = () => {
           </Grid>
         </Grid>
 
+        {/* Right Part */}
         <Grid
           item
           xs={12}
@@ -96,19 +96,27 @@ const HomePage = () => {
           sx={{
             backgroundColor: "#003359",
             borderLeft: "1px solid #003359",
-            display: "flex",  // Ensures the grid stretches and the content can be centered
-            alignItems: "center",  // Centers the content vertically
-            justifyContent: "center",  // Centers the content horizontally
+            display: "flex",  // Flexbox to center the content
+            justifyContent: "center",  // Centers content horizontally
+            alignItems: "center",  // Centers content vertically
+            padding: { xs: 2, sm: 4 },  // Adds padding for mobile responsiveness
+            height: "100%",  // Ensures full height is used
           }}
         >
-          <Grid container justifyContent="center" spacing={2} sx={{ width: "100%", padding: "0 20px" }}>
+          <Grid 
+            container 
+            direction={{ xs: "column", sm: "row" }}  // Stack vertically on small screens, horizontally on larger screens
+            spacing={2} 
+            justifyContent="center" 
+            sx={{ width: "100%", maxWidth: "500px" }}  // Limits max width
+          >
             <Grid item xs={12} sm={6}>
               <Button
                 fullWidth
                 variant="contained"
                 onClick={login}
                 sx={{
-                  mt: { xs: 2, sm: 3 },  // Adjust margin for mobile
+                  mt: { xs: 2, sm: 0 },  // Adjust margin for mobile
                   mb: { xs: 1, sm: 2 },
                   backgroundColor: "white",
                   color: "#003359",
@@ -126,7 +134,7 @@ const HomePage = () => {
                   fullWidth
                   variant="contained"
                   sx={{
-                    mt: { xs: 2, sm: 3 },  // Adjust margin for mobile
+                    mt: { xs: 2, sm: 0 },  // Adjust margin for mobile
                     mb: { xs: 1, sm: 2 },
                     backgroundColor: "white",
                     color: "#003359",
