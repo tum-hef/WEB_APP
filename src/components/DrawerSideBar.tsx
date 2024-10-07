@@ -22,7 +22,9 @@ export const DrawerSideBar = () => {
   const { keycloak } = useKeycloak();
 
   const handleLogout = () => {
+    localStorage.clear()
     keycloak.logout();
+    
   };
   return (
     <div>
