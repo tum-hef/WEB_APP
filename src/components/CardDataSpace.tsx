@@ -13,7 +13,7 @@ const CardDataSpace = ({
   Icon,
   redirection_path,
 }: CardDataSpaceProps) => (
-  <LinkCustom to={`/${redirection_path}`}>
+  <LinkCustom to={`/${redirection_path}`} target="_blank">
     <Card
       sx={{
         backgroundColor: "#222E41",

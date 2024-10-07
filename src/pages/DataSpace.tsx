@@ -26,7 +26,7 @@ export default function DataSpace() {
   const [group, setGroup] = useState<any>({});
   const { group_id } = useParams<{ group_id: string }>();
   const [error, setError] = useState<boolean>(false);
-  
+
 
   const fetchGroups = async () => {
     if (keycloak && userInfo && userInfo.sub) {
@@ -251,10 +251,17 @@ export default function DataSpace() {
                       style={{
                         borderBottom: "1px solid #233044",
                       }}
-                      to={`https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0`}
+                      to="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        window.open(
+                          `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0`,
+                          "_blank",
+                          "noopener,noreferrer"
+                        );
+                      }}
                     >
                       {`https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0`}
-                      /FROST-Server/v1.0
                     </LinkCustom>
                   </Typography>{" "}
                   <Typography
