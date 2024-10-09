@@ -27,8 +27,8 @@ function GraphObservationsPerDatastream({
   isGraphButtonSelected,
   setIsGraphButtonSelected,
 }: any) {
-  const [start_date, setStartDate] = useState<Date | null>(null);
-  const [end_date, setEndDate] = useState<Date | null>(null);
+  const [start_date, setStartDate] = useState<any | null>(null);
+  const [end_date, setEndDate] = useState<any | null>(null);
   const [phenomenon_times, setPhenomenonTimes] = useState<any[]>([]);
   const [result_times, setResultTimes] = useState<any[]>([]);
   const [observations, setObservations] = useState<any[]>([]);
@@ -85,7 +85,8 @@ function GraphObservationsPerDatastream({
       )
       .then((res) => {
         if (res.status === 200 && res.data.value) {
-          setObservations(res.data.value);
+          setObservations(res.data.value); 
+          console.log("res.data.value",res.data.value)
           setPhenomenonTimes(
             res?.data.value
               .map(
@@ -108,55 +109,52 @@ function GraphObservationsPerDatastream({
       });
   };
 
+
+
   const filterObservations = async () => {
     try {
       const backend_url = process.env.REACT_APP_FROST_URL;
-      const obs_fetched = await axios.get(
-        `https://${frostServerPort}-${backend_url}/FROST-Server/v1.0/Datastreams(${id})/Observations?$orderby=phenomenonTime`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
+    
+  
+      const startDate = new Date(start_date).toISOString(); 
+      const endDate = new Date(end_date).toISOString();     
+  
+      // Construct the URL with the $filter query parameter
+      const filterQuery = `phenomenonTime ge ${encodeURIComponent(startDate)} and phenomenonTime le ${encodeURIComponent(endDate)}`;
+      const url = `https://${frostServerPort}-${backend_url}/FROST-Server/v1.0/Datastreams(${id})/Observations?$filter=${filterQuery}&$orderby=phenomenonTime`;
+  
+      const obs_fetched = await axios.get(url, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+  
       const fetched_observation = obs_fetched.data.value;
-
-      if (start_date && end_date) {
-        const filteredObservations = fetched_observation.filter(
-          (item: any) =>
+      console.log("fetched_observation", fetched_observation);
+  
+      // Set observations and formatted times directly from fetched data
+      setObservations(fetched_observation);
+      setPhenomenonTimes(
+        fetched_observation
+          .map((item: any) =>
             format(new Date(item.phenomenonTime), "dd.MM.yyyy HH:mm", {
               timeZone: "Europe/Rome",
-            }) >=
-              format(start_date, "dd.MM.yyyy HH:mm", {
-                timeZone: "Europe/Rome",
-              }) &&
-            format(new Date(item.phenomenonTime), "dd.MM.yyyy HH:mm", {
-              timeZone: "Europe/Rome",
-            }) <=
-              format(end_date, "dd.MM.yyyy HH:mm", { timeZone: "Europe/Rome" })
-        );
-
-        setObservations(filteredObservations);
-        setPhenomenonTimes(
-          filteredObservations
-            .map((item: any) =>
-              format(new Date(item.phenomenonTime), "dd.MM.yyyy HH:mm", {
-                timeZone: "Europe/Rome",
-              })
-            )
-            .slice(0, 50)
-        );
-
-        setResultTimes(
-          filteredObservations.map((item: any) => item.result).slice(0, 50)
-        );
-      }
+            })
+          )
+          .slice(0, 50)
+      );
+  
+      setResultTimes(
+        fetched_observation.map((item: any) => item.result).slice(0, 50)
+      );
+  
     } catch (error) {
       console.error("Error fetching observations:", error);
     }
   };
+  
+
 
   const handleChangeStartDate = (newValue: Date | null) => {
     setStartDate(newValue);

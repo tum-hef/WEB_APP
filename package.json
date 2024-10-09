@@ -43,6 +43,8 @@
     "install": "^0.13.0",
     "keycloak-js": "^21.0.1",
     "leaflet": "^1.9.4",
+    "moment": "^2.30.1",
+    "moment-timezone": "^0.5.46",
     "npm": "^8.5.5",
     "polished": "^4.2.2",
     "react": "^17.0.2",
