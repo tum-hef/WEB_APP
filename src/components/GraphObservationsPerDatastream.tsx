@@ -119,7 +119,7 @@ function GraphObservationsPerDatastream({
       const startDate = new Date(start_date).toISOString(); 
       const endDate = new Date(end_date).toISOString();     
   
-      // Construct the URL with the $filter query parameter
+      // make query to filter data from frost api 
       const filterQuery = `phenomenonTime ge ${encodeURIComponent(startDate)} and phenomenonTime le ${encodeURIComponent(endDate)}`;
       const url = `https://${frostServerPort}-${backend_url}/FROST-Server/v1.0/Datastreams(${id})/Observations?$filter=${filterQuery}&$orderby=phenomenonTime`;
   
