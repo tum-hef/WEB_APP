@@ -449,7 +449,7 @@ function StepperStore() {
                   // 6: Get the ID of the Sensor
 
                   const response_get_sensor = await axios.get(
-                    `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}}/FROST-Server/v1.0/Sensors?$filter=name%20eq%20%27${encodeURIComponent(
+                    `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Sensors?$filter=name%20eq%20%27${encodeURIComponent(
                       name_of_the_sensor
                     )}%27`,
                     {
