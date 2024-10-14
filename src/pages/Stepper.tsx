@@ -385,7 +385,7 @@ function StepperStore() {
 
                   if (!values.observedProperty_existing_id) {
                     const response_get_observed_property = await axios.get(
-                      `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}}/FROST-Server/v1.0/ObservedProperties?$filter=name%20eq%20%27${encodeURIComponent(
+                      `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/ObservedProperties?$filter=name%20eq%20%27${encodeURIComponent(
                         values.observeProperty_name
                       )}%27`,
                       {
