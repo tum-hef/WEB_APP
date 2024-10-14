@@ -59,7 +59,7 @@ export default function DashboardPage() {
               const group = response.data.groups.find(
                 (group: any) => group.id === group_id
               );
-              if (!group) {
+              if (!group) { 
                 toast.error("Group is not valid");
                 setError(true);
               } else {
@@ -136,7 +136,6 @@ export default function DashboardPage() {
         })
         .then((res) => {
           if (res.status === 200 && res.data.value) {
-            console.log(res.data.value);
             setDevices(res.data.value.length);
           }
         });
@@ -146,7 +145,14 @@ export default function DashboardPage() {
       toast.error("Error Getting Devices");
     }
   };
+ 
 
+
+  useEffect(()=>{
+  if(userID){
+    fetchGroups()
+  }
+  },[userID])
   return (
     <Dashboard>
       {loading ? (
