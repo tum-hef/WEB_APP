@@ -18,6 +18,7 @@
 .env.test.local
 .env.production.local
 .env.prod
+.env.dev
 .env.dev.http
 .env
 
