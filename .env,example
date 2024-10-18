@@ -1,0 +1,8 @@
+NODE_ENV="development"   # when in pro mode replace it with production 
+REACT_APP_KEYCLOAK_URL=
+REACT_APP_KEYCLOAK_REALM="master"
+REACT_APP_KEYCLOAK_CLIENT_ID="hefSensorHub_production"
+# REACT_APP_BACKEND_URL="https://services.hef.tum.de"
+REACT_APP_BACKEND_URL=
+REACT_APP_BACKEND_URL_ROOT=
+REACT_APP_GOOGLE_ANALYTICS_ID=
