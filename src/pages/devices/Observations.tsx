@@ -28,10 +28,11 @@ const Observations = () => {
   const [isGraphButtonSelected, setIsGraphButtonSelected] = useState(false);
 
   const fetchObservations = () => {
-    const backend_url = process.env.REACT_APP_FROST_URL;
+    const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
+    const isDev = process.env.REACT_APP_NODE_ENV === "development"
     axios
       .get(
-        `https://${frostServerPort}-${backend_url}/FROST-Server/v1.0/Datastreams(${id})/Observations?$orderby=phenomenonTime%20desc`,
+        isDev ?  `${backend_url}:${frostServerPort}/FROST-Server/v1.0/Datastreams(${id})/Observations?$orderby=phenomenonTime%20desc` :   `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Datastreams(${id})/Observations?$orderby=phenomenonTime%20desc`,
         {
           headers: {
             "Content-Type": "application/json",

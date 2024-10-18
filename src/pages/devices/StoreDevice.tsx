@@ -27,10 +27,11 @@ function StoreDevice() {
     initialValues: device_initial_values,
     validationSchema: device_validationSchema,
     onSubmit: async (values: any) => {
-      formik.resetForm();
+      formik.resetForm(); 
+      const isDev = process.env.REACT_APP_NODE_ENV === "development"
       try {
         const response = await axios.post(
-          `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Things`,
+          isDev ?  `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Things`  :    `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Things`,
           {
             name: values.device_name,
             description: values.device_description,

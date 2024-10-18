@@ -24,10 +24,11 @@ const Reports = () => {
 
       const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
       console.log(backend_url);
-
+      const isDev = process.env.REACT_APP_NODE_ENV === 'development';  
+      const url = isDev ?  `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Datastreams` : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Things`
       // First request
       const datastreamRes = await axios.get(
-        `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Datastreams`,
+        url,
         {
           headers: {
             "Content-Type": "application/json",

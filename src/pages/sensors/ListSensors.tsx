@@ -22,10 +22,11 @@ const ListSensors = () => {
   const [sensors, setSensors] = useState<any[]>([]);
 
   const fetchSensors = () => {
-    const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
+    const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT; 
+    const isDev = process.env.REACT_APP_NODE_ENV === "development"
     console.log(backend_url);
     axios
-      .get(`https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Sensors`, {
+      .get(isDev ?  `${backend_url}:${frostServerPort}/FROST-Server/v1.0/Sensors`  : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Sensors`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,

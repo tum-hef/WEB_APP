@@ -45,10 +45,12 @@ const Location = () => {
 
   const getLocation = async () => {
     try {
-      const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
+      const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT; 
+      const isDev = process.env.REACT_APP_NODE_ENV === 'development';   
+     const url = isDev ?  `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Locations(${id})` : `https://${frostServerPort}-${backend_url}/FROST-Server/v1.0/Locations(${id})`
       axios
         .get(
-          `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Locations(${id})`,
+          url,
           {
             headers: {
               "Content-Type": "application/json",

@@ -66,9 +66,11 @@ export default function DataSpace() {
 
   const fetchDataStreams = () => {
     console.log(frostServerPort);
-    const backend_url = process.env.REACT_APP_FROST_URL;
+    const backend_url = process.env.REACT_APP_FROST_URL; 
+    const isDev = process.env.REACT_APP_NODE_ENV === 'development'; 
+    const url = isDev ?  `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Datastreams` :`https://${frostServerPort}-${backend_url}/FROST-Server/v1.0/Datastreams`
     axios
-      .get(`https://${frostServerPort}-${backend_url}/FROST-Server/v1.0/Datastreams`, {
+      .get(url, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -104,8 +106,10 @@ export default function DataSpace() {
   const asyncGetDevices = async () => {
     try {
       const backend_url = process.env.REACT_APP_FROST_URL;
+      const isDev = process.env.REACT_APP_NODE_ENV === 'development'; 
+      const url = isDev ?  `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Things` : `https://${frostServerPort}-${backend_url}/FROST-Server/v1.0/Things`
       axios
-        .get(`https://${frostServerPort}-${backend_url}/FROST-Server/v1.0/Things`, {
+        .get(url, {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
@@ -255,13 +259,13 @@ export default function DataSpace() {
                       onClick={(e) => {
                         e.preventDefault();
                         window.open(
-                          `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0`,
+                          process.env.REACT_APP_NODE_ENV === 'development' ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0` : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0`,
                           "_blank",
                           "noopener,noreferrer"
                         );
                       }}
                     >
-                      {`https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0`}
+                      { process.env.REACT_APP_NODE_ENV === 'development' ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0` : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0`}
                     </LinkCustom>
                   </Typography>{" "}
                   <Typography

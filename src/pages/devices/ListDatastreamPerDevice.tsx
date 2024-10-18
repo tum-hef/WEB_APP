@@ -20,10 +20,11 @@ const ListDatastreamPerDevice = () => {
   const { id } = useParams<{ id: string }>();
 
   const fetchThings = () => {
-    const backend_url = process.env.REACT_APP_FROST_URL;
+    const backend_url = process.env.REACT_APP_BACKEND_URL; 
+    const isDev = process.env.REACT_APP_NODE_ENV  === "development" 
     axios
       .get(
-        `https://${frostServerPort}-${backend_url}/FROST-Server/v1.0/Things(${id})/Datastreams`,
+        isDev ? `${backend_url}:${frostServerPort}/FROST-Server/v1.0/Things(${id})/Datastreams`   : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Things(${id})/Datastreams`,
         {
           headers: {
             "Content-Type": "application/json",

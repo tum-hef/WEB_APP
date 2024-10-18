@@ -50,9 +50,10 @@ function StoreDatastream() {
 
         const phenphenomenonTimeFormated = `${formattedDate}/${formattedDate}`;
 
-        console.log(`Current Date and Time in Rome: ${formattedDate}`);
+        console.log(`Current Date and Time in Rome: ${formattedDate}`); 
+        const isDev = process.env.REACT_APP_NODE_ENV  === "development"
         const response = await axios.post(
-          `${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Datastreams`,
+          isDev  ?  `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Datastreams`  :   `${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Datastreams`,
           {
             name: values.name,
             unitOfMeasurement: {
@@ -122,10 +123,11 @@ function StoreDatastream() {
   const fetchData = async () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL;
     const email = userInfo?.preferred_username;
+    const isDev = process.env.REACT_APP_NODE_ENV  === "development"
 
     try {
       const response = await axios.get(
-        `${backend_url}/frost-server?email=${email}`,
+         `${backend_url}/frost-server?email=${email}`,
         {
           headers: {
             "Content-Type": "application/json",
@@ -137,7 +139,7 @@ function StoreDatastream() {
         setFrostServerPort(response.data.PORT);
 
         const responseDevices = await axios.get(
-          `https://${response.data.PORT}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Things`,
+          isDev ?   `${process.env.REACT_APP_BACKEND_URL_ROOT}:${response.data.PORT}/FROST-Server/v1.0/Things`   : `https://${response.data.PORT}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Things`,
 
           {
             headers: {
@@ -152,7 +154,7 @@ function StoreDatastream() {
         }
 
         const responseObservedProperties = await axios.get(
-          `https://${response.data.PORT}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/ObservedProperties`,
+         isDev ?  `${process.env.REACT_APP_BACKEND_URL_ROOT}:${response.data.PORT}/FROST-Server/v1.0/ObservedProperties` :   `https://${response.data.PORT}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/ObservedProperties`,
           {
             headers: {
               "Content-Type": "application/json",
@@ -166,7 +168,7 @@ function StoreDatastream() {
         }
 
         const responseSensors = await axios.get(
-          `https://${response.data.PORT}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Sensors`,
+         isDev ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${response.data.PORT}/FROST-Server/v1.0/Sensors` :  `https://${response.data.PORT}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Sensors`,
           {
             headers: {
               "Content-Type": "application/json",

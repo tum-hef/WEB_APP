@@ -21,8 +21,10 @@ const Datastreams = () => {
 
   const getDatastreams = async () => {
     try {
-      const backend_url = process.env.REACT_APP_FROST_URL;
-      const url = `https://${frostServerPort}-${backend_url}/FROST-Server/v1.0/Things(${id})/Datastreams`;
+      const backend_url = process.env.REACT_APP_FROST_URL; 
+      const isDev = process.env.REACT_APP_NODE_ENV === 'development';   
+      const url = isDev ?  `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Things(${id})/Datastreams` : `https://${frostServerPort}-${backend_url}/FROST-Server/v1.0/Things(${id})/Datastreams`
+
       console.log(url);
       axios
         .get(url, {
