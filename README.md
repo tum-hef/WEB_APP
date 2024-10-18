@@ -56,16 +56,5 @@ Contact: david.gackstetter@tum.de
 
 Copyright (C) 2024 Technical University of Munich, Arcisstr. 11, 80333 Munich, Germany.
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
+This program is free software: you can redistribute it and/or modify it under the terms of the CC-BY-4.0 License. You may copy, distribute, display, perform and make derivative works and remixes based on it, yet only if giving the author or licensor the credits (attribution) in the manner specified by these. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the CC-BY-4.0 License for more details. You should have received a copy of the CC-BY-4.0 license along with this program. If not, see https://creativecommons.org/licenses/by/4.0/. 
 
