@@ -27,6 +27,7 @@ You can read more in our [contribution guidelines](CONTRIBUTING.md).
 2) Fill .env variables: 
 
    ```
+    NODE_ENV="development"   # for LITE-version; when in PRO mode replace it with production
     REACT_APP_KEYCLOAK_URL=
     REACT_APP_KEYCLOAK_REALM=
     REACT_APP_KEYCLOAK_CLIENT_ID=
