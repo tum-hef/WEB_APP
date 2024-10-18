@@ -1,4 +1,21 @@
-# Configuration
+# sensorHUB - Graphical Web Application
+The sensorHUB software is a novel, open-source software stack for enhanced accessibility and secure interoperability in IoT project management. It is developed by Technical University of Munich's (TUM) Hans Eisenmann-Forum for Agricultural Sciences (HEF). This repository presents the sensorHUB's graphical web interface. From a user perspective the sensorHUB web-based GUI represents the central access to the stack’s services including data processing, project management functionalities, and knowledge acquisition. With ReactJS, the web app builds on a widely used, state-of-the-art front-end web framework. For facilitated development, we apply pre-configured designs and code modules from [Material UI](https://mui.com/material-ui/), a widely used, open source ReactJS component library. The app is designed as reactive web application, enabling its usability from diverse end device platforms. User access the app using a landing page, which either forwards to the login or a registration procedure both being regulated by Keycloak’s authentication mechanism. After a successful login, the user is required to select from the scope of available FROST-servers (a user may be assigned several projects with related servers) before being forwarded to the app’s dashboard. Contents are organized using a sidebar, which supports users in navigating to their intended destinations. For more details, see the [sensorHUB repository](https://github.com/tum-hef/sensorHUB) and the related ISPRS publication [tba](https://www.google.com).
+![App_features](https://github.com/user-attachments/assets/f76b06bd-6766-49ca-99fa-9f82f61897b6)
+
+## Changes and Updates
+
+See the [Change Log](CHANGELOG.md).
+
+## Contributing
+
+Contributions are what make the open source community such an amazing place to learn, inspire, and create.
+Any contributions are greatly appreciated.
+You can read more in our [contribution guidelines](CONTRIBUTING.md).
+
+## Compiling
+
+
+### Configuration
 
  - Keycloak Version:  15.0.2
 
@@ -26,170 +43,28 @@
 
 -----------------------------------------------------------------------------------------------------------------
 
-# 1) Projects (Servers)
 
-  
+## Authors
 
-URL: /projects
+David Gackstetter, Parid Varoshi, Syed Saad Zahidi
 
-  
+Contact: david.gackstetter@tum.de
 
-Data displayed:
 
-  
+## License
 
-1. ID
+Copyright (C) 2024 Technical University of Munich, Arcisstr. 11, 80333 Munich, Germany.
 
-2. Client Name
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-3. URL
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser General Public License for more details.
 
-4. Description
+You should have received a copy of the GNU Lesser General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-5. Redirect Button to Device
-
-  
-
-# 2) Devices (Things)
-
-  
-
-URL: /devices
-
-  
-
-Data displayed:
-
-  
-
-1. ID
-
-2. Name
-
-3. Description
-
-4. Redirect Button to Datastream
-
-5. Redirect Button to Location
-
-6. Button that exports a specific row to JSON file
-
-  
-
-Details:
-
-Due that name or description might be too long to display in the table, an arrow in every row is provided in every row that makes possible to read the full name and description.
-
-Button “Create Device” will redirect to a new form that creates a new device.
-
-  
-
-# 3) Create Device (Things)
-
-  
-
-URL: / devices/store
-
-  
-
-Form:
-
-  
-
-1. Device Information
-
-a) Device ID
-
-b) Application ID
-
-  
-
-2. TTNS Keys
-
-a) AppEUI
-
-b) DevEUI ID
-
-c) AppKey ID
-
-3. Payload Function
-
-a) Type (Decoder/Encoder)
-
-b) Format (FORMATTER_JAVASCRIPT / FORMATTER_CAYENNELPP/ FORMATTER_DEVICEREPO)
-
-c) Function File
-
-4. Lorawan Settings
-
-a) Activation Method (OTAA / ABP)
-
-b) LoRaWAN Version (1.0.0 / 1.0.1 1.0.2 / 1.0.3 /1.0.4 /1.1.0)
-
-  
-
-# 4) Datastreams
-
-  
-
-URL: /datastreams/{ID}
-
-  
-
-Data displayed:
-
-  
-
-1. ID
-
-2. Name
-
-3. Unit of Measurements
-
-4. Descriptions
-
-5. Redirect Button to Observations
-
-  
-
-# 5) Location
-
-  
-
-URL: / locations/{ID}
-
-  
-
-Data displayed:
-
-  
-
-1. Location Address Provided
-
-2. Map
-
-  
-  
-
-# 6) Observation
-
-  
-
-URL: / observations/{ID}
-
-  
-
-Data displayed:
-
-  
-  
-
-2. Phenomenon Time
-
-3. Result
-
-4. Download Data as CSV
-
-5. Graph of the last 10 Observation
-
-6. 2 datetime input that makes possible to filter data
