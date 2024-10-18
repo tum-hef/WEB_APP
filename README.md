@@ -17,7 +17,7 @@ You can read more in our [contribution guidelines](CONTRIBUTING.md).
 
 ### Configuration
 
- - Keycloak Version:  15.0.2
+ - Keycloak Version:  23.0.6
 
 
 1) Clone Repository
