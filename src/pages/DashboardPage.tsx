@@ -127,7 +127,7 @@ export default function DashboardPage() {
   const asyncGetDevices = async () => {
     try {
       const backend_url = process.env.REACT_APP_FROST_URL;  
-      const isDev = process.env.REACT_APP_NODE_ENV === 'development';  
+      const isDev = process.env.REACT_APP_IS_DEVELOPMENT;  
       const url = isDev ?  `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Things` : `https://${frostServerPort}-${backend_url}/FROST-Server/v1.0/Things`
       if(frostServerPort){
         axios
@@ -238,7 +238,7 @@ export default function DashboardPage() {
                 {nodeRedPort && (
                   <Grid item lg={6} sm={12} xl={6} xs={12}>
                     <Anchor
-                      href={ process.env.REACT_APP_NODE_ENV === 'development' ?  `${process.env.REACT_APP_BACKEND_URL_ROOT}:${nodeRedPort}`  : `https://${nodeRedPort}-${process.env.REACT_APP_NODERED_URL}`}
+                      href={ process.env.REACT_APP_IS_DEVELOPMENT  ?  `${process.env.REACT_APP_BACKEND_URL_ROOT}:${nodeRedPort}`  : `https://${nodeRedPort}-${process.env.REACT_APP_NODERED_URL}`}
                       target="_blank"
                     >
                       <Card

@@ -25,7 +25,7 @@ const ListObservationProperty = () => {
   const fetchObservationProperty = () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
     console.log(backend_url); 
-    const isDev = process.env.REACT_APP_NODE_ENV === "development"
+    const isDev = process.env.REACT_APP_IS_DEVELOPMENT
     axios
       .get(
        isDev ? `${backend_url}:${frostServerPort}/FROST-Server/v1.0/ObservedProperties` :   `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/ObservedProperties`,

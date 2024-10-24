@@ -39,6 +39,8 @@ const HomePage = () => {
     return <Redirect to={currentLocationState?.from as string} />;
   }
 
+  
+
   const theme = createTheme();
 
   return (
