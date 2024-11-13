@@ -128,7 +128,7 @@ function StepperStore() {
   const fetchFrostPort = async () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL;
     const backend_url_root = process.env.REACT_APP_BACKEND_URL_ROOT; 
-    const isDev = process.env.REACT_APP_IS_DEVELOPMENT; 
+    const isDev = process.env.REACT_APP_IS_DEVELOPMENT === 'true';  
     const email = userInfo?.preferred_username;
     await axios
       .get(`${backend_url}/frost-server?email=${email}`, {
@@ -312,7 +312,7 @@ function StepperStore() {
             }}
             validationSchema={getValidationSchemaPerStep(activeStep)}
             onSubmit={async (values: any, helpers: any) => { 
-              const isDev = process.env.REACT_APP_IS_DEVELOPMENT; 
+              const isDev = process.env.REACT_APP_IS_DEVELOPMENT === 'true';  
               if (isLastStep) {
                 setLoading(true);
                 helpers.resetForm();
@@ -1495,7 +1495,7 @@ function StepperStore() {
                         }
                         variant="contained"
                         onClick={() => {
-                          const isDev = process.env.REACT_APP_IS_DEVELOPMENT
+                          const isDev = process.env.REACT_APP_IS_DEVELOPMENT === 'true';  
                           if (activeStep === 0 && values.device_name !== "") { 
                             
                             axios

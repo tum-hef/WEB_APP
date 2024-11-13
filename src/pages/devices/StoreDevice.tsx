@@ -28,7 +28,7 @@ function StoreDevice() {
     validationSchema: device_validationSchema,
     onSubmit: async (values: any) => {
       formik.resetForm(); 
-      const isDev = process.env.REACT_APP_IS_DEVELOPMENT
+      const isDev = process.env.REACT_APP_IS_DEVELOPMENT === 'true';  
       try {
         const response = await axios.post(
           isDev ?  `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Things`  :    `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Things`,

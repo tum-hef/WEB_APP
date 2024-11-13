@@ -22,7 +22,7 @@ const ListObservations = () => {
 
   const fetchObservations = () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT; 
-    const isDev = process.env.REACT_APP_IS_DEVELOPMENT
+    const isDev = process.env.REACT_APP_IS_DEVELOPMENT === 'true';  
     axios
       .get(isDev ?  `${backend_url}:${frostServerPort}/FROST-Server/v1.0/Observations`  :  `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Observations`, {
         headers: {

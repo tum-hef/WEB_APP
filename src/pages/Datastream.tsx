@@ -22,7 +22,7 @@ const Datastreams = () => {
   const getDatastreams = async () => {
     try {
       const backend_url = process.env.REACT_APP_FROST_URL; 
-      const isDev = process.env.REACT_APP_IS_DEVELOPMENT;    
+      const isDev = process.env.REACT_APP_IS_DEVELOPMENT === 'true';    
       const url = isDev ?  `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Things(${id})/Datastreams` : `https://${frostServerPort}-${backend_url}/FROST-Server/v1.0/Things(${id})/Datastreams`
 
       console.log(url);

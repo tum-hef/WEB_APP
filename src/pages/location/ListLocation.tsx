@@ -22,7 +22,7 @@ const ListLocations = () => {
   const fetchLocations = () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
     console.log(backend_url); 
-    const isDev = process.env.REACT_APP_IS_DEVELOPMENT
+    const isDev = process.env.REACT_APP_IS_DEVELOPMENT === 'true';  
     axios
       .get( isDev ? `${backend_url}:${frostServerPort}/FROST-Server/v1.0/Locations` :  `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Locations`, {
         headers: {

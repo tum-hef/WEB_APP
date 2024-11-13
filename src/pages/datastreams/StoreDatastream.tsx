@@ -51,7 +51,7 @@ function StoreDatastream() {
         const phenphenomenonTimeFormated = `${formattedDate}/${formattedDate}`;
 
         console.log(`Current Date and Time in Rome: ${formattedDate}`); 
-        const isDev = process.env.REACT_APP_IS_DEVELOPMENT
+        const isDev = process.env.REACT_APP_IS_DEVELOPMENT === 'true';  
         const response = await axios.post(
           isDev  ?  `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Datastreams`  :   `${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Datastreams`,
           {
@@ -123,7 +123,7 @@ function StoreDatastream() {
   const fetchData = async () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL;
     const email = userInfo?.preferred_username;
-    const isDev = process.env.REACT_APP_IS_DEVELOPMENT
+    const isDev = process.env.REACT_APP_IS_DEVELOPMENT === 'true';  
 
     try {
       const response = await axios.get(
