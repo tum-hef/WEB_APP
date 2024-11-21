@@ -9,6 +9,7 @@ import { useKeycloak } from "@react-keycloak/web";
 import { ToastContainer, toast } from "react-toastify";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import DeleteForeverOutlinedIcon from "@mui/icons-material/DeleteForeverOutlined";
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import Swal from "sweetalert2";
 import ReactGA from "react-ga4";
 import { GAactionsDataStreams } from "../../utils/GA";
@@ -296,6 +297,30 @@ const ListDatastream = () => {
       sortable: true,
       width: "20%",
     },
+    {
+      name: "Export Data",
+      selector: (row: any) => (
+        <FileDownloadIcon
+          style={{
+            cursor: "pointer",
+            color: "black",
+          }}
+          onClick={() => {
+            const blob = new Blob([JSON.stringify(row, null, 2)], {
+              type: "application/json",
+            });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = `${row.name || "data"}.json`; // Use row.name for the filename, fallback to 'data'
+            link.click();
+            URL.revokeObjectURL(url); // Cleanup after download
+          }}
+        />
+      ),
+      sortable: true,
+      width: "20%",
+    }
   ];
 
   const ExpandedComponent: React.FC<ExpanderComponentProps<any>> = ({
