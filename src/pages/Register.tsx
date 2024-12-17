@@ -55,20 +55,19 @@ function Register() {
     }),
     onSubmit: async (values) => {
       formik.resetForm();
-
+    
       if (!process.env.REACT_APP_BACKEND_URL) {
         Swal.fire("Error", "Problem with credentials", "error");
         return;
       }
-
-      try { 
-        console.log("url",`${process.env.REACT_APP_BACKEND_URL}/register`)
+    
+      try {
+        console.log("url", `${process.env.REACT_APP_BACKEND_URL}/register`);
         await axios
           .post(`${process.env.REACT_APP_BACKEND_URL}/register`, {
             firstName: values.firstName,
             lastName: values.lastName,
             email: values.email,
-            // password: values.password,
           })
           .then((response) => {
             if (response.status === 200) {
@@ -78,36 +77,47 @@ function Register() {
                 "success"
               );
             } else {
-              Swal.fire("Error", "Try Again", "error");
+              Swal.fire("Error", "Unexpected response from server", "error");
             }
           })
           .catch((error) => {
-            if (
-              error.response.status === 400 &&
-              error.response.data.code === "A00001" &&
-              error.response.data.error
-            ) {
-              Swal.fire("Error", error.response.data.error, "error");
-            } else if (
-              error.response.status === 400 &&
-              error.response.data.code === "A00002" &&
-              error.response.data.error
-            ) {
-              Swal.fire("Error", error.response.data.error, "error");
-            } else if (
-              error.response.status === 400 &&
-              error.response.data.code === "A00003" &&
-              error.response.data.error
-            ) {
-              Swal.fire("Error", error.response.data.error, "error");
+            if (!error.response) {
+              Swal.fire("Error", "Network error. Please try again.", "error");
+              return;
+            }
+    
+            const { status, data } = error.response;
+    
+            // Handle specific backend error responses
+            if (status === 403 && data.error === "Email not found in TUM database") {
+              Swal.fire("Error", "The provided email does not exist in the TUM database.", "error");
+            } else if (status === 504 && data.error === "LDAP script execution timed out") {
+              Swal.fire(
+                "Error",
+                "The verification process timed out. Please try again later.",
+                "error"
+              );
+            } else if (status === 500 && data.error === "Failed to connect to the database") {
+              Swal.fire(
+                "Error",
+                "Server encountered an issue connecting to the database. Please try again.",
+                "error"
+              );
+            } else if (status === 400 && data.code === "A00001") {
+              Swal.fire("Error", data.error || "Already registered but not verified.", "error");
+            } else if (status === 400 && data.code === "A00002") {
+              Swal.fire("Error", data.error || "Verification email resent.", "error");
+            } else if (status === 400 && data.code === "A00003") {
+              Swal.fire("Error", data.error || "You are already registered and verified.", "error");
             } else {
-              Swal.fire("Error", "Try Again", "error");
+              Swal.fire("Error", data.error || "An unexpected error occurred. Please try again.", "error");
             }
           });
-      } catch (error: any) {
-        Swal.fire("Error", "Try Again", "error");
+      } catch (error) {
+        Swal.fire("Error", "An unexpected error occurred. Please try again.", "error");
       }
     },
+    
   });
   const location = useLocation<{ [key: string]: unknown }>();
   const currentLocationState = location.state || {
