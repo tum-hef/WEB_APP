@@ -81,42 +81,39 @@ function Register() {
             }
           })
           .catch((error) => {
-            if (!error.response) {
-              Swal.fire("Error", "Network error. Please try again.", "error");
-              return;
-            }
+            // Check if there is a response from the backend 
+            if (error.response) {
+              const { status, data } = error.response;
     
-            const { status, data } = error.response;
-    
-            // Handle specific backend error responses
-            if (status === 403 && data.error === "Email not found in TUM database") {
-              Swal.fire("Error", "The provided email does not exist in the TUM database.", "error");
-            } else if (status === 504 && data.error === "LDAP script execution timed out") {
-              Swal.fire(
-                "Error",
-                "The verification process timed out. Please try again later.",
-                "error"
-              );
-            } else if (status === 500 && data.error === "Failed to connect to the database") {
-              Swal.fire(
-                "Error",
-                "Server encountered an issue connecting to the database. Please try again.",
-                "error"
-              );
-            } else if (status === 400 && data.code === "A00001") {
-              Swal.fire("Error", data.error || "Already registered but not verified.", "error");
-            } else if (status === 400 && data.code === "A00002") {
-              Swal.fire("Error", data.error || "Verification email resent.", "error");
-            } else if (status === 400 && data.code === "A00003") {
-              Swal.fire("Error", data.error || "You are already registered and verified.", "error");
+              if (status === 403 && data.error === "Email not found in TUM database") {
+                Swal.fire("Error", data.error, "error");
+              } else if (status === 504) {
+                Swal.fire(
+                  "Error",
+                  "The verification process timed out. Please try again later.",
+                  "error"
+                );
+              } else if (status === 500) {
+                Swal.fire(
+                  "Error",
+                  "Server encountered an internal error. Please try again later.",
+                  "error"
+                );
+              } else if (status === 400 && data.error) {
+                Swal.fire("Error", data.error, "error");
+              } else {
+                Swal.fire("Error", "An unexpected error occurred. Please try again.", "error");
+              }
             } else {
-              Swal.fire("Error", data.error || "An unexpected error occurred. Please try again.", "error");
+              // If no response (network or server down)
+              Swal.fire("Error", "Network error. Please check your connection.", "error");
             }
           });
       } catch (error) {
         Swal.fire("Error", "An unexpected error occurred. Please try again.", "error");
       }
-    },
+    }
+    
     
   });
   const location = useLocation<{ [key: string]: unknown }>();
