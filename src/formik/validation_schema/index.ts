@@ -5,22 +5,22 @@ export const device_validationSchema = yup.object().shape({
     .string()
     .required("Device name is required")
     .min(3, "Device name must be at least 3 characters")
-    .max(20, "Device name must be at most 20 characters"),
+    .max(40, "Device name must be at most 40 characters"),
   device_description: yup
     .string()
     .required("Device description is required")
     .min(3, "Device description must be at least 3 characters")
-    .max(30, "Device description must be at most 30 characters"),
+    .max(40, "Device description must be at most 40 characters"),
   location_name: yup
     .string()
     .required("Location name is required")
     .min(3, "Location name must be at least 3 characters")
-    .max(20, "Location name must be at most 20 characters"),
+    .max(40, "Location name must be at most 40 characters"),
   location_description: yup
     .string()
     .required("Location description is required")
     .min(3, "Location description must be at least 3 characters")
-    .max(30, "Location description must be at most 30 characters"),
+    .max(40, "Location description must be at most 40 characters"),
   location_longitude: yup
     .string()
     .required("Location longitude is required")
@@ -36,17 +36,17 @@ export const sensor_validationSchema = yup.object().shape({
     .string()
     .required("Sensor name is required")
     .min(3, "Sensor name must be at least 3 characters")
-    .max(20, "Sensor name must be at most 20 characters"),
+    .max(40, "Sensor name must be at most 40 characters"),
   sensor_description: yup
     .string()
     .required("Sensor description is required")
     .min(3, "Sensor description must be at least 3 characters")
-    .max(30, "Sensor description must be at most 30 characters"),
+    .max(40, "Sensor description must be at most 40 characters"),
   sensor_metadata: yup
     .string()
     .required("Sensor metadata is required")
     .min(3, "Sensor metadata must be at least 3 characters")
-    .max(30, "Sensor metadata must be at most 30 characters"),
+    .max(40, "Sensor metadata must be at most 40 characters"),
 });
 
 export const observation_property_validationSchema = yup.object().shape({
@@ -54,17 +54,17 @@ export const observation_property_validationSchema = yup.object().shape({
     .string()
     .required("Measurement property name is required")
     .min(3, "Measurement property name must be at least 3 characters")
-    .max(20, "Measurement property name must be at most 20 characters"),
+    .max(40, "Measurement property name must be at most 40 characters"),
   description: yup
     .string()
     .required("Measurement property description is required")
     .min(3, "Measurement property description must be at least 3 characters")
-    .max(30, "Measurement property description must be at most 30 characters"),
+    .max(40, "Measurement property description must be at most 40 characters"),
   definition: yup
     .string()
     .required("Measurement property definition is required")
     .min(3, "Measurement property definition must be at least 3 characters")
-    .max(30, "Measurement property definition must be at most 30 characters"),
+    .max(40, "Measurement property definition must be at most 40 characters"),
 });
 
 export const datastreams_validationSchema = yup.object().shape({
@@ -72,12 +72,12 @@ export const datastreams_validationSchema = yup.object().shape({
     .string()
     .required("Datastream name is required")
     .min(3, "Datastream name must be at least 3 characters")
-    .max(20, "Datastream name must be at most 20 characters"),
+    .max(40, "Datastream name must be at most 40 characters"),
   description: yup
     .string()
     .required("Datastream description is required")
     .min(3, "Datastream description must be at least 3 characters")
-    .max(30, "Datastream description must be at most 30 characters"),
+    .max(40, "Datastream description must be at most 40 characters"),
   observationType: yup
     .string()
     .required("Datastream observation type is required")
@@ -88,8 +88,8 @@ export const datastreams_validationSchema = yup.object().shape({
     .required("Datastream unit of measurement name is required")
     .min(3, "Datastream unit of measurement name must be at least 3 characters")
     .max(
-      30,
-      "Datastream unit of measurement name must be at most 30 characters"
+      40,
+      "Datastream unit of measurement name must be at most 40 characters"
     ),
   unit_of_measurement_symbol: yup
     .string()
@@ -118,7 +118,7 @@ export const update_password_validationSchema = yup.object().shape({
     .string()
     .required("New password is required")
     .min(8, "New password must be at least 8 characters")
-    .max(20, "New password must be at most 20 characters")
+    .max(40, "New password must be at most 40 characters")
     // must have a capital letter
     .matches(/[A-Z]/, "New password must contain at least one capital letter")
     .matches(
