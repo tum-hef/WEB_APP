@@ -39,14 +39,13 @@ const HomePage = () => {
     return <Redirect to={currentLocationState?.from as string} />;
   }
 
-  
-
   const theme = createTheme();
 
   return (
     <ThemeProvider theme={theme}>
-      <Grid container component="main" sx={{ height: "100vh" }}>
+      <Grid container component="main" sx={{ height: "100vh", position: "relative" }}>
         <CssBaseline />
+
         {/* Left Part */}
         <Grid
           item
@@ -98,19 +97,19 @@ const HomePage = () => {
           sx={{
             backgroundColor: "#003359",
             borderLeft: "1px solid #003359",
-            display: "flex",  // Flexbox to center the content
-            justifyContent: "center",  // Centers content horizontally
-            alignItems: "center",  // Centers content vertically
-            padding: { xs: 2, sm: 4 },  // Adds padding for mobile responsiveness
-            height: "100%",  // Ensures full height is used
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            padding: { xs: 2, sm: 4 },
+            height: "100%",
           }}
         >
-          <Grid 
-            container 
-            direction={{ xs: "column", sm: "row" }}  // Stack vertically on small screens, horizontally on larger screens
-            spacing={2} 
-            justifyContent="center" 
-            sx={{ width: "100%", maxWidth: "500px" }}  // Limits max width
+          <Grid
+            container
+            direction={{ xs: "column", sm: "row" }}
+            spacing={2}
+            justifyContent="center"
+            sx={{ width: "100%", maxWidth: "500px" }}
           >
             <Grid item xs={12} sm={6}>
               <Button
@@ -118,12 +117,12 @@ const HomePage = () => {
                 variant="contained"
                 onClick={login}
                 sx={{
-                  mt: { xs: 2, sm: 0 },  // Adjust margin for mobile
+                  mt: { xs: 2, sm: 0 },
                   mb: { xs: 1, sm: 2 },
                   backgroundColor: "white",
                   color: "#003359",
                   fontWeight: "bold",
-                  fontSize: { xs: "18px", sm: "26px" }, // Responsive font size
+                  fontSize: { xs: "18px", sm: "26px" },
                   textTransform: "none",
                 }}
               >
@@ -136,12 +135,12 @@ const HomePage = () => {
                   fullWidth
                   variant="contained"
                   sx={{
-                    mt: { xs: 2, sm: 0 },  // Adjust margin for mobile
+                    mt: { xs: 2, sm: 0 },
                     mb: { xs: 1, sm: 2 },
                     backgroundColor: "white",
                     color: "#003359",
                     fontWeight: "bold",
-                    fontSize: { xs: "18px", sm: "26px" }, // Responsive font size
+                    fontSize: { xs: "18px", sm: "26px" },
                     textTransform: "none",
                   }}
                 >
@@ -151,50 +150,13 @@ const HomePage = () => {
             </Grid>
           </Grid>
         </Grid>
-
-        {/* Footer */}
-        <Grid
-          item
-          xs={12}
-          sx={{
-            backgroundColor: "#003359",
-            textAlign: "center",
-            padding: "20px 0",
-            position: "absolute",
-            bottom: 0,
-            width: "100%",
-          }}
-        >
-          <Grid container justifyContent="center">
-            <Grid item>
-              <Typography
-                component="h1"
-                variant="h6"
-                sx={{
-                  color: "white",
-                  fontWeight: "bold",
-                  fontSize: { xs: "15px", sm: "17px" },
-                }}
-              >
-                HEF Hans Eisenmann-Forum für Agrarwissenschaften
-              </Typography>
-            </Grid>
-
-            <Grid item>
-              <img
-                src="/images/tum_logo.png"
-                alt="logo"
-                style={{
-                  width: "80px",
-                  height: "40px",
-                  marginTop: "20px",
-                  marginRight: "40px",
-                }}
-              />
-            </Grid>
-          </Grid>
+        <Grid item xs={12}>
+        <Footer />
         </Grid>
-      </Grid>
+        {/* Footer */}
+        
+      </Grid> 
+      
     </ThemeProvider>
   );
 };
