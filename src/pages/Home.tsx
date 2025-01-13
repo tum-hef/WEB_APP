@@ -61,40 +61,42 @@ const HomePage = () => {
         >
           {/* Left Part */}
           <Box
-            sx={{
-              flex: 1,
-              backgroundColor: "#003359",
-              backgroundImage:
-                "linear-gradient(to left, transparent 100%, #003359 50%), url(/images/design_element.png)",
-              backgroundRepeat: "no-repeat",
-              backgroundPosition: "center center",
-              backgroundSize: "cover",
-            }}
-          >
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "center",
-                alignItems: "center",
-                height: "100%",
-              }}
-            >
-              <Typography
-                component="h1"
-                variant="h5"
-                sx={{
-                  color: "white",
-                  fontWeight: "bold",
-                  fontSize: { xs: "20px", md: "30px" },
-                  textAlign: "center",
-                  mt: 3,
-                }}
-              >
-                HEF sensorHUB
-              </Typography>
-            </Box>
-          </Box>
+  sx={{
+    flex: 1,
+    backgroundColor: "#003359",
+    backgroundImage:
+      "linear-gradient(to left, transparent 100%, #003359 50%), url(/images/design_element.png)",
+    backgroundRepeat: "no-repeat",
+    backgroundPosition: "center",
+    backgroundSize: "contain",
+    overflow: "hidden",
+  }}
+>
+  <Box
+    sx={{
+      display: "flex",
+      flexDirection: "column",
+      justifyContent: "center",
+      alignItems: "center",
+      height: "100%",
+    }}
+  >
+    <Typography
+      component="h1"
+      variant="h5"
+      sx={{
+        color: "white",
+        fontWeight: "bold",
+        fontSize: { xs: "20px", md: "30px" },
+        textAlign: "center",
+        mt: 3,
+      }}
+    >
+      HEF sensorHUB
+    </Typography>
+  </Box>
+</Box>
+
 
           {/* Center Divider (Vertical Line) */}
           <Box
