@@ -11,6 +11,7 @@ import {
   ListItemText,
 } from "@mui/material";
 import { ExpandLess, ExpandMore } from "@mui/icons-material";
+import { useKeycloak } from "@react-keycloak/web";
 
 
 type ItemType = {
@@ -116,6 +117,7 @@ const SidebarNavListItem: React.FC<SidebarNavListItemProps> = (props) => {
   } = props;
 
   const [open, setOpen] = React.useState(openProp);
+  const { keycloak } = useKeycloak();
 
   const handleToggle = () => {
     setOpen((state) => !state);

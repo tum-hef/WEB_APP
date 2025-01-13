@@ -102,7 +102,7 @@ const AppRouter = (props: any) => {
                     path="/dashboard"
                     component={ListClients}
                   />
-                  <PrivateRoute exact path="/impressum" component={Impressum} />
+                  <Route exact path="/impressum" component={Impressum} />
                   <PrivateRoute exact path="/reports" component={Reports} />
                   <PrivateRoute exact path="/details" component={Details} />
                   <PrivateRoute

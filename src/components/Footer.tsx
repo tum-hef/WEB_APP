@@ -55,7 +55,7 @@ function Footer() {
         {/* Item 1: Impressum */}
         <Grid item>
           <List>
-            <ListItemButton disabled={!keycloak?.authenticated} href="/impressum">
+            <ListItemButton  href="/impressum">
             <InfoIcon style={{ marginRight: "8px", fontSize: "20px" }} />
               <ListItemText
                 disableTypography
@@ -75,7 +75,7 @@ function Footer() {
         {/* Item 4: Documentation (with Icon) */}
         <Grid item>
           <List>
-            <ListItemButton disabled={!keycloak?.authenticated}  href="/database/web_app">
+            <ListItemButton   href="/database/web_app">
               <DescriptionIcon style={{ marginRight: "8px", fontSize: "20px" }} />
               <Typography variant="body2" style={{ fontSize: "13px", color: "#000" }}>
                 Documentation
