@@ -3,10 +3,11 @@ import { ToastContainer, toast } from "react-toastify";
 import { useKeycloak } from "@react-keycloak/web";
 import { useEffect, useState } from "react";
 import Dashboard from "../components/DashboardComponent";
-import { Breadcrumbs, Button, Grid, Typography } from "@mui/material";
+import { Accordion, AccordionDetails, AccordionSummary, Box, Breadcrumbs, Button, Grid, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
 import axios from "axios";
 import { useLocation } from "react-router-dom";
 import Swal from "sweetalert2";
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 export default function ListClients() {
   const [userID, setUserID] = useState<string | null>(null);
@@ -57,6 +58,15 @@ export default function ListClients() {
 
     fetchData();
   }, [keycloak, userInfo, userID, message]);
+  const pendingRequests = [
+    { username: "John Doe", email: "john.doe@xyz.com" },
+    { username: "Jane Smith", email: "jane.smith@xyz.com" },
+  ];
+
+  const currentMembers = [
+    { username: "Alice Johnson", email: "alice.j@xyz.com" },
+    { username: "Bob Smith", email: "bob.smith@xyz.com" },
+  ];
 
   return (
     <Dashboard>
@@ -126,6 +136,150 @@ export default function ListClients() {
                 </Grid>
               </Grid>
             ))}
+          </Grid> 
+          <Grid sx={{mt:2}}>
+          <Box sx={{ padding: 2 }}>
+      <Typography variant="h6" gutterBottom>
+        Groups
+      </Typography>
+      <Accordion>
+      {/* Accordion Header */}
+      <AccordionSummary
+        expandIcon={<ExpandMoreIcon />}
+        aria-controls="join-group-content"
+        id="join-group-header"
+      >
+        <Typography variant="h6">Join Group:</Typography>
+      </AccordionSummary>
+
+      {/* Accordion Details */}
+      <AccordionDetails>
+        <Typography variant="body1" gutterBottom>
+          List of Groups:
+        </Typography>
+
+        {/* Group List */}
+        {groups.map((group, index) => (
+  <Box
+    key={index}
+    sx={{
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginBottom: 2,
+      padding: 1,
+      border: "1px solid #ccc",
+      borderRadius: "4px",
+      backgroundColor: "#f9f9f9",
+    }}
+  >
+    {/* Group Details */}
+    <Typography variant="body2" sx={{ flex: 1, marginRight: 2 }}>
+      {group.email} - {group.type}
+    </Typography>
+
+    {/* Buttons */}
+    <Button
+      variant="outlined"
+      size="small"
+      color="primary"
+      onClick={() => console.log("Join button clicked")}
+      sx={{ marginRight: 1 }}
+    >
+      Join
+    </Button>
+    <Button
+      variant="outlined"
+      size="small"
+      color="secondary"
+      onClick={() => console.log("Leave button clicked")}
+      sx={{ marginRight: 1 }}
+    >
+      Leave
+    </Button>
+    <Button
+      variant="outlined"
+      size="small"
+      color="info"
+      onClick={() => console.log("Configure button clicked")}
+    >
+      Select
+    </Button>
+  </Box>
+))}
+      </AccordionDetails>
+    </Accordion>
+      <Typography variant="h6" sx={{ marginTop: 2 }}>
+        Manage My Group:
+      </Typography>
+
+      <Accordion sx={{ marginTop: 2 }}>
+        <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="panel2-content" id="panel2-header">
+          Pending Requests:
+        </AccordionSummary>
+        <AccordionDetails>
+          <TableContainer component={Paper}>
+            <Table size="small" aria-label="pending requests table">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Username</TableCell>
+                  <TableCell>Email</TableCell>
+                  <TableCell>Action</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {pendingRequests.map((request, index) => (
+                  <TableRow key={index}>
+                    <TableCell>{request.username}</TableCell>
+                    <TableCell>{request.email}</TableCell>
+                    <TableCell>
+                      <Button variant="outlined" size="small" sx={{ marginRight: 1 }}>
+                        Approve
+                      </Button>
+                      <Button variant="outlined" size="small">
+                        Reject
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </AccordionDetails>
+      </Accordion>
+
+      <Accordion sx={{ marginTop: 2 }}>
+        <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="panel3-content" id="panel3-header">
+          Current Members:
+        </AccordionSummary>
+        <AccordionDetails>
+          <TableContainer component={Paper}>
+            <Table size="small" aria-label="current members table">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Username</TableCell>
+                  <TableCell>Email</TableCell>
+                  <TableCell>Action</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {currentMembers.map((member, index) => (
+                  <TableRow key={index}>
+                    <TableCell>{member.username}</TableCell>
+                    <TableCell>{member.email}</TableCell>
+                    <TableCell>
+                      <Button variant="outlined" size="small">
+                        Remove
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </AccordionDetails>
+      </Accordion>
+    </Box>
           </Grid>
         </>
       )}

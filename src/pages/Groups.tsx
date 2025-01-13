@@ -22,7 +22,7 @@ const Groups = () => {
 
   const getGroups = async () => {
     const response = await axios.get(
-      `http://localhost:8080/admin/realms/keycloak-react-auth/users/${userId}/groups`,
+      `${process.env.REACT_APP_KEYCLOAK_URL}/admin/realms/keycloak-react-auth/users/${userId}/groups`,
       {
         headers: {
           Authorization: "Bearer " + token,
