@@ -12,132 +12,102 @@ import GitHubIcon from "@mui/icons-material/GitHub"; // GitHub icon for Open Sou
 import HelpIcon from "@mui/icons-material/Help"; // Help icon for Support
 import GroupIcon from "@mui/icons-material/Group"; // Group icon for Community
 import DescriptionIcon from "@mui/icons-material/Description"; // Description icon for Documentation
-import InfoIcon from "@mui/icons-material/Info"; 
+import InfoIcon from "@mui/icons-material/Info";
 import { useKeycloak } from "@react-keycloak/web";
+import { useLocation } from "react-router-dom"; // Import useLocation
+
 interface ListItemButtonProps extends MuiListItemButtonProps {
   component?: ElementType<any>;
-  href?: string; 
-  target?: string
+  href?: string;
+  target?: string;
 }
 
-const Wrapper = styled.div`
-  padding: ${(props) => props.theme.spacing(1)} ${(props) => props.theme.spacing(4)};
-  background: ${(props) => props.theme.footer.background};
+const Wrapper = styled.div<{ backgroundColor: string; textColor: string }>`
+  padding: ${(props) => props.theme.spacing(1)} ${(props) => props.theme.spacing(3)};
+  background: ${(props) => props.backgroundColor};
+  color: ${(props) => props.textColor};
   position: relative;
-`;
+  text-align: center;
 
-const ListItemButton = styled(MuiListItemButton)<ListItemButtonProps>`
-  display: inline-block;
-  width: auto;
-  padding-left: ${(props) => props.theme.spacing(2)};
-  padding-right: ${(props) => props.theme.spacing(2)};
-
-  &,
-  &:hover,
-  &:active {
-    color: #000; /* Ensuring black color for all ListItemButtons */
-    text-decoration: none;
+  @media (max-width: 600px) {
+    padding: ${(props) => props.theme.spacing(2)};
   }
 `;
 
-const ListItemText = styled(MuiListItemText)`
-  span {
-    color: #000; /* Ensuring black color for all ListItemTexts */
+const FooterItem = styled.a`
+  display: inline-flex;
+  align-items: center;
+  font-size: 12px; /* Slightly larger font size */
+  margin: 0 ${(props) => props.theme.spacing(2)};
+  text-decoration: none; /* No underline */
+  color: inherit;
+
+  &::after {
+    content: "|"; /* Adds the pipe separator */
+    margin-left: ${(props) => props.theme.spacing(2)};
+    color: inherit; /* Inherit text color */
+  }
+
+  &:last-child::after {
+    content: ""; /* Removes pipe after the last item */
+  }
+
+  &:hover {
+    text-decoration: none; /* Ensures no underline on hover */
   }
 `;
 
-function Footer() { 
-  const { keycloak } = useKeycloak();
+function Footer() {
+  const location = useLocation();
+
+  const isHomePage = location.pathname === "/";
+  const backgroundColor = isHomePage ? "#003359" : "#f7f9fc";
+  const textColor = isHomePage ? "#fff" : "#000";
+
   return (
-    <Wrapper>
-      {/* Single Grid Container for all items */}
-      <Grid container spacing={2} alignItems="center" justifyContent="center" style={{ flexWrap: "nowrap" }}>
-        {/* Item 1: Impressum */}
-        <Grid item>
-          <List>
-            <ListItemButton  href="/impressum">
-            <InfoIcon style={{ marginRight: "8px", fontSize: "20px" }} />
-              <ListItemText
-                disableTypography
-                primary={
-                  <Typography variant="body2" style={{ fontSize: "13px", color: "#000" }}>
-                    Impressum
-                  </Typography>
-                }
-              />
-            </ListItemButton>
-          </List>
-        </Grid>
+    <Wrapper backgroundColor={backgroundColor} textColor={textColor}>
+      <Typography
+        component="div"
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          flexWrap: "wrap", // Wrap items on smaller screens
+        }}
+      >
+        <FooterItem href="/impressum">
+          <InfoIcon style={{ fontSize: "16px", verticalAlign: "middle", marginRight: "4px" }} />
+          Impressum
+        </FooterItem>
 
-        {/* Item 2: HEF SensorHUB */}
-      
+        <FooterItem href="/database/web_app">
+          <DescriptionIcon style={{ fontSize: "16px", verticalAlign: "middle", marginRight: "4px" }} />
+          Documentation
+        </FooterItem>
 
-        {/* Item 4: Documentation (with Icon) */}
-        <Grid item>
-          <List>
-            <ListItemButton   href="/database/web_app">
-              <DescriptionIcon style={{ marginRight: "8px", fontSize: "20px" }} />
-              <Typography variant="body2" style={{ fontSize: "13px", color: "#000" }}>
-                Documentation
-              </Typography>
-            </ListItemButton>
-          </List>
-        </Grid>
+        <FooterItem href="/support">
+          <HelpIcon style={{ fontSize: "16px", verticalAlign: "middle", marginRight: "4px" }} />
+          Support
+        </FooterItem>
 
-        {/* Item 5: Support (with Icon) */}
-        <Grid item>
-          <List>
-            <ListItemButton href="/support">
-              <HelpIcon style={{ marginRight: "8px", fontSize: "20px" }} />
-              <Typography variant="body2" style={{ fontSize: "13px", color: "#000" }}>
-                Support
-              </Typography>
-            </ListItemButton>
-          </List>
-        </Grid>
+        <FooterItem href="https://github.com/tum-hef" target="_blank">
+          <GroupIcon style={{ fontSize: "16px", verticalAlign: "middle", marginRight: "4px" }} />
+          Community
+        </FooterItem>
 
-        {/* Item 6: Community (with Icon) */}
-        <Grid item>
-          <List>
-            <ListItemButton href="https://github.com/tum-hef" target="_blank">
-              <GroupIcon style={{ marginRight: "8px", fontSize: "20px" }} />
-              <Typography variant="body2" style={{ fontSize: "13px", color: "#000" }}>
-                Community
-              </Typography>
-            </ListItemButton>
-          </List>
-        </Grid>
+        <FooterItem href="https://github.com/tum-hef/sensorHUB" target="_blank">
+          <GitHubIcon style={{ fontSize: "16px", verticalAlign: "middle", marginRight: "4px" }} />
+          Open Source
+        </FooterItem>
 
-        {/* Item 7: Open Source (with Icon) */}
-        <Grid item>
-          <List>
-            <ListItemButton href="https://github.com/tum-hef/sensorHUB" target="_blank">
-              <GitHubIcon style={{ marginRight: "8px", fontSize: "20px" }} />
-              <Typography variant="body2" style={{ fontSize: "13px", color: "#000" }}>
-                Open Source
-              </Typography>
-            </ListItemButton>
-          </List>
-        </Grid>
-
-        {/* Item 3: © {current year} - TUM HEF */}
-        <Grid item>
-          <List>
-            <ListItemButton>
-              <ListItemText
-                disableTypography
-                primary={
-                  <Typography variant="body2" style={{ fontSize: "13px", color: "#000" }}>
-                    © {new Date().getFullYear()} - HEF sensorHUB
-                  </Typography>
-                }
-              />
-            </ListItemButton>
-          </List>
-        </Grid>
-      </Grid>
+        <FooterItem>
+          © {new Date().getFullYear()} - HEF sensorHUB
+        </FooterItem>
+      </Typography>
     </Wrapper>
   );
 }
 
 export default Footer;
+
+

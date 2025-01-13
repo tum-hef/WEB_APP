@@ -3,9 +3,8 @@ import { Link, Redirect, useLocation } from "react-router-dom";
 import Button from "@mui/material/Button";
 import { useKeycloak } from "@react-keycloak/web";
 import {
+  Box,
   CssBaseline,
-  Grid,
-  Paper,
   ThemeProvider,
   Typography,
   createTheme,
@@ -43,82 +42,93 @@ const HomePage = () => {
 
   return (
     <ThemeProvider theme={theme}>
-      <Grid container component="main" sx={{ height: "100vh", position: "relative" }}>
-        <CssBaseline />
-
-        {/* Left Part */}
-        <Grid
-          item
-          xs={12}
-          sm={6}
-          md={6}
+      <CssBaseline />
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          width: "100vw",
+          height: "100vh",
+          overflow: "hidden",
+        }}
+      >
+        {/* Main Content */}
+        <Box
           sx={{
             display: "flex",
-            backgroundColor: "#003359",
-            backgroundImage:
-              "linear-gradient(to left, transparent 100%, #003359 50%), url(/images/design_element.png)",
-            backgroundRepeat: "no-repeat",
-            backgroundPosition: "center center",
-            backgroundSize: { xs: "cover", sm: "contain" },
+            flex: 1,
           }}
         >
-          <Grid
-            container
-            direction="column"
-            alignItems="center"
-            justifyContent="center"
-            sx={{ height: "100%" }}
+          {/* Left Part */}
+          <Box
+            sx={{
+              flex: 1,
+              backgroundColor: "#003359",
+              backgroundImage:
+                "linear-gradient(to left, transparent 100%, #003359 50%), url(/images/design_element.png)",
+              backgroundRepeat: "no-repeat",
+              backgroundPosition: "center center",
+              backgroundSize: "cover",
+            }}
           >
-            <Typography
-              component="h1"
-              variant="h5"
+            <Box
               sx={{
-                color: "white",
-                fontWeight: "bold",
-                fontSize: { xs: "20px", md: "30px" },
-                textAlign: "center",
-                mt: 3,
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                alignItems: "center",
+                height: "100%",
               }}
             >
-              HEF sensorHUB
-            </Typography>
-          </Grid>
-        </Grid>
+              <Typography
+                component="h1"
+                variant="h5"
+                sx={{
+                  color: "white",
+                  fontWeight: "bold",
+                  fontSize: { xs: "20px", md: "30px" },
+                  textAlign: "center",
+                  mt: 3,
+                }}
+              >
+                HEF sensorHUB
+              </Typography>
+            </Box>
+          </Box>
 
-        {/* Right Part */}
-        <Grid
-          item
-          xs={12}
-          sm={6}
-          md={6}
-          component={Paper}
-          elevation={6}
-          square
-          sx={{
-            backgroundColor: "#003359",
-            borderLeft: "1px solid #003359",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            padding: { xs: 2, sm: 4 },
-            height: "100%",
-          }}
-        >
-          <Grid
-            container
-            direction={{ xs: "column", sm: "row" }}
-            spacing={2}
-            justifyContent="center"
-            sx={{ width: "100%", maxWidth: "500px" }}
+          {/* Center Divider (Vertical Line) */}
+          <Box
+            sx={{
+              width: "2px", // Adjust this value to increase/decrease the line width
+              backgroundColor: "black", // Line color
+            }}
+          />
+
+          {/* Right Part */}
+          <Box
+            sx={{
+              flex: 1,
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              backgroundColor: "#003359",
+              padding: { xs: 2, sm: 4 },
+            }}
           >
-            <Grid item xs={12} sm={6}>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: { xs: "column", sm: "row" },
+                width: "100%",
+                maxWidth: "500px",
+                gap: 2,
+              }}
+            >
               <Button
                 fullWidth
                 variant="contained"
                 onClick={login}
                 sx={{
-                  mt: { xs: 2, sm: 0 },
-                  mb: { xs: 1, sm: 2 },
                   backgroundColor: "white",
                   color: "#003359",
                   fontWeight: "bold",
@@ -128,15 +138,14 @@ const HomePage = () => {
               >
                 Log in
               </Button>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <Link to={"/register"} style={{ textDecoration: "none", width: "100%" }}>
+              <Link
+                to={"/register"}
+                style={{ textDecoration: "none", width: "100%" }}
+              >
                 <Button
                   fullWidth
                   variant="contained"
                   sx={{
-                    mt: { xs: 2, sm: 0 },
-                    mb: { xs: 1, sm: 2 },
                     backgroundColor: "white",
                     color: "#003359",
                     fontWeight: "bold",
@@ -147,16 +156,23 @@ const HomePage = () => {
                   Register
                 </Button>
               </Link>
-            </Grid>
-          </Grid>
-        </Grid>
-        <Grid item xs={12}>
-        <Footer />
-        </Grid>
+            </Box>
+          </Box>
+        </Box>
+
         {/* Footer */}
-        
-      </Grid> 
-      
+        <Box
+          sx={{
+            width: "100%",
+            backgroundColor: "#003359",
+            textAlign: "center",
+            padding: 1,
+            color: "white",
+          }}
+        >
+          <Footer />
+        </Box>
+      </Box>
     </ThemeProvider>
   );
 };
