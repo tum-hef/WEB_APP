@@ -129,7 +129,10 @@ function StepperStore() {
     const backend_url = process.env.REACT_APP_BACKEND_URL;
     const backend_url_root = process.env.REACT_APP_BACKEND_URL_ROOT; 
     const isDev = process.env.REACT_APP_IS_DEVELOPMENT === 'true';  
-    const email = userInfo?.preferred_username;
+    const selectedOthers = localStorage.getItem("selected_others") === "true";
+    const email = selectedOthers
+    ? localStorage.getItem("user_email")
+    : userInfo?.preferred_username;
     await axios
       .get(`${backend_url}/frost-server?email=${email}`, {
         headers: {
