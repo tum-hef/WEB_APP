@@ -16,7 +16,7 @@ import { ToastContainer, toast } from "react-toastify";
 import DnsIcon from "@mui/icons-material/Dns";
 import { useKeycloak } from "@react-keycloak/web";
 import styled from "styled-components";
-import { useParams } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import { NOTFOUND } from "./404";
 import PublicIcon from "@mui/icons-material/Public";
 import CardDataSpace from "../components/CardDataSpace";
@@ -41,8 +41,10 @@ export default function DashboardPage() {
   const userInfo = keycloak?.idTokenParsed;
   const token = keycloak?.token;
   const { group_id } = useParams<{ group_id: string }>();
+  const location = useLocation();
   const [frostServerPort, setFrostServerPort] = useState<number | null>(null);
-
+  const queryParams = new URLSearchParams(location.search); 
+  const otherGroup = queryParams.get('other_group');
   const fetchGroups = async () => {
     if (keycloak && userInfo && userInfo.sub) {
       setUserID(userInfo.sub);
@@ -53,12 +55,12 @@ export default function DashboardPage() {
           const response = await axios.get(
             `${process.env.REACT_APP_BACKEND_URL}/get_clients?user_id=${userID}`
           );
-
+          console.log("response",response?.data?.result)
           if (response.status === 200 && response.data.groups) {
             // check if group_id is in groups
             if (group_id) {
               const group = response.data.groups.find(
-                (group: any) => group.id === group_id
+                (group: any) => group.group_name_id === group_id
               );
               if (!group) { 
                 toast.error("Group is not valid");
@@ -82,7 +84,9 @@ export default function DashboardPage() {
 
   const fetchData = async () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL;
-    const email = userInfo?.preferred_username;
+    const email = localStorage.getItem("selected_others") === "true"
+    ? localStorage.getItem("user_email")
+    : userInfo?.preferred_username;
     await axios
       .get(`${backend_url}/frost-server?email=${email}`, {
         headers: {
@@ -96,21 +100,32 @@ export default function DashboardPage() {
       });
   };
   useEffect(() => {
+    const groupId = localStorage.getItem("group_id");
+    const selectedOthers = localStorage.getItem("selected_others");
+  
     if (frostServerPort !== null && !hasFetched) {
       fetchGroups();
       getNodeRedPort();
       asyncGetDevices();
-      setHasFetched(true);  // Set this to true so it doesn't run again
+      setHasFetched(true); // Set this to true so it doesn't run again
       setLoading(false);
     } else if (frostServerPort === null) {
       fetchData();
       setLoading(false);
     }
+  
+    // Refetch group data when group selection changes
+    if (groupId && selectedOthers === "true") {
+      fetchGroups();
+    }
   }, [frostServerPort, hasFetched]);
+  
 
   const getNodeRedPort = async () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL;
-    const email = userInfo?.preferred_username;
+    const email = localStorage.getItem("selected_others") === "true"
+    ? localStorage.getItem("user_email")
+    : userInfo?.preferred_username;
     await axios
       .get(`${backend_url}/node-red?email=${email}`, {
         headers: {

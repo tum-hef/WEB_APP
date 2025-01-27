@@ -35,7 +35,7 @@ export function PrivateRoute({
           if (response.status === 200 && response.data.groups) {
             // check if group_id from localstorage is in groups
             const group = response.data.groups.find(
-              (group: any) => group.id === group_id
+              (group: any) => group.group_name_id === group_id
             );
             if (!group) {
               if (history.location.pathname !== "/dashboard") {
@@ -43,7 +43,8 @@ export function PrivateRoute({
               }
             }
           }
-        } catch (error) {
+        } catch (error) { 
+          console.log("error",error)
           if (history.location.pathname !== "/dashboard") {
             history.push("/dashboard?message=no_group");
           }

@@ -91,7 +91,11 @@ function StoreObservationProerties() {
   });
   const fetchData = async () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL;
-    const email = userInfo?.preferred_username;
+    const email =
+    localStorage.getItem("selected_others") === "true"
+      ? localStorage.getItem("user_email")
+      : userInfo?.preferred_username;
+
 
     try {
       const response = await axios.get(

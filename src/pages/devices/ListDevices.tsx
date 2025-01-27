@@ -78,20 +78,27 @@ const Devices = () => {
 
   const fetchFrostPort = async () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL;
-    const email = userInfo?.preferred_username;
-    await axios
-      .get(`${backend_url}/frost-server?email=${email}`, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
-      .then((res) => {
-        if (res.status === 200 && res.data.PORT) {
-          setFrostServerPort(res.data.PORT);
-        }
-      });
-  };
 
+    // Determine email based on the "other group" selection
+    const email =
+      localStorage.getItem("selected_others") === "true"
+        ? localStorage.getItem("user_email")
+        : userInfo?.preferred_username;
+
+    if (email) {
+      await axios
+        .get(`${backend_url}/frost-server?email=${email}`, {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        })
+        .then((res) => {
+          if (res.status === 200 && res.data.PORT) {
+            setFrostServerPort(res.data.PORT);
+          }
+        });
+    }
+  };
   useEffect(() => {
     ReactGA.event({
       category: GAactionsDevices.category,

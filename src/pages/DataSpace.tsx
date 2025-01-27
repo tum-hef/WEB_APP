@@ -29,37 +29,32 @@ export default function DataSpace() {
 
 
   const fetchGroups = async () => {
-    if (keycloak && userInfo && userInfo.sub) {
-      setUserID(userInfo.sub);
+   const email=  userInfo?.id;
 
-      if (userID) {
-        try {
-          const response = await axios.get(
-            `${process.env.REACT_APP_BACKEND_URL}/get_clients?user_id=${userID}`
+    if (keycloak && email) {
+      try {
+        const response = await axios.get(
+          `${process.env.REACT_APP_BACKEND_URL}/get_clients?user_id=${email}`
+        );
+
+        if (response.status === 200 && response.data.groups) {
+          const group = response.data.groups.find(
+            (group: any) => group.id === group_id
           );
-
-          if (response.status === 200 && response.data.groups) {
-            // check if group_id is in groups
-            if (group_id) {
-              const group = response.data.groups.find(
-                (group: any) => group.id === group_id
-              );
-              if (!group) {
-                toast.error("Group is not valid");
-                setError(true);
-              } else {
-                setGroup(group);
-              }
-            }
-          } else if (response.status === 404 && response.data.message) {
-            toast.error(response.data.message);
+          if (!group) {
+            toast.error("Group is not valid");
+            setError(true);
           } else {
-            toast.error("Error fetching clients");
+            setGroup(group);
           }
-        } catch (error) {
-          toast.error("An error occurred while fetching clients.");
-          console.log(error);
+        } else if (response.status === 404 && response.data.message) {
+          toast.error(response.data.message);
+        } else {
+          toast.error("Error fetching clients");
         }
+      } catch (error) {
+        toast.error("An error occurred while fetching clients.");
+        console.error(error);
       }
     }
   };
@@ -89,58 +84,84 @@ export default function DataSpace() {
 
   const getNodeRedPort = async () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL;
-    const email = userInfo?.preferred_username;
-    await axios
-      .get(`${backend_url}/node-red?email=${email}`, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
-      .then((res) => {
+    const selectedOthers = localStorage.getItem("selected_others") === "true";
+    const email = selectedOthers
+      ? localStorage.getItem("user_email")
+      : userInfo?.preferred_username;
+
+    if (email) {
+      try {
+        const res = await axios.get(`${backend_url}/node-red?email=${email}`, {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
         if (res.status === 200 && res.data.PORT) {
           setNodeRedPort(res.data.PORT);
         }
-      });
+      } catch (error) {
+        console.error("Error fetching Node-RED port:", error);
+      }
+    }
   };
 
-  const asyncGetDevices = async () => {
-    try {
-      const backend_url = process.env.REACT_APP_FROST_URL;
-      const isDev = process.env.REACT_APP_IS_DEVELOPMENT === 'true';  
-      const url = isDev ?  `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Things` : `https://${frostServerPort}-${backend_url}/FROST-Server/v1.0/Things`
-      axios
-        .get(url, {
+  const asyncGetDevices = async (retryCount = 3) => {
+    const backend_url = process.env.REACT_APP_FROST_URL;
+    const isDev = process.env.REACT_APP_IS_DEVELOPMENT === "true";
+    const url = isDev
+      ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Things`
+      : `https://${frostServerPort}-${backend_url}/FROST-Server/v1.0/Things`;
+  
+    let attempt = 0;
+  
+    while (attempt < retryCount) {
+      try {
+        const res = await axios.get(url, {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-        })
-        .then((res) => {
-          if (res.status === 200 && res.data.value) {
-            console.log(res.data.value);
-            setDevices(res.data.value.length);
-          }
         });
-    } catch (err) {
-      console.log(err);
-      toast.error("Error Getting Devices");
+  
+        if (res.status === 200 && res.data.value) {
+          setDevices(res.data.value.length);
+          return; // Exit on success
+        }
+      } catch (err) {
+        attempt += 1;
+        console.error(`Attempt ${attempt}: Failed to fetch devices`, err);
+        if (attempt >= retryCount) {
+          toast.error("Error fetching devices. Please try again later.");
+        }
+      }
+  
+      // Wait before retrying (exponential backoff)
+      await new Promise((resolve) => setTimeout(resolve, 1000 * Math.pow(2, attempt)));
     }
   };
+  
 
   const fetchData = async () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL;
-    const email = userInfo?.preferred_username;
-    await axios
-      .get(`${backend_url}/frost-server?email=${email}`, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
-      .then((res) => {
+    const selectedOthers = localStorage.getItem("selected_others") === "true";
+    const email = selectedOthers
+      ? localStorage.getItem("user_email")
+      : userInfo?.preferred_username;
+
+    if (email) {
+      try {
+        const res = await axios.get(`${backend_url}/frost-server?email=${email}`, {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
         if (res.status === 200 && res.data.PORT) {
           setFrostServerPort(res.data.PORT);
         }
-      });
+      } catch (error) {
+        console.error("Error fetching Frost server:", error);
+      }
+    }
   };
   useEffect(() => {
     ReactGA.event({
@@ -148,17 +169,20 @@ export default function DataSpace() {
       action: GAactionsDataSpace.action,
       label: GAactionsDataSpace.label,
     });
-
-    getNodeRedPort();
-    asyncGetDevices();
+  
     fetchGroups();
+    getNodeRedPort();
+  
     if (frostServerPort !== null) {
       fetchDataStreams();
+      asyncGetDevices(); // Retry logic included
     } else {
       fetchData();
     }
+  
     setLoading(false);
   }, [frostServerPort]);
+
 
   return (
     <Dashboard>
