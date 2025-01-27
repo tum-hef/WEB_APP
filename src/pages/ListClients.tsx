@@ -244,12 +244,13 @@ export default function ListClients() {
                       </Typography>
                     </Grid>
                     <Grid item xs={2}>
-                      <LinkCustom to={`/dashboard/${item.id}`}>
+                      <LinkCustom to={`/dashboard/${item.group_name_id}`}>
                         <Button
                           variant="contained"
                           color="primary"
-                          onClick={() => {
-                            localStorage.setItem("group_id", item.id);
+                          onClick={() => { 
+                            console.log("group_id", item.id)
+                            localStorage.setItem("group_id", item.group_name_id);
                             localStorage.setItem("selected_others","false")
                             localStorage.removeItem("user_email")
                           }}
