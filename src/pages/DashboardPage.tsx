@@ -232,6 +232,8 @@ export default function DashboardPage() {
                             to="/dashboard"
                             onClick={() => {
                               localStorage.removeItem("group_id");
+                              localStorage.removeItem("user_email");
+                              localStorage.removeItem("selected_others");
                             }}
                           >
                             {" "}
