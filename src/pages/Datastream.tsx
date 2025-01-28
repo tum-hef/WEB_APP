@@ -22,7 +22,8 @@ const Datastreams = () => {
   const getDatastreams = async () => {
     try {
       const backend_url = process.env.REACT_APP_FROST_URL; 
-      const isDev = process.env.REACT_APP_IS_DEVELOPMENT === 'true';    
+      const isDev = process.env.REACT_APP_IS_DEVELOPMENT === 'true';  
+      console.log("hhhhhjk",frostServerPort) 
       const url = isDev ?  `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Things(${id})/Datastreams` : `https://${frostServerPort}-${backend_url}/FROST-Server/v1.0/Things(${id})/Datastreams`
 
       console.log(url);
@@ -50,11 +51,9 @@ const Datastreams = () => {
 
   const fetchFrostPort = async () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL;
-    const email =
-    localStorage.getItem("selected_others") === "true"
-      ? localStorage.getItem("user_email")
-      : userInfo?.preferred_username;
-
+    const email = localStorage.getItem("selected_others") === "true"
+    ? localStorage.getItem("user_email")
+    : userInfo?.preferred_username
     await axios
       .get(`${backend_url}/frost-server?email=${email}`, {
         headers: {
@@ -69,7 +68,8 @@ const Datastreams = () => {
   };
 
   useEffect(() => {
-    if (frostServerPort !== null) {
+    if (frostServerPort !== null) { 
+      console.log("frostServerPort",frostServerPort)
       getDatastreams();
     } else {
       fetchFrostPort();

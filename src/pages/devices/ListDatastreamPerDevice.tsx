@@ -43,11 +43,10 @@ const ListDatastreamPerDevice = () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL;
 
     // Determine email based on the "selected_others" logic
-    const email =
-      localStorage.getItem("selected_others") === "true"
-        ? localStorage.getItem("user_email")
-        : userInfo?.preferred_username;
-
+    const email = localStorage.getItem("selected_others") === "true"
+    ? localStorage.getItem("user_email")
+  
+    : userInfo?.preferred_username;
     if (email) {
       try {
         const response = await axios.get(`${backend_url}/frost-server?email=${email}`, {
