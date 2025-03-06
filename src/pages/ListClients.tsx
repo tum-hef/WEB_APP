@@ -1,7 +1,7 @@
 import LinkCustom from "../components/LinkCustom";
 import { ToastContainer, toast } from "react-toastify";
 import { useKeycloak } from "@react-keycloak/web";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Dashboard from "../components/DashboardComponent";
 import {
   Accordion,
@@ -11,6 +11,7 @@ import {
   Breadcrumbs,
   Button,
   Grid,
+  IconButton,
   Paper,
   Table,
   TableBody,
@@ -18,12 +19,28 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TextField,
   Typography,
+  Popover,
+  List,
+  ListItem,
+  ListItemText,
+  Divider,
+  ClickAwayListener
 } from "@mui/material";
 import axios from "axios";
 import { useLocation } from "react-router-dom";
 import Swal from "sweetalert2";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import GroupIcon from "@mui/icons-material/Groups"; // View Members
+import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty"; // Pending Requests
+import ExitToAppIcon from "@mui/icons-material/ExitToApp"; // Leave Group
+import CheckCircleIcon from "@mui/icons-material/CheckCircle"; // Approve Icon
+import CancelIcon from "@mui/icons-material/Cancel"; // Reject Icon
+import CloseIcon from "@mui/icons-material/Close"; // Close Popover Ico
+import RemoveCircleIcon from "@mui/icons-material/RemoveCircle"; // Remove Member Icon
+import { useFormik } from "formik";
+import * as Yup from "yup";
 
 export default function ListClients() {
   const [userID, setUserID] = useState<string | null>(null);
@@ -35,7 +52,28 @@ export default function ListClients() {
   const searchParams = new URLSearchParams(location.search);
   const [joinNewGroups, setJoinNewGroups] = useState<any[]>([]);
   const [myGroups, setMyGroups] = useState<any[]>([]);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [pendingRequests, setPendingRequests] = useState([]);
+  const [anchorElPending, setAnchorElPending] = useState(null);
+  const [selectedMembers, setSelectedMembers] = useState([]);
+  const popoverRef = useRef(null); // ✅ Store popover anchor in a ref
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const message = searchParams.get("message");
+  const validationSchema = Yup.object({
+    searchQuery: Yup.string()
+      .length(32, "Search query must be exactly 32 characters")
+      .required("Search is required"),
+  });
+  const formik = useFormik({
+    initialValues: { searchQuery: "" },
+    validationSchema,
+    onSubmit: async (values) => {
+      console.log("valassasues", values)
+      if (values?.searchQuery) {
+        await SearchGroupById(values?.searchQuery)
+      }
+    },
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -56,7 +94,7 @@ export default function ListClients() {
             );
 
             if (response.status === 200 && response.data.groups) {
-              console.log("response.data.groups",response.data.groups)
+              console.log("response.data.groups", response.data.groups)
               setGroups(response.data.groups);
               setLoading(false);
             } else if (response.status === 404 && response.data.message) {
@@ -88,18 +126,106 @@ export default function ListClients() {
         const response = await axios.get(
           `${process.env.REACT_APP_BACKEND_URL}/groups?email=${userInfo?.email}`
         );
-        console.log("(response?.data?.join_new_grou",response?.data?.join_new_group)
-        setJoinNewGroups(response?.data?.join_new_group);
-        setMyGroups(response?.data?.my_groups);
+        setMyGroups(response?.data?.filter((x: any) => { return x?.membership_status != "left" }));
       } catch (error) {
-        toast.error("Failed to fetch groups.");
+        toast.error("Failed to fetch project");
         console.error(error);
       }
     }
   };
-
+  useEffect(() => {
+    console.log("isPopoverOpen", isPopoverOpen)
+  }, [isPopoverOpen])
+  useEffect(() => {
+    console.log("anchorEl", anchorEl)
+  }, [anchorEl])
+  const SearchGroupById = async (group_id: string) => {
+    if (!group_id) {
+      toast.error("Group ID is required.");
+      return;
+    }
+  
+    try {
+      const token = keycloak?.token;
+      if (!token) {
+        throw new Error("No authentication token found.");
+      }
+  
+      const email = userInfo?.email;
+      if (!email) {
+        throw new Error("User email is required.");
+      }
+  
+      // API request to fetch group details
+      const response = await axios.get(
+        `${process.env.REACT_APP_BACKEND_URL}/search_group?keycloak_group_id=${group_id}&email=${email}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+  
+      const groupData = response?.data;
+  
+      // Check if the response is an array (user is not a member and can join)
+      if (Array.isArray(groupData)) {
+        setJoinNewGroups(groupData);
+  
+        Swal.fire({
+          icon: "success",
+          title: "Success!",
+          text: "Project details fetched successfully.",
+          confirmButtonColor: "#3085d6",
+        });
+      } 
+      // Check if response is an object with status (user is already a member or owner)
+      else if (groupData?.status === "owner") {
+        Swal.fire({
+          icon: "info",
+          title: "Info",
+          text: "You are already the owner of this project.",
+          confirmButtonColor: "#3085d6",
+        });
+      } else if (groupData?.status === "member") {
+        Swal.fire({
+          icon: "info",
+          title: "Info",
+          text: "You are already a member of this project.",
+          confirmButtonColor: "#3085d6",
+        });
+      } else {
+        // Handle unexpected response formats
+        Swal.fire({
+          icon: "warning",
+          title: "Warning",
+          text: "Unexpected response received.",
+          confirmButtonColor: "#f39c12",
+        });
+      }
+    } catch (error: any) {
+      console.error("Error fetching project:", error);
+  
+      let errorMessage = "Failed to fetch project details. Please try again.";
+      if (error.response) {
+        errorMessage = error.response?.data?.error || errorMessage;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+  
+      toast.error(errorMessage);
+  
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: errorMessage,
+        confirmButtonColor: "#d33",
+      });
+    }
+  };
+  
   const handleAction = (action: string, userId: any) => {
-    let data = {"membership_id":userId, "action":action}
+    let data = { "membership_id": userId, "action": action }
     Swal.fire({
       title: `Are you sure you want to ${action} this request?`,
       icon: "warning",
@@ -115,7 +241,7 @@ export default function ListClients() {
           );
           Swal.fire("Success", response.data.message, "success");
           getAllGroups();
-        } catch (error:any) {
+        } catch (error: any) {
           Swal.fire(
             "Error",
             error?.response?.data?.message || "An error occurred.",
@@ -125,13 +251,30 @@ export default function ListClients() {
       }
     });
   };
+  const handleViewMembers = (event: any, group: any) => {
+    setSelectedMembers(group || []); // Set members or empty array
+    setAnchorEl(event.currentTarget); // Attach popover to clicked icon
+  };
+
+  const handleClosePopover = () => {
+    setAnchorEl(null);
+  };
+  const handleOpenPendingPopover = (event: any) => {
+    popoverRef.current = event.currentTarget;
+    setIsPopoverOpen(true); // ✅ Opens popover
+  };
+
+  const handleClosePendingPopover = () => {
+    console.log("Closing popover...");
+    setIsPopoverOpen((prev) => !prev); // ✅ Ensures correct state update
+  };
 
   const joinGroup = async (group_id: any) => {
     if (!group_id) {
       Swal.fire({
         icon: "warning",
         title: "Invalid Group",
-        text: "Please select a valid group to join.",
+        text: "Please select a valid project to join.",
       });
       return;
     }
@@ -148,7 +291,7 @@ export default function ListClients() {
       Swal.fire({
         icon: "success",
         title: "Join Request Sent",
-        text: response?.data?.message || "Your request to join the group was successful!",
+        text: response?.data?.message || "Your request to join the project was successful!",
       });
       getAllGroups();
     } catch (error: any) {
@@ -156,14 +299,14 @@ export default function ListClients() {
       Swal.fire({
         icon: "error",
         title: "Error",
-        text: error.response?.data?.message || "Failed to join the group. Please try again later.",
+        text: error.response?.data?.message || "Failed to join the project. Please try again later.",
       });
     }
   };
 
-  const handleLeaveGroup = async (groupId: number ,userEmail:any , remove_admin:boolean) => {
+  const handleLeaveGroup = async (groupId: number, userEmail: any, remove_admin: boolean) => {
     Swal.fire({
-      title:remove_admin ? "Are you sure you want to remove this member ?" : "Are you sure you want to leave this group ?" ,
+      title: remove_admin ? "Are you sure you want to remove this member ?" : "Are you sure you want to leave this project ?",
       icon: "warning",
       showCancelButton: true,
       confirmButtonText: "Yes",
@@ -180,7 +323,7 @@ export default function ListClients() {
           );
           Swal.fire("Success", response.data.message, "success");
           getAllGroups();
-        } catch (error:any) {
+        } catch (error: any) {
           Swal.fire(
             "Error",
             error.response?.data?.message || "An error occurred.",
@@ -229,11 +372,11 @@ export default function ListClients() {
                 color: "#233044",
               }}
             >
-              Groups
+              Projects
             </Typography>
 
-            {groups?.length > 0 ? (
-              groups?.filter((x:any)=>{return x?.attributes?.group_name[0] == userInfo?.email}).map((item, index) => (
+            {/* {groups?.length > 0 ? (
+              groups?.filter((x: any) => { return x?.attributes?.group_name[0] == userInfo?.email }).map((item, index) => (
                 <Grid item xs={12} key={item.group_name}>
                   <Grid container alignItems="center">
                     <Grid item xs={10}>
@@ -248,12 +391,13 @@ export default function ListClients() {
                         <Button
                           variant="contained"
                           color="primary"
-                          onClick={() => { 
+                          onClick={() => {
                             console.log("group_id", item.id)
                             localStorage.setItem("group_id", item.group_name_id);
-                            localStorage.setItem("selected_others","false")
+                            localStorage.setItem("selected_others", "false")
                             localStorage.removeItem("user_email")
                           }}
+                          
                         >
                           Select
                         </Button>
@@ -264,89 +408,75 @@ export default function ListClients() {
               ))
             ) : (
               <Typography>No groups available.</Typography>
-            )}
+            )} */}
           </Grid>
 
           <Box sx={{ padding: 2 }}>
             <Accordion>
-              <AccordionSummary
-                expandIcon={<ExpandMoreIcon />}
-                aria-controls="join-group-content"
-                id="join-group-header"
-              >
-                <Typography variant="h6">Join Group:</Typography>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Typography variant="h6">Join Project:</Typography>
               </AccordionSummary>
               <AccordionDetails>
-  {joinNewGroups.length === 0 ? (
-    <Typography>No groups available to join.</Typography>
-  ) : (
-    <TableContainer component={Paper}>
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableCell>Group ID</TableCell>
-            <TableCell>Group Owner Name</TableCell>
-            <TableCell>Email</TableCell>
-            <TableCell align="center">Actions</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {joinNewGroups.map((group, index) => (
-            <TableRow key={group.id || index}>
-              <TableCell>{group.keycloak_group_id}</TableCell>
-              <TableCell>{group?.firstName + " " + group?.lastName}</TableCell>
-              <TableCell>{group.owner_email}</TableCell>
-              <TableCell align="center">
-                <Button
-                  variant="contained"
-                  size="small"
-                  color="primary"
-                  disabled={group?.status === "pending" || group?.status === "approved"}
-                  onClick={() => joinGroup(group?.id)}
-                  sx={{ marginRight: 1 }}
-                >
-                  Join
-                </Button>
+                <Box component="form" onSubmit={formik.handleSubmit} sx={{ width: "100%" }}>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} sm={6} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <TextField
+                        label="Search Project"
+                        variant="outlined"
+                        size="medium"
+                        name="searchQuery"
+                        value={formik.values.searchQuery}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        error={formik.touched.searchQuery && Boolean(formik.errors.searchQuery)}
+                        helperText={formik.touched.searchQuery && formik.errors.searchQuery}
+                        sx={{ mt: 1, width: "250px" }} // Adjust width as needed
+                      />
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        type="submit"
+                        sx={{ height: "40px", width: "120px", ml: 1 }} // Adjust width and add margin for spacing
+                      >
+                        Search
+                      </Button>
+                    </Grid>
+                  </Grid>
+                </Box>
 
-                <Button
-                  variant="contained"
-                  size="small"
-                  color="error"
-                  onClick={() => handleLeaveGroup(group?.id, userInfo?.email ,false)}
-                  disabled={
-                    group?.status === "pending" || !group?.status || group?.status === "rejected" || group?.status =="left"
-                  }
-                  sx={{ marginRight: 1 }}
-                >
-                  Leave
-                </Button>
+                <TableContainer component={Paper}>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Group ID</TableCell>
+                        <TableCell>Owner</TableCell>
+                        <TableCell>Email</TableCell>
+                        <TableCell align="center">Actions</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {joinNewGroups?.map((group, index) => (
+                        <TableRow key={group.id || index}>
+                          <TableCell>{group?.keycloak_group_id}</TableCell>
+                          <TableCell>{group?.owner_first_name + " " + group?.owner_last_name}</TableCell>
+                          <TableCell>{group.owner_email}</TableCell>
+                          <TableCell align="center">
+                            <Button
+                              variant="contained"
+                              size="small"
+                              color="primary"
+                              onClick={() => joinGroup(group?.id)}
+                            >
+                              Join
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
 
-                <LinkCustom to={`/dashboard/${group?.keycloak_group_id}?other_group=true`}>
-                  <Button
-                    variant="contained"
-                    size="small"
-                    color="primary"
-                    onClick={() => {
-                      localStorage.setItem("group_id", group?.keycloak_group_id);
-                      localStorage.setItem("selected_others","true")
-                      localStorage.setItem("user_email",group?.owner_email)
-                    }}
-                    disabled={
-                      group?.status === "pending" || !group?.status || group?.status === "rejected" ||  group?.status =="left"
-                    }
-                  >
-                    Select
-                  </Button>
-                </LinkCustom>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
-  )}
-</AccordionDetails>
-
+              </AccordionDetails>
             </Accordion>
 
             <Accordion sx={{ marginTop: 2 }}>
@@ -355,107 +485,173 @@ export default function ListClients() {
                 aria-controls="panel2-content"
                 id="panel2-header"
               >
-                <Typography>Pending Requests:</Typography>
+                <Typography variant="h6">Already Joined Groups:</Typography>
               </AccordionSummary>
               <AccordionDetails>
-                {myGroups.length === 0 ? (
-                  <Typography>No pending requests.</Typography>
+                {myGroups?.length === 0 ? (
+                  <Typography >No joined Project.</Typography>
                 ) : (
                   <TableContainer component={Paper}>
                     <Table>
                       <TableHead>
                         <TableRow>
-                          <TableCell>Username</TableCell>
-                          <TableCell>Email</TableCell>
-                          <TableCell>Actions</TableCell>
+                          <TableCell><b>Group ID</b></TableCell>
+                          <TableCell><b>Owner Name</b></TableCell>
+                          <TableCell><b>Owner Email</b></TableCell>
+                          <TableCell><b>Actions</b></TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
-                        {myGroups
-                          .filter((x: any) => x?.status === "pending")
-                          .map((request, index) => (
-                            <TableRow key={index}>
-                              <TableCell>{
-                                request?.firstName + " " + request?.lastName
-                              }</TableCell>
-                              <TableCell>{request.email}</TableCell>
-                              <TableCell>
-                                <Button
-                                  variant="contained"
-                                  size="small"
-                                  sx={{ marginRight: 1 }}
-                                  onClick={() => handleAction("approve", request.membership_id
+                        {myGroups?.map((group: any, index) => (
+                          <TableRow key={index}>
+                            <TableCell>{group?.keycloak_group_id}</TableCell>
+                            <TableCell>{group?.owner_first_name + " " + group?.owner_last_name}</TableCell>
+                            <TableCell>{group?.owner_email}</TableCell>
+                            <TableCell>
+                              {/* View Current Members */}
+                              <IconButton
+                                disabled={!group?.is_owner}
+                                color="primary"
+                                onClick={(e) => handleViewMembers(e, group?.members?.filter((x: any) => { return x?.membership_status == "approved" }))}
+                              >
+                                <GroupIcon />
+                              </IconButton>
+                              <Popover
+                                open={Boolean(anchorEl)}
+                                anchorEl={anchorEl}
+                                onClose={handleClosePopover}
+                                anchorOrigin={{
+                                  vertical: "bottom",
+                                  horizontal: "right",
+                                }}
+                                transformOrigin={{
+                                  vertical: "top",
+                                  horizontal: "left",
+                                }}
+                              >
+                                <Box sx={{ padding: 1, minWidth: 250, maxHeight: 300, overflowY: "auto" }}>
+                                  {/* Header with Close Button */}
+                                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: 1 }}>
+                                    <Typography variant="subtitle1">Members</Typography>
+                                    <IconButton size="small" onClick={handleClosePopover}>
+                                      <CloseIcon />
+                                    </IconButton>
+                                  </Box>
+                                  <Divider />
 
-)}
+                                  {/* Member List */}
+                                  <List>
+                                    {group?.members?.length > 0 ? (
+                                      group?.members?.filter((x: any) => { return x?.membership_status == "approved" })?.map((member: any, index: any) => (
+                                        <ListItem
+                                          key={index}
+                                          sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
+                                        >
+                                          <ListItemText
+                                            primary={`${member?.firstName} ${member?.lastName}`}
+                                            secondary={member?.email}
+                                          />
+                                          {/* Remove Member Button */}
+                                          <IconButton color="error" size="small" onClick={() => handleLeaveGroup(group?.id, member.email, true)}>
+                                            <RemoveCircleIcon />
+                                          </IconButton>
+                                        </ListItem>
+                                      ))
+                                    ) : (
+                                      <Typography sx={{ padding: 1 }}>No members found.</Typography>
+                                    )}
+                                  </List>
+                                </Box>
+                              </Popover>
+
+                              {/* View Pending Requests */}
+                              <IconButton color="warning" disabled={!group?.is_owner} onClick={(e) => handleOpenPendingPopover(e)}>
+                                <HourglassEmptyIcon />
+                                {/* Pending Requests Popover */}
+                                {isPopoverOpen && <Popover
+                                  open={isPopoverOpen}
+                                  anchorEl={popoverRef.current}
+                                  onClose={handleClosePendingPopover}
+                                  anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+                                  transformOrigin={{ vertical: "top", horizontal: "left" }}
                                 >
-                                  Approve
-                                </Button>
+                                  <ClickAwayListener onClickAway={handleClosePendingPopover}>
+                                    <Box sx={{ padding: 1, minWidth: 250, maxHeight: 300, overflowY: "auto" }}>
+                                      {/* Header with Close Button */}
+                                      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: 1 }}>
+                                        <Typography variant="subtitle1">Pending Requests</Typography>
+                                        <IconButton size="small" onClick={handleClosePendingPopover}>
+                                          <CloseIcon />
+                                        </IconButton>
+                                      </Box>
+                                      <Divider />
+
+                                      {/* Pending Requests List */}
+                                      <List>
+                                        {group?.members?.length > 0 ? (
+                                          group?.members?.filter((x: any) => { return x?.membership_status == "pending" })?.map((member: any, index: any) => (
+                                            <ListItem key={index} sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                              <ListItemText primary={`${member.firstName} ${member.lastName}`} secondary={member.email} />
+                                              <IconButton color="success" size="small" onClick={() => handleAction("approve", member?.membership_id)}>
+                                                <CheckCircleIcon />
+                                              </IconButton>
+                                              <IconButton color="error" size="small" onClick={() => handleAction("reject", member?.membership_id)}>
+                                                <CancelIcon />
+                                              </IconButton>
+                                            </ListItem>
+                                          ))
+                                        ) : (
+                                          <Typography sx={{ padding: 1 }}>No pending requests.</Typography>
+                                        )}
+                                      </List>
+                                    </Box>
+                                  </ClickAwayListener>
+                                </Popover>}
+                              </IconButton>
+
+                              {/* Leave Group */}
+                              <IconButton
+                                color="error"
+                                disabled={group?.is_owner}
+                                onClick={() => handleLeaveGroup(group?.id, userInfo?.email, false)}
+                              >
+                                <ExitToAppIcon />
+                              </IconButton>
+                              <LinkCustom to={group?.is_owner ? `/dashboard/${group?.keycloak_group_id}` : `/dashboard/${group?.keycloak_group_id}?other_group=true`}>
+                                {/* Select Group */}
                                 <Button
-                                  variant="contained"
+                                  variant={"contained"}
+                                  color="primary"
                                   size="small"
-                                  color="error"
-                                  onClick={() => handleAction("reject", request.membership_id)}
+                                  onClick={() => {
+                                    if (group?.is_owner) {
+                                      console.log("group_id", group.id)
+                                      localStorage.setItem("group_id", group.keycloak_group_id);
+                                      localStorage.setItem("selected_others", "false")
+                                      localStorage.removeItem("user_email")
+                                    } else {
+                                      localStorage.setItem("group_id", group?.keycloak_group_id);
+                                      localStorage.setItem("selected_others", "true")
+                                      localStorage.setItem("user_email", group?.owner_email)
+                                    }
+                                  }}
+                                  disabled={
+                                    group?.membership_status === "pending" || group?.membership_status === "rejected" || group?.membership_status == "left"
+                                  }
                                 >
-                                  Reject
+                                  {"Select"}
                                 </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))}
+                              </LinkCustom>
+                            </TableCell>
+                          </TableRow>
+                        ))}
                       </TableBody>
                     </Table>
                   </TableContainer>
                 )}
               </AccordionDetails>
             </Accordion>
-            <Accordion sx={{ marginTop: 2 }}>
-              <AccordionSummary
-                expandIcon={<ExpandMoreIcon />}
-                aria-controls="panel2-content"
-                id="panel2-header"
-              >
-                <Typography>Current Members:</Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                {myGroups?.filter((x:any)=> {return x?.status == "approved"}).length === 0 ? (
-                  <Typography>No pending requests.</Typography>
-                ) : (
-                  <TableContainer component={Paper}>
-                    <Table>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Username</TableCell>
-                          <TableCell>Email</TableCell>
-                          <TableCell>Actions</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {myGroups
-                          .filter((x: any) => x?.status === "approved")
-                          .map((request, index) => (
-                            <TableRow key={index}>
-                              <TableCell>{
-                                request?.firstName + " " + request?.lastName
-                              }</TableCell>
-                              <TableCell>{request.email}</TableCell>
-                              <TableCell>
-              
-                                <Button
-                                  variant="contained"
-                                  size="small"
-                                  color="error"
-                                  onClick={() => handleLeaveGroup(request?.id, request.email ,true)}
-                                >
-                                  Remove Member
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                )}
-              </AccordionDetails>
-            </Accordion>
+
           </Box>
         </>
       )}
