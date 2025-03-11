@@ -28,7 +28,7 @@ import {
   Divider,
   ClickAwayListener
 } from "@mui/material";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { useLocation } from "react-router-dom";
 import Swal from "sweetalert2";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -42,6 +42,17 @@ import RemoveCircleIcon from "@mui/icons-material/RemoveCircle"; // Remove Membe
 import { useFormik } from "formik";
 import * as Yup from "yup";
 
+
+interface Group {
+  group_name_id: string;
+  group_name: string;
+}
+
+interface ApiResponse {
+  success: boolean;
+  message?: string;
+  groups?: Group[];
+}
 export default function ListClients() {
   const [userID, setUserID] = useState<string | null>(null);
   const [groups, setGroups] = useState<any[]>([]);
@@ -74,6 +85,35 @@ export default function ListClients() {
       }
     },
   });
+  const formikCreateProject = useFormik({
+    initialValues: {
+      projectName: "",
+      projectDescription: "",
+    },
+    validationSchema: Yup.object({
+      projectName: Yup.string()
+        .min(3, "Project name must be at least 3 characters")
+        .required("Project name is required"),
+      projectDescription: Yup.string()
+        .min(10, "Description must be at least 10 characters")
+        .required("Project description is required"),
+    }),
+    onSubmit: async (values) => {
+      Swal.fire({
+        title: "Are you sure you want to create this project?",
+        text: `Project: ${values.projectName}\nDescription: ${values.projectDescription}`,
+        icon: "question",
+        showCancelButton: true,
+        confirmButtonText: "Yes, create it!",
+        cancelButtonText: "Cancel",
+      }).then((result) => {
+        if (result.isConfirmed) {
+          console.log("Project Created:", values);
+          Swal.fire("Success", "Your project has been created!", "success");
+        }
+      });
+    },
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -83,39 +123,50 @@ export default function ListClients() {
           title: "Oops...",
           text: "You have not selected a group. Please select a group first.",
         });
+        return; // ✅ Prevents unnecessary API call
       }
-      if (keycloak && userInfo && userInfo.sub) {
-        setUserID(userInfo.sub);
-
-        if (userID) {
-          try {
-            const response = await axios.get(
-              `${process.env.REACT_APP_BACKEND_URL}/get_clients?user_id=${userID}`
-            );
-
-            if (response.status === 200 && response.data.groups) {
-              console.log("response.data.groups", response.data.groups)
-              setGroups(response.data.groups);
-              setLoading(false);
-            } else if (response.status === 404 && response.data.message) {
-              toast.error(response.data.message);
-              setLoading(false);
-            } else {
-              toast.error("Error fetching clients");
-              setLoading(false);
-            }
-          } catch (error) {
-            toast.error("An error occurred while fetching clients.");
-            console.log(error);
+  
+      if (keycloak && userInfo?.sub) {
+        const userID = userInfo.sub; // ✅ Ensures correct user ID before setting state
+        setUserID(userID);
+  
+        try {
+          setLoading(true);
+  
+          const response = await axios.get<ApiResponse>(
+            `${process.env.REACT_APP_BACKEND_URL}/get_clients?user_id=${userID}`
+          );
+  
+          console.log("API Response:", response.data);
+  
+          // ✅ Check if API response contains success: false
+          if (!response.data.success) {
+            toast.error(response.data.message || "Error fetching clients.");
             setLoading(false);
+            return;
           }
+  
+          if (response.status === 200 && response.data.groups && response.data.groups.length > 0) {
+            setGroups(response.data.groups);
+          } else {
+            toast.error("No groups found.");
+          }
+        } catch (error: unknown) {
+          if (axios.isAxiosError(error)) {
+            const axiosError = error as AxiosError<ApiResponse>; 
+            // toast.error(axiosError.response?.data?.message || "An error occurred while fetching clients.");
+          } else {
+            toast.error("An unexpected error occurred.");
+          }
+          console.error("Error fetching clients:", error);
+        } finally {
+          setLoading(false);
         }
       }
     };
-
+  
     fetchData();
-  }, [keycloak, userInfo, userID, message]);
-
+  }, [keycloak, userInfo, message]);
   useEffect(() => {
     getAllGroups();
   }, [userID]);
@@ -412,80 +463,13 @@ export default function ListClients() {
           </Grid>
 
           <Box sx={{ padding: 2 }}>
-            <Accordion>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography variant="h6">Join Project:</Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Box component="form" onSubmit={formik.handleSubmit} sx={{ width: "100%" }}>
-                  <Grid container spacing={2}>
-                    <Grid item xs={12} sm={6} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <TextField
-                        label="Search Project"
-                        variant="outlined"
-                        size="medium"
-                        name="searchQuery"
-                        value={formik.values.searchQuery}
-                        onChange={formik.handleChange}
-                        onBlur={formik.handleBlur}
-                        error={formik.touched.searchQuery && Boolean(formik.errors.searchQuery)}
-                        helperText={formik.touched.searchQuery && formik.errors.searchQuery}
-                        sx={{ mt: 1, width: "250px" }} // Adjust width as needed
-                      />
-                      <Button
-                        variant="contained"
-                        color="primary"
-                        type="submit"
-                        sx={{ height: "40px", width: "120px", ml: 1 }} // Adjust width and add margin for spacing
-                      >
-                        Search
-                      </Button>
-                    </Grid>
-                  </Grid>
-                </Box>
-
-                <TableContainer component={Paper}>
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Group ID</TableCell>
-                        <TableCell>Owner</TableCell>
-                        <TableCell>Email</TableCell>
-                        <TableCell align="center">Actions</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {joinNewGroups?.map((group, index) => (
-                        <TableRow key={group.id || index}>
-                          <TableCell>{group?.keycloak_group_id}</TableCell>
-                          <TableCell>{group?.owner_first_name + " " + group?.owner_last_name}</TableCell>
-                          <TableCell>{group.owner_email}</TableCell>
-                          <TableCell align="center">
-                            <Button
-                              variant="contained"
-                              size="small"
-                              color="primary"
-                              onClick={() => joinGroup(group?.id)}
-                            >
-                              Join
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-
-              </AccordionDetails>
-            </Accordion>
-
-            <Accordion sx={{ marginTop: 2 }}>
+          <Accordion sx={{ marginTop: 2 }} defaultExpanded={true}>
               <AccordionSummary
                 expandIcon={<ExpandMoreIcon />}
                 aria-controls="panel2-content"
                 id="panel2-header"
               >
-                <Typography variant="h6">Already Joined Groups:</Typography>
+                <Typography variant="h5">Own and Joined Projects</Typography>
               </AccordionSummary>
               <AccordionDetails>
                 {myGroups?.length === 0 ? (
@@ -622,7 +606,8 @@ export default function ListClients() {
                                 <Button
                                   variant={"contained"}
                                   color="primary"
-                                  size="small"
+                                  size="small" 
+                                  sx={{ backgroundColor: "#233044", '&:hover': { backgroundColor: "#233044" }}}
                                   onClick={() => {
                                     if (group?.is_owner) {
                                       console.log("group_id", group.id)
@@ -651,6 +636,142 @@ export default function ListClients() {
                 )}
               </AccordionDetails>
             </Accordion>
+            <Accordion sx={{ marginTop: 2 }} defaultExpanded={true}>
+              <AccordionSummary
+                expandIcon={<ExpandMoreIcon />}
+                aria-controls="panel3-content"
+                id="panel3-header"
+              >
+                <Typography variant="h5">Create New Project</Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Box component="form" onSubmit={formikCreateProject.handleSubmit} sx={{ width: "100%" }}>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        label="Project Name"
+                        variant="outlined"
+                        fullWidth
+                        name="projectName"
+                        value={formikCreateProject.values.projectName}
+                        onChange={formikCreateProject.handleChange}
+                        onBlur={formikCreateProject.handleBlur}
+                        error={formikCreateProject.touched.projectName && Boolean(formikCreateProject.errors.projectName)}
+                        helperText={formikCreateProject.touched.projectName && formikCreateProject.errors.projectName}
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        label="Project Description"
+                        variant="outlined"
+                        fullWidth
+                        multiline
+                        name="projectDescription"
+                        value={formikCreateProject.values.projectDescription}
+                        onChange={formikCreateProject.handleChange}
+                        onBlur={formikCreateProject.handleBlur}
+                        error={formikCreateProject.touched.projectDescription && Boolean(formikCreateProject.errors.projectDescription)}
+                        helperText={formikCreateProject.touched.projectDescription && formikCreateProject.errors.projectDescription}
+                      />
+                    </Grid>
+                  </Grid>
+                  <Button
+              type="submit"
+              style={{
+                marginTop: "10px",
+                backgroundColor: "#233044",
+              }}
+              fullWidth
+              variant="contained"
+              color="primary"
+            >
+              Submit
+            </Button>
+               
+                </Box>
+              </AccordionDetails>
+            </Accordion>
+            <Accordion defaultExpanded={true}>
+  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+    <Typography variant="h5">Join Existing Project</Typography>
+  </AccordionSummary>
+  <AccordionDetails>
+    <Box component="form" onSubmit={formik.handleSubmit} sx={{ width: "100%" }}>
+      <Grid container spacing={2}>
+        <Grid item xs={12} sm={6} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <TextField
+            label="Search By ID"
+            variant="outlined"
+            size="medium"
+            name="searchQuery"
+            value={formik.values.searchQuery}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            error={formik.touched.searchQuery && Boolean(formik.errors.searchQuery)}
+            helperText={formik.touched.searchQuery && formik.errors.searchQuery}
+            sx={{ mt: 1, width: "250px" }}
+          />
+          <Button
+            variant="contained"
+            color="primary"
+            type="submit"
+            sx={{
+              height: "40px",
+              width: "120px",
+              ml: 1,
+              backgroundColor: "#233044",
+              "&:hover": { backgroundColor: "#233044" },
+            }}
+          >
+            Search
+          </Button>
+        </Grid>
+      </Grid>
+    </Box>
+
+    {joinNewGroups?.length > 0 && (
+      <TableContainer component={Paper}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Group ID</TableCell>
+              <TableCell>Owner</TableCell>
+              <TableCell>Email</TableCell>
+              <TableCell align="center">Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {joinNewGroups.map((group, index) => (
+              <TableRow key={group.id || index}>
+                <TableCell>{group?.keycloak_group_id}</TableCell>
+                <TableCell>{group?.owner_first_name + " " + group?.owner_last_name}</TableCell>
+                <TableCell>{group.owner_email}</TableCell>
+                <TableCell align="center">
+                  <Button
+                    variant="contained"
+                    size="small"
+                    color="primary"
+                    sx={{
+                      backgroundColor: "#233044",
+                      "&:hover": { backgroundColor: "#233044" },
+                    }}
+                    onClick={() => joinGroup(group?.id)}
+                  >
+                    Join
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    )}
+  </AccordionDetails>
+</Accordion>
+
+
+            
+           
 
           </Box>
         </>
