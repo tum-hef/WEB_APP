@@ -35,6 +35,7 @@ import BiotechSharpIcon from "@mui/icons-material/BiotechSharp";
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 import DnsIcon from "@mui/icons-material/Dns";
 import PublicIcon from "@mui/icons-material/Public";
+import { toast } from "react-toastify";
 const baseScrollbar = css`
   background-color: ${(props) => props.theme.sidebar.background};
   border-right: 1px solid rgba(0, 0, 0, 0.12);
@@ -60,7 +61,12 @@ type SidebarNavProps = {
     pages: SidebarItemsType[];
   }[];
 };
-
+interface ApiResponse {
+  success: boolean;
+  PORT?: number;
+  message?: string;
+  error_code?: number;
+}
 const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
   const { keycloak } = useKeycloak();
   const [nodeRedPort, setNodeRedPort] = useState<number | null>(null);
@@ -70,23 +76,57 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
   const currentUrl = location.pathname;
   const getNodeRedPort = async () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL;
-    const email =
-    localStorage.getItem("selected_others") === "true"
-      ? localStorage.getItem("user_email")
-      : userInfo?.preferred_username;
-
-    await axios
-      .get(`${backend_url}/node-red?email=${email}`, {
+  
+    if (!backend_url) {
+      toast.error("Backend URL is missing.");
+      return;
+    }
+  
+    const email: string | null =
+      localStorage.getItem("selected_others") === "true"
+        ? localStorage.getItem("user_email")
+        : userInfo?.preferred_username || "";
+  
+    if (!email) {
+      toast.error("User email is missing.");
+      return;
+    }
+  
+    try {
+      const response = await axios.get<ApiResponse>(`${backend_url}/node-red?email=${email}`, {
         headers: {
           "Content-Type": "application/json",
         },
-      })
-      .then((res) => {
-        if (res.status === 200 && res.data.PORT) {
-          setNodeRedPort(res.data.PORT);
-        }
+        validateStatus: (status) => true, // Prevents Axios from throwing for 400/404 errors
       });
+  
+      if (response.status >= 200 && response.status < 300) {
+        if (response.data.success) {
+          setNodeRedPort(response.data.PORT!);
+        } else {
+          toast.error(response.data.message || "Failed to fetch Node-RED port.");
+        }
+      } else if (response.status !== 400) {
+        // Only show toast for non-400 errors
+        toast.error(response.data.message || "Error fetching Node-RED port.");
+      }
+    } catch (error: any) {
+      if (axios.isAxiosError(error)) {
+        const errorResponse = error.response?.data as ApiResponse;
+  
+        if (error.response?.status === 500) {
+          toast.error("Internal server error. Please try again later.");
+        } else if (error.response?.status !== 400) {
+          toast.error(errorResponse.message || "An error occurred.");
+        }
+      } else {
+        toast.error("An unexpected error occurred.");
+      }
+  
+      console.error("Error fetching Node-RED port:", error);
+    }
   };
+  
   const [openDataSpace, setOpenDataSpace] = useState(false);
   const [openTraining, setOpenTraining] = useState(false);
   const [openFrostEntities, setOpenFrostEntities] = useState(false);
