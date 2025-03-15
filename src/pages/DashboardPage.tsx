@@ -72,6 +72,7 @@ export default function DashboardPage() {
                 toast.error("Group is not valid");
                 setError(true);
               } else {
+                console.log("group111",group)
                 setGroup(group);
               }
             }
@@ -264,7 +265,7 @@ export default function DashboardPage() {
                             fontSize: "1.0rem",
                           }}
                         >
-                          Group selected: <b>{group.attributes.group_name} </b>,
+                          Project selected: <b>{group?.project_name ? group?.project_name  :  group?.attributes?.group_name} </b>,
                           click
                           <LinkCustom
                             style={{

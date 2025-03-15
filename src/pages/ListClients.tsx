@@ -645,13 +645,19 @@ export default function ListClients() {
                               </IconButton>
 
                               {/* Select Group Button */}
-                              <LinkCustom to={group?.is_owner ? `/dashboard/${group?.keycloak_group_id}` : `/dashboard/${group?.keycloak_group_id}?other_group=true`}>
-                                <Button
-                                  variant={"contained"}
-                                  color="primary"
-                                  size="small"
-                                  sx={{ backgroundColor: "#233044", "&:hover": { backgroundColor: "#233044" } }}
-                                  onClick={() => {
+                              <Button
+                                variant="contained"
+                                color="primary"
+                                size="small"
+                                sx={{ backgroundColor: "#233044", "&:hover": { backgroundColor: "#233044" } }}
+                                disabled={group?.membership_status === "pending" || group?.membership_status === "rejected" || group?.membership_status === "left" || !group?.is_ready}
+                                onClick={() => {
+                                  if (!(
+                                    group?.membership_status === "pending" ||
+                                    group?.membership_status === "rejected" ||
+                                    group?.membership_status === "left" ||
+                                    !group?.is_ready
+                                  )) {
                                     if (group?.is_owner) {
                                       localStorage.setItem("group_id", group.keycloak_group_id);
                                       localStorage.setItem("selected_others", "false");
@@ -661,12 +667,21 @@ export default function ListClients() {
                                       localStorage.setItem("selected_others", "true");
                                       localStorage.setItem("user_email", group?.owner_email);
                                     }
-                                  }}
-                                  disabled={group?.membership_status === "pending" || group?.membership_status === "rejected" || group?.membership_status === "left"}
-                                >
-                                  {"Select"}
-                                </Button>
-                              </LinkCustom>
+                                  }
+                                }}
+                              >
+                                {!(group?.membership_status === "pending" || group?.membership_status === "rejected" || group?.membership_status === "left" || !group?.is_ready) ? (
+                                  <LinkCustom
+                                    to={group?.is_owner ? `/dashboard/${group?.keycloak_group_id}` : `/dashboard/${group?.keycloak_group_id}?other_group=true`}
+                                    style={{ textDecoration: "none", color: "inherit" }}
+                                  >
+                                    Select
+                                  </LinkCustom>
+                                ) : (
+                                  "Select"
+                                )}
+                              </Button>
+
                             </TableCell>
                           </TableRow>
                         ))}
