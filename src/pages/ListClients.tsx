@@ -26,7 +26,8 @@ import {
   ListItem,
   ListItemText,
   Divider,
-  ClickAwayListener
+  ClickAwayListener,
+  CircularProgress
 } from "@mui/material";
 import axios, { AxiosError } from "axios";
 import { useLocation } from "react-router-dom";
@@ -70,6 +71,8 @@ export default function ListClients() {
   const [openPendingGroupId, setOpenPendingGroupId] = useState<number | null>(null);
   const [pendingPopover, setPendingPopover] = useState<{ anchorEl: HTMLElement | null, groupId: number | null }>({ anchorEl: null, groupId: null });
   const [membersPopover, setMembersPopover] = useState<{ anchorEl: HTMLElement | null, groupId: number | null }>({ anchorEl: null, groupId: null });
+  const [isCreatingProject, setIsCreatingProject] = useState(false);
+
 
 
   const popoverRef = useRef(null); // ✅ Store popover anchor in a ref
@@ -104,17 +107,15 @@ export default function ListClients() {
         .required("Project description is required"),
     }),
     onSubmit: async (values, { resetForm }) => {
-      // Fetch authentication token
       const token = keycloak?.token;
       if (!token) {
         Swal.fire("Error", "Authentication token not found. Please log in.", "error");
         return;
       }
 
-      // Confirm with the user before sending request
       Swal.fire({
         title: "Are you sure you want to create this project?",
-        text: `Project Name: ${values.projectName}`,  // ✅ Only project name is shown
+        text: `Project Name: ${values.projectName}`,
         icon: "question",
         showCancelButton: true,
         confirmButtonText: "Yes, create it!",
@@ -122,7 +123,7 @@ export default function ListClients() {
       }).then(async (result) => {
         if (result.isConfirmed) {
           try {
-            // Send API request
+            setIsCreatingProject(true); // ✅ Show loading overlay
             const response = await axios.post(
               `${process.env.REACT_APP_BACKEND_URL}/create_project`,
               {
@@ -132,25 +133,21 @@ export default function ListClients() {
               },
               {
                 headers: {
-                  Authorization: `Bearer ${token}`,  // ✅ Token is passed in headers
+                  Authorization: `Bearer ${token}`,
                   "Content-Type": "application/json",
                 },
               }
             );
 
-            // Show success message from API response
             Swal.fire("Success", response.data.message || "Project created successfully!", "success");
 
-            // Reset form fields
             resetForm();
-
-            // Refresh project list
             getAllGroups();
           } catch (error: any) {
-            // ✅ Display the exact error message from the API
             const errorMessage = error.response?.data?.error || "Failed to create project. Please try again.";
-            
             Swal.fire("Error", errorMessage, "error");
+          } finally {
+            setIsCreatingProject(false); // ✅ Hide loading overlay
           }
         }
       });
@@ -213,9 +210,9 @@ export default function ListClients() {
     getAllGroups();
   }, [userID]);
 
-  useEffect(()=>{
-    console.log("pendingPopover",pendingPopover)
-  },[pendingPopover])
+  useEffect(() => {
+    console.log("pendingPopover", pendingPopover)
+  }, [pendingPopover])
 
   const getAllGroups = async () => {
     if (userID) {
@@ -365,7 +362,7 @@ export default function ListClients() {
     console.log("Close button clicked");
     setPendingPopover({ anchorEl: null, groupId: null }); // New object ensures state updates
     setOpenPendingGroupId(null); // Also reset open group tracking
-};
+  };
 
 
   const joinGroup = async (group_id: any) => {
@@ -523,30 +520,38 @@ export default function ListClients() {
                 {myGroups?.length === 0 ? (
                   <Typography >No joined Project.</Typography>
                 ) : (
-                  <TableContainer component={Paper}>
-                    <Table>
+                  <TableContainer component={Paper} sx={{ maxHeight: "70vh", overflowY: "auto" }}>
+                    <Table stickyHeader>
                       <TableHead>
                         <TableRow>
-                          <TableCell><b>Group ID</b></TableCell>
-                          <TableCell><b>Owner Name</b></TableCell>
-                          <TableCell><b>Owner Email</b></TableCell>
-                          <TableCell><b>Actions</b></TableCell>
+                          <TableCell sx={{ width: "15%", fontWeight: "bold" }}>Group ID</TableCell>
+                          <TableCell sx={{ width: "20%", fontWeight: "bold" }}>Project Name</TableCell>
+                          <TableCell sx={{ width: "30%", fontWeight: "bold", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                            Project Description
+                          </TableCell>
+                          <TableCell sx={{ width: "20%", fontWeight: "bold" }}>Project Owner</TableCell>
+                          <TableCell sx={{ width: "15%", textAlign: "center", fontWeight: "bold" }}>Actions</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
                         {myGroups?.map((group: any, index) => (
                           <TableRow key={index}>
-                            <TableCell>{group?.keycloak_group_id}</TableCell>
-                            <TableCell>{group?.owner_first_name + " " + group?.owner_last_name}</TableCell>
-                            <TableCell>{group?.owner_email}</TableCell>
-                            <TableCell>
-                              {/* View Current Members */}
+                            <TableCell sx={{ maxWidth: "150px", wordBreak: "break-word" }}>{group?.keycloak_group_id}</TableCell>
+                            <TableCell sx={{ maxWidth: "180px", wordBreak: "break-word", fontWeight: "bold" }}>{group?.name}</TableCell>
+                            <TableCell sx={{ maxWidth: "300px", wordBreak: "break-word", whiteSpace: "normal" }}>
+                              {group?.description}
+                            </TableCell>
+                            <TableCell sx={{ maxWidth: "200px", wordBreak: "break-word" }}>
+                              {group?.owner_first_name + " " + group?.owner_last_name}
+                            </TableCell>
+                            <TableCell sx={{ textAlign: "center" }}>
+                              {/* View Members Popover */}
                               <IconButton disabled={!group?.is_owner} color="primary" onClick={(e) => handleViewMembers(e, group?.id)}>
                                 <GroupIcon />
                               </IconButton>
                               {membersPopover.groupId === group?.id && (
                                 <Popover
-                                  open={Boolean(membersPopover.anchorEl) && membersPopover.groupId === group?.id}
+                                  open={Boolean(membersPopover.anchorEl)}
                                   anchorEl={membersPopover.anchorEl}
                                   onClose={handleCloseMembersPopover}
                                   anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
@@ -588,92 +593,76 @@ export default function ListClients() {
 
                               {/* View Pending Requests */}
                               <IconButton color="warning" disabled={!group?.is_owner} onClick={(e) => handleOpenPendingPopover(e, group?.id)}>
-
                                 <HourglassEmptyIcon />
-                                {/* Pending Requests Popover */}
-                                {openPendingGroupId === group?.id && (
-                                  <Popover
-                                  open={Boolean(pendingPopover.anchorEl) && pendingPopover.groupId === group?.id}
+                              </IconButton>
+                              {openPendingGroupId === group?.id && (
+                                <Popover
+                                  open={Boolean(pendingPopover.anchorEl)}
                                   anchorEl={pendingPopover.anchorEl}
                                   onClose={handleClosePendingPopover}
-                                  anchorOrigin={{ vertical: "bottom", horizontal: "left" }} 
-                                  transformOrigin={{ vertical: "top", horizontal: "left" }} 
+                                  anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+                                  transformOrigin={{ vertical: "top", horizontal: "left" }}
                                 >
-                                    <ClickAwayListener onClickAway={handleClosePendingPopover}>
-                                      <Box sx={{ padding: 1, minWidth: 250, maxHeight: 300, overflowY: "auto" }}>
-                                        {/* Header with Close Button */}
-                                        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: 1 }}>
-                                          <Typography variant="subtitle1">Pending Requests</Typography>
-                                          <IconButton
-                                            size="small"
-                                            onClick={() => {
-                                              console.log("Close button clicked"); // Debugging log
-                                              handleClosePendingPopover(); // Ensure this function gets triggered
-                                            }}
-                                          >
-                                            <CloseIcon />
-                                          </IconButton>
-                                        </Box>
-                                        <Divider />
-
-                                        {/* Pending Requests List */}
-                                        <List>
-                                          {group?.members?.some((x: any) => x?.membership_status === "pending") ? (
-                                            group?.members
-                                              .filter((x: any) => x?.membership_status === "pending")
-                                              .map((member: any, index: any) => (
-                                                <ListItem key={index} sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                                  <ListItemText primary={`${member.first_name} ${member.last_name}`} secondary={member.email} />
-                                                  <IconButton color="success" size="small" onClick={() => handleAction("approve", member?.membership_id)}>
-                                                    <CheckCircleIcon />
-                                                  </IconButton>
-                                                  <IconButton color="error" size="small" onClick={() => handleAction("reject", member?.membership_id)}>
-                                                    <CancelIcon />
-                                                  </IconButton>
-                                                </ListItem>
-                                              ))
-                                          ) : (
-                                            <Typography sx={{ padding: 1 }}>No pending requests.</Typography>
-                                          )}
-                                        </List>
+                                  <ClickAwayListener onClickAway={handleClosePendingPopover}>
+                                    <Box sx={{ padding: 1, minWidth: 250, maxHeight: 300, overflowY: "auto" }}>
+                                      {/* Header with Close Button */}
+                                      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: 1 }}>
+                                        <Typography variant="subtitle1">Pending Requests</Typography>
+                                        <IconButton size="small" onClick={handleClosePendingPopover}>
+                                          <CloseIcon />
+                                        </IconButton>
                                       </Box>
-                                    </ClickAwayListener>
-                                  </Popover>
-                                )}
+                                      <Divider />
 
-
-                              </IconButton>
+                                      {/* Pending Requests List */}
+                                      <List>
+                                        {group?.members?.some((x: any) => x?.membership_status === "pending") ? (
+                                          group?.members
+                                            .filter((x: any) => x?.membership_status === "pending")
+                                            .map((member: any, index: any) => (
+                                              <ListItem key={index} sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                                <ListItemText primary={`${member.first_name} ${member.last_name}`} secondary={member.email} />
+                                                <IconButton color="success" size="small" onClick={() => handleAction("approve", member?.membership_id)}>
+                                                  <CheckCircleIcon />
+                                                </IconButton>
+                                                <IconButton color="error" size="small" onClick={() => handleAction("reject", member?.membership_id)}>
+                                                  <CancelIcon />
+                                                </IconButton>
+                                              </ListItem>
+                                            ))
+                                        ) : (
+                                          <Typography sx={{ padding: 1 }}>No pending requests.</Typography>
+                                        )}
+                                      </List>
+                                    </Box>
+                                  </ClickAwayListener>
+                                </Popover>
+                              )}
 
                               {/* Leave Group */}
-                              <IconButton
-                                color="error"
-                                disabled={group?.is_owner}
-                                onClick={() => handleLeaveGroup(group?.id, userInfo?.email, false)}
-                              >
+                              <IconButton color="error" disabled={group?.is_owner} onClick={() => handleLeaveGroup(group?.id, userInfo?.email, false)}>
                                 <ExitToAppIcon />
                               </IconButton>
+
+                              {/* Select Group Button */}
                               <LinkCustom to={group?.is_owner ? `/dashboard/${group?.keycloak_group_id}` : `/dashboard/${group?.keycloak_group_id}?other_group=true`}>
-                                {/* Select Group */}
                                 <Button
                                   variant={"contained"}
                                   color="primary"
                                   size="small"
-                                  sx={{ backgroundColor: "#233044", '&:hover': { backgroundColor: "#233044" } }}
+                                  sx={{ backgroundColor: "#233044", "&:hover": { backgroundColor: "#233044" } }}
                                   onClick={() => {
                                     if (group?.is_owner) {
-                                      console.log("group_id", group.id)
                                       localStorage.setItem("group_id", group.keycloak_group_id);
-                                      localStorage.setItem("selected_others", "false")
-                                      localStorage.removeItem("user_email")
+                                      localStorage.setItem("selected_others", "false");
+                                      localStorage.removeItem("user_email");
                                     } else {
                                       localStorage.setItem("group_id", group?.keycloak_group_id);
-                                      localStorage.setItem("selected_others", "true")
-                                      localStorage.setItem("user_email", group?.owner_email)
+                                      localStorage.setItem("selected_others", "true");
+                                      localStorage.setItem("user_email", group?.owner_email);
                                     }
                                   }}
-                                  disabled={
-                                    group?.membership_status === "pending" || group?.membership_status === "rejected" || group?.membership_status == "left"
-                                  }
+                                  disabled={group?.membership_status === "pending" || group?.membership_status === "rejected" || group?.membership_status === "left"}
                                 >
                                   {"Select"}
                                 </Button>
@@ -684,6 +673,7 @@ export default function ListClients() {
                       </TableBody>
                     </Table>
                   </TableContainer>
+
                 )}
               </AccordionDetails>
             </Accordion>
@@ -735,10 +725,10 @@ export default function ListClients() {
                     fullWidth
                     variant="contained"
                     color="primary"
+                    disabled={isCreatingProject} // ✅ Disable button while loading
                   >
-                    Submit
+                    {isCreatingProject ? "Processing..." : "Submit"}
                   </Button>
-
                 </Box>
               </AccordionDetails>
             </Accordion>
@@ -781,22 +771,30 @@ export default function ListClients() {
                 </Box>
 
                 {joinNewGroups?.length > 0 && (
-                  <TableContainer component={Paper}>
-                    <Table>
+                  <TableContainer component={Paper} sx={{ maxHeight: "70vh", overflowY: "auto" }}>
+                    <Table stickyHeader>
                       <TableHead>
                         <TableRow>
-                          <TableCell>Group ID</TableCell>
-                          <TableCell>Owner</TableCell>
-                          <TableCell>Email</TableCell>
-                          <TableCell align="center">Actions</TableCell>
+                          <TableCell sx={{ width: "15%", fontWeight: "bold" }}>Group ID</TableCell>
+                          <TableCell sx={{ width: "20%", fontWeight: "bold" }}>Project Name</TableCell>
+                          <TableCell sx={{ width: "30%", fontWeight: "bold", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                            Project Description
+                          </TableCell>
+                          <TableCell sx={{ width: "20%", fontWeight: "bold" }}>Project Owner</TableCell>
+                          <TableCell sx={{ width: "15%", textAlign: "center", fontWeight: "bold" }}>Actions</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
                         {joinNewGroups.map((group, index) => (
                           <TableRow key={group.id || index}>
-                            <TableCell>{group?.keycloak_group_id}</TableCell>
-                            <TableCell>{group?.owner_first_name + " " + group?.owner_last_name}</TableCell>
-                            <TableCell>{group.owner_email}</TableCell>
+                            <TableCell sx={{ maxWidth: "150px", wordBreak: "break-word" }}>{group?.keycloak_group_id}</TableCell>
+                            <TableCell sx={{ maxWidth: "180px", wordBreak: "break-word", fontWeight: "bold" }}>{group?.name}</TableCell>
+                            <TableCell sx={{ maxWidth: "300px", wordBreak: "break-word", whiteSpace: "normal" }}>
+                              {group?.description}
+                            </TableCell>
+                            <TableCell sx={{ maxWidth: "200px", wordBreak: "break-word" }}>
+                              {group?.owner_first_name + " " + group?.owner_last_name}
+                            </TableCell>
                             <TableCell align="center">
                               <Button
                                 variant="contained"
@@ -805,6 +803,7 @@ export default function ListClients() {
                                 sx={{
                                   backgroundColor: "#233044",
                                   "&:hover": { backgroundColor: "#233044" },
+                                  minWidth: "80px",
                                 }}
                                 onClick={() => joinGroup(group?.id)}
                               >
@@ -816,6 +815,7 @@ export default function ListClients() {
                       </TableBody>
                     </Table>
                   </TableContainer>
+
                 )}
               </AccordionDetails>
             </Accordion>
@@ -826,6 +826,25 @@ export default function ListClients() {
 
           </Box>
         </>
+      )}
+      {isCreatingProject && (
+        <Box
+          sx={{
+            position: 'absolute',  // Position loader on top of form
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: 'rgba(14, 10, 10, 0.7)',  // Optional: add background overlay
+            zIndex: 9999,  // Ensure it's above the form
+            backdropFilter: 'blur(5px)',  // Optional: blur the background to give a dim effect
+          }}
+        >
+          <CircularProgress size={50} color="primary" />  {/* MUI CircularProgress spinner */}
+        </Box>
       )}
     </Dashboard>
   );
