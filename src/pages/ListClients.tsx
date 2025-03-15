@@ -67,6 +67,11 @@ export default function ListClients() {
   const [pendingRequests, setPendingRequests] = useState([]);
   const [anchorElPending, setAnchorElPending] = useState(null);
   const [selectedMembers, setSelectedMembers] = useState([]);
+  const [openPendingGroupId, setOpenPendingGroupId] = useState<number | null>(null);
+  const [pendingPopover, setPendingPopover] = useState<{ anchorEl: HTMLElement | null, groupId: number | null }>({ anchorEl: null, groupId: null });
+  const [membersPopover, setMembersPopover] = useState<{ anchorEl: HTMLElement | null, groupId: number | null }>({ anchorEl: null, groupId: null });
+
+
   const popoverRef = useRef(null); // ✅ Store popover anchor in a ref
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const message = searchParams.get("message");
@@ -98,18 +103,55 @@ export default function ListClients() {
         .min(10, "Description must be at least 10 characters")
         .required("Project description is required"),
     }),
-    onSubmit: async (values) => {
+    onSubmit: async (values, { resetForm }) => {
+      // Fetch authentication token
+      const token = keycloak?.token;
+      if (!token) {
+        Swal.fire("Error", "Authentication token not found. Please log in.", "error");
+        return;
+      }
+
+      // Confirm with the user before sending request
       Swal.fire({
         title: "Are you sure you want to create this project?",
-        text: `Project: ${values.projectName}\nDescription: ${values.projectDescription}`,
+        text: `Project Name: ${values.projectName}`,  // ✅ Only project name is shown
         icon: "question",
         showCancelButton: true,
         confirmButtonText: "Yes, create it!",
         cancelButtonText: "Cancel",
-      }).then((result) => {
+      }).then(async (result) => {
         if (result.isConfirmed) {
-          console.log("Project Created:", values);
-          Swal.fire("Success", "Your project has been created!", "success");
+          try {
+            // Send API request
+            const response = await axios.post(
+              `${process.env.REACT_APP_BACKEND_URL}/create_project`,
+              {
+                user_email: userInfo?.email,
+                project_name: values.projectName,
+                project_description: values.projectDescription,
+              },
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,  // ✅ Token is passed in headers
+                  "Content-Type": "application/json",
+                },
+              }
+            );
+
+            // Show success message from API response
+            Swal.fire("Success", response.data.message || "Project created successfully!", "success");
+
+            // Reset form fields
+            resetForm();
+
+            // Refresh project list
+            getAllGroups();
+          } catch (error: any) {
+            // ✅ Display the exact error message from the API
+            const errorMessage = error.response?.data?.error || "Failed to create project. Please try again.";
+            
+            Swal.fire("Error", errorMessage, "error");
+          }
         }
       });
     },
@@ -125,27 +167,27 @@ export default function ListClients() {
         });
         return; // ✅ Prevents unnecessary API call
       }
-  
+
       if (keycloak && userInfo?.sub) {
         const userID = userInfo.sub; // ✅ Ensures correct user ID before setting state
         setUserID(userID);
-  
+
         try {
           setLoading(true);
-  
+
           const response = await axios.get<ApiResponse>(
             `${process.env.REACT_APP_BACKEND_URL}/get_clients?user_id=${userID}`
           );
-  
+
           console.log("API Response:", response.data);
-  
+
           // ✅ Check if API response contains success: false
           if (!response.data.success) {
             toast.error(response.data.message || "Error fetching clients.");
             setLoading(false);
             return;
           }
-  
+
           if (response.status === 200 && response.data.groups && response.data.groups.length > 0) {
             setGroups(response.data.groups);
           } else {
@@ -153,7 +195,7 @@ export default function ListClients() {
           }
         } catch (error: unknown) {
           if (axios.isAxiosError(error)) {
-            const axiosError = error as AxiosError<ApiResponse>; 
+            const axiosError = error as AxiosError<ApiResponse>;
             // toast.error(axiosError.response?.data?.message || "An error occurred while fetching clients.");
           } else {
             toast.error("An unexpected error occurred.");
@@ -164,12 +206,16 @@ export default function ListClients() {
         }
       }
     };
-  
+
     fetchData();
   }, [keycloak, userInfo, message]);
   useEffect(() => {
     getAllGroups();
   }, [userID]);
+
+  useEffect(()=>{
+    console.log("pendingPopover",pendingPopover)
+  },[pendingPopover])
 
   const getAllGroups = async () => {
     if (userID) {
@@ -195,18 +241,18 @@ export default function ListClients() {
       toast.error("Group ID is required.");
       return;
     }
-  
+
     try {
       const token = keycloak?.token;
       if (!token) {
         throw new Error("No authentication token found.");
       }
-  
+
       const email = userInfo?.email;
       if (!email) {
         throw new Error("User email is required.");
       }
-  
+
       // API request to fetch group details
       const response = await axios.get(
         `${process.env.REACT_APP_BACKEND_URL}/search_group?keycloak_group_id=${group_id}&email=${email}`,
@@ -216,20 +262,20 @@ export default function ListClients() {
           },
         }
       );
-  
+
       const groupData = response?.data;
-  
+
       // Check if the response is an array (user is not a member and can join)
       if (Array.isArray(groupData)) {
         setJoinNewGroups(groupData);
-  
+
         Swal.fire({
           icon: "success",
           title: "Success!",
           text: "Project details fetched successfully.",
           confirmButtonColor: "#3085d6",
         });
-      } 
+      }
       // Check if response is an object with status (user is already a member or owner)
       else if (groupData?.status === "owner") {
         Swal.fire({
@@ -256,16 +302,16 @@ export default function ListClients() {
       }
     } catch (error: any) {
       console.error("Error fetching project:", error);
-  
+
       let errorMessage = "Failed to fetch project details. Please try again.";
       if (error.response) {
         errorMessage = error.response?.data?.error || errorMessage;
       } else if (error.message) {
         errorMessage = error.message;
       }
-  
+
       toast.error(errorMessage);
-  
+
       Swal.fire({
         icon: "error",
         title: "Error",
@@ -274,7 +320,7 @@ export default function ListClients() {
       });
     }
   };
-  
+
   const handleAction = (action: string, userId: any) => {
     let data = { "membership_id": userId, "action": action }
     Swal.fire({
@@ -302,23 +348,25 @@ export default function ListClients() {
       }
     });
   };
-  const handleViewMembers = (event: any, group: any) => {
-    setSelectedMembers(group || []); // Set members or empty array
-    setAnchorEl(event.currentTarget); // Attach popover to clicked icon
+  const handleViewMembers = (event: React.MouseEvent<HTMLElement>, groupId: number) => {
+    setMembersPopover({ anchorEl: event.currentTarget, groupId });
   };
 
-  const handleClosePopover = () => {
-    setAnchorEl(null);
+  const handleCloseMembersPopover = () => {
+    setMembersPopover({ anchorEl: null, groupId: null });
   };
-  const handleOpenPendingPopover = (event: any) => {
-    popoverRef.current = event.currentTarget;
-    setIsPopoverOpen(true); // ✅ Opens popover
+  const handleOpenPendingPopover = (event: React.MouseEvent<HTMLElement>, groupId: number) => {
+    setPendingPopover({ anchorEl: event.currentTarget, groupId }); // Attach popover to clicked element
+    setOpenPendingGroupId(groupId);  // Track which group's popover is open
   };
+
 
   const handleClosePendingPopover = () => {
-    console.log("Closing popover...");
-    setIsPopoverOpen((prev) => !prev); // ✅ Ensures correct state update
-  };
+    console.log("Close button clicked");
+    setPendingPopover({ anchorEl: null, groupId: null }); // New object ensures state updates
+    setOpenPendingGroupId(null); // Also reset open group tracking
+};
+
 
   const joinGroup = async (group_id: any) => {
     if (!group_id) {
@@ -463,7 +511,7 @@ export default function ListClients() {
           </Grid>
 
           <Box sx={{ padding: 2 }}>
-          <Accordion sx={{ marginTop: 2 }} defaultExpanded={true}>
+            <Accordion sx={{ marginTop: 2 }} defaultExpanded={true}>
               <AccordionSummary
                 expandIcon={<ExpandMoreIcon />}
                 aria-controls="panel2-content"
@@ -493,104 +541,107 @@ export default function ListClients() {
                             <TableCell>{group?.owner_email}</TableCell>
                             <TableCell>
                               {/* View Current Members */}
-                              <IconButton
-                                disabled={!group?.is_owner}
-                                color="primary"
-                                onClick={(e) => handleViewMembers(e, group?.members?.filter((x: any) => { return x?.membership_status == "approved" }))}
-                              >
+                              <IconButton disabled={!group?.is_owner} color="primary" onClick={(e) => handleViewMembers(e, group?.id)}>
                                 <GroupIcon />
                               </IconButton>
-                              <Popover
-                                open={Boolean(anchorEl)}
-                                anchorEl={anchorEl}
-                                onClose={handleClosePopover}
-                                anchorOrigin={{
-                                  vertical: "bottom",
-                                  horizontal: "right",
-                                }}
-                                transformOrigin={{
-                                  vertical: "top",
-                                  horizontal: "left",
-                                }}
-                              >
-                                <Box sx={{ padding: 1, minWidth: 250, maxHeight: 300, overflowY: "auto" }}>
-                                  {/* Header with Close Button */}
-                                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: 1 }}>
-                                    <Typography variant="subtitle1">Members</Typography>
-                                    <IconButton size="small" onClick={handleClosePopover}>
-                                      <CloseIcon />
-                                    </IconButton>
-                                  </Box>
-                                  <Divider />
-
-                                  {/* Member List */}
-                                  <List>
-                                    {group?.members?.length > 0 ? (
-                                      group?.members?.filter((x: any) => { return x?.membership_status == "approved" })?.map((member: any, index: any) => (
-                                        <ListItem
-                                          key={index}
-                                          sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
-                                        >
-                                          <ListItemText
-                                            primary={`${member?.firstName} ${member?.lastName}`}
-                                            secondary={member?.email}
-                                          />
-                                          {/* Remove Member Button */}
-                                          <IconButton color="error" size="small" onClick={() => handleLeaveGroup(group?.id, member.email, true)}>
-                                            <RemoveCircleIcon />
-                                          </IconButton>
-                                        </ListItem>
-                                      ))
-                                    ) : (
-                                      <Typography sx={{ padding: 1 }}>No members found.</Typography>
-                                    )}
-                                  </List>
-                                </Box>
-                              </Popover>
-
-                              {/* View Pending Requests */}
-                              <IconButton color="warning" disabled={!group?.is_owner} onClick={(e) => handleOpenPendingPopover(e)}>
-                                <HourglassEmptyIcon />
-                                {/* Pending Requests Popover */}
-                                {isPopoverOpen && <Popover
-                                  open={isPopoverOpen}
-                                  anchorEl={popoverRef.current}
-                                  onClose={handleClosePendingPopover}
+                              {membersPopover.groupId === group?.id && (
+                                <Popover
+                                  open={Boolean(membersPopover.anchorEl) && membersPopover.groupId === group?.id}
+                                  anchorEl={membersPopover.anchorEl}
+                                  onClose={handleCloseMembersPopover}
                                   anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
                                   transformOrigin={{ vertical: "top", horizontal: "left" }}
                                 >
-                                  <ClickAwayListener onClickAway={handleClosePendingPopover}>
+                                  <ClickAwayListener onClickAway={handleCloseMembersPopover}>
                                     <Box sx={{ padding: 1, minWidth: 250, maxHeight: 300, overflowY: "auto" }}>
                                       {/* Header with Close Button */}
                                       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: 1 }}>
-                                        <Typography variant="subtitle1">Pending Requests</Typography>
-                                        <IconButton size="small" onClick={handleClosePendingPopover}>
+                                        <Typography variant="subtitle1">Members</Typography>
+                                        <IconButton size="small" onClick={handleCloseMembersPopover}>
                                           <CloseIcon />
                                         </IconButton>
                                       </Box>
                                       <Divider />
 
-                                      {/* Pending Requests List */}
+                                      {/* Member List */}
                                       <List>
-                                        {group?.members?.length > 0 ? (
-                                          group?.members?.filter((x: any) => { return x?.membership_status == "pending" })?.map((member: any, index: any) => (
-                                            <ListItem key={index} sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                              <ListItemText primary={`${member.firstName} ${member.lastName}`} secondary={member.email} />
-                                              <IconButton color="success" size="small" onClick={() => handleAction("approve", member?.membership_id)}>
-                                                <CheckCircleIcon />
-                                              </IconButton>
-                                              <IconButton color="error" size="small" onClick={() => handleAction("reject", member?.membership_id)}>
-                                                <CancelIcon />
-                                              </IconButton>
-                                            </ListItem>
-                                          ))
+                                        {group?.members?.some((x: any) => x?.membership_status === "approved") ? (
+                                          group?.members
+                                            .filter((x: any) => x?.membership_status === "approved")
+                                            .map((member: any, index: any) => (
+                                              <ListItem key={index} sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                                <ListItemText primary={`${member?.first_name} ${member?.last_name}`} secondary={member?.email} />
+                                                {/* Remove Member Button */}
+                                                <IconButton color="error" size="small" onClick={() => handleLeaveGroup(group?.id, member.email, true)}>
+                                                  <RemoveCircleIcon />
+                                                </IconButton>
+                                              </ListItem>
+                                            ))
                                         ) : (
-                                          <Typography sx={{ padding: 1 }}>No pending requests.</Typography>
+                                          <Typography sx={{ padding: 1 }}>No approved members found.</Typography>
                                         )}
                                       </List>
                                     </Box>
                                   </ClickAwayListener>
-                                </Popover>}
+                                </Popover>
+                              )}
+
+                              {/* View Pending Requests */}
+                              <IconButton color="warning" disabled={!group?.is_owner} onClick={(e) => handleOpenPendingPopover(e, group?.id)}>
+
+                                <HourglassEmptyIcon />
+                                {/* Pending Requests Popover */}
+                                {openPendingGroupId === group?.id && (
+                                  <Popover
+                                  open={Boolean(pendingPopover.anchorEl) && pendingPopover.groupId === group?.id}
+                                  anchorEl={pendingPopover.anchorEl}
+                                  onClose={handleClosePendingPopover}
+                                  anchorOrigin={{ vertical: "bottom", horizontal: "left" }} 
+                                  transformOrigin={{ vertical: "top", horizontal: "left" }} 
+                                >
+                                    <ClickAwayListener onClickAway={handleClosePendingPopover}>
+                                      <Box sx={{ padding: 1, minWidth: 250, maxHeight: 300, overflowY: "auto" }}>
+                                        {/* Header with Close Button */}
+                                        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: 1 }}>
+                                          <Typography variant="subtitle1">Pending Requests</Typography>
+                                          <IconButton
+                                            size="small"
+                                            onClick={() => {
+                                              console.log("Close button clicked"); // Debugging log
+                                              handleClosePendingPopover(); // Ensure this function gets triggered
+                                            }}
+                                          >
+                                            <CloseIcon />
+                                          </IconButton>
+                                        </Box>
+                                        <Divider />
+
+                                        {/* Pending Requests List */}
+                                        <List>
+                                          {group?.members?.some((x: any) => x?.membership_status === "pending") ? (
+                                            group?.members
+                                              .filter((x: any) => x?.membership_status === "pending")
+                                              .map((member: any, index: any) => (
+                                                <ListItem key={index} sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                                  <ListItemText primary={`${member.first_name} ${member.last_name}`} secondary={member.email} />
+                                                  <IconButton color="success" size="small" onClick={() => handleAction("approve", member?.membership_id)}>
+                                                    <CheckCircleIcon />
+                                                  </IconButton>
+                                                  <IconButton color="error" size="small" onClick={() => handleAction("reject", member?.membership_id)}>
+                                                    <CancelIcon />
+                                                  </IconButton>
+                                                </ListItem>
+                                              ))
+                                          ) : (
+                                            <Typography sx={{ padding: 1 }}>No pending requests.</Typography>
+                                          )}
+                                        </List>
+                                      </Box>
+                                    </ClickAwayListener>
+                                  </Popover>
+                                )}
+
+
                               </IconButton>
 
                               {/* Leave Group */}
@@ -606,8 +657,8 @@ export default function ListClients() {
                                 <Button
                                   variant={"contained"}
                                   color="primary"
-                                  size="small" 
-                                  sx={{ backgroundColor: "#233044", '&:hover': { backgroundColor: "#233044" }}}
+                                  size="small"
+                                  sx={{ backgroundColor: "#233044", '&:hover': { backgroundColor: "#233044" } }}
                                   onClick={() => {
                                     if (group?.is_owner) {
                                       console.log("group_id", group.id)
@@ -676,102 +727,102 @@ export default function ListClients() {
                     </Grid>
                   </Grid>
                   <Button
-              type="submit"
-              style={{
-                marginTop: "10px",
-                backgroundColor: "#233044",
-              }}
-              fullWidth
-              variant="contained"
-              color="primary"
-            >
-              Submit
-            </Button>
-               
+                    type="submit"
+                    style={{
+                      marginTop: "10px",
+                      backgroundColor: "#233044",
+                    }}
+                    fullWidth
+                    variant="contained"
+                    color="primary"
+                  >
+                    Submit
+                  </Button>
+
                 </Box>
               </AccordionDetails>
             </Accordion>
             <Accordion defaultExpanded={true}>
-  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-    <Typography variant="h5">Join Existing Project</Typography>
-  </AccordionSummary>
-  <AccordionDetails>
-    <Box component="form" onSubmit={formik.handleSubmit} sx={{ width: "100%" }}>
-      <Grid container spacing={2}>
-        <Grid item xs={12} sm={6} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <TextField
-            label="Search By ID"
-            variant="outlined"
-            size="medium"
-            name="searchQuery"
-            value={formik.values.searchQuery}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            error={formik.touched.searchQuery && Boolean(formik.errors.searchQuery)}
-            helperText={formik.touched.searchQuery && formik.errors.searchQuery}
-            sx={{ mt: 1, width: "250px" }}
-          />
-          <Button
-            variant="contained"
-            color="primary"
-            type="submit"
-            sx={{
-              height: "40px",
-              width: "120px",
-              ml: 1,
-              backgroundColor: "#233044",
-              "&:hover": { backgroundColor: "#233044" },
-            }}
-          >
-            Search
-          </Button>
-        </Grid>
-      </Grid>
-    </Box>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Typography variant="h5">Join Existing Project</Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Box component="form" onSubmit={formik.handleSubmit} sx={{ width: "100%" }}>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} sm={6} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <TextField
+                        label="Search By ID"
+                        variant="outlined"
+                        size="medium"
+                        name="searchQuery"
+                        value={formik.values.searchQuery}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        error={formik.touched.searchQuery && Boolean(formik.errors.searchQuery)}
+                        helperText={formik.touched.searchQuery && formik.errors.searchQuery}
+                        sx={{ mt: 1, width: "250px" }}
+                      />
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        type="submit"
+                        sx={{
+                          height: "40px",
+                          width: "120px",
+                          ml: 1,
+                          backgroundColor: "#233044",
+                          "&:hover": { backgroundColor: "#233044" },
+                        }}
+                      >
+                        Search
+                      </Button>
+                    </Grid>
+                  </Grid>
+                </Box>
 
-    {joinNewGroups?.length > 0 && (
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Group ID</TableCell>
-              <TableCell>Owner</TableCell>
-              <TableCell>Email</TableCell>
-              <TableCell align="center">Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {joinNewGroups.map((group, index) => (
-              <TableRow key={group.id || index}>
-                <TableCell>{group?.keycloak_group_id}</TableCell>
-                <TableCell>{group?.owner_first_name + " " + group?.owner_last_name}</TableCell>
-                <TableCell>{group.owner_email}</TableCell>
-                <TableCell align="center">
-                  <Button
-                    variant="contained"
-                    size="small"
-                    color="primary"
-                    sx={{
-                      backgroundColor: "#233044",
-                      "&:hover": { backgroundColor: "#233044" },
-                    }}
-                    onClick={() => joinGroup(group?.id)}
-                  >
-                    Join
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    )}
-  </AccordionDetails>
-</Accordion>
+                {joinNewGroups?.length > 0 && (
+                  <TableContainer component={Paper}>
+                    <Table>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Group ID</TableCell>
+                          <TableCell>Owner</TableCell>
+                          <TableCell>Email</TableCell>
+                          <TableCell align="center">Actions</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {joinNewGroups.map((group, index) => (
+                          <TableRow key={group.id || index}>
+                            <TableCell>{group?.keycloak_group_id}</TableCell>
+                            <TableCell>{group?.owner_first_name + " " + group?.owner_last_name}</TableCell>
+                            <TableCell>{group.owner_email}</TableCell>
+                            <TableCell align="center">
+                              <Button
+                                variant="contained"
+                                size="small"
+                                color="primary"
+                                sx={{
+                                  backgroundColor: "#233044",
+                                  "&:hover": { backgroundColor: "#233044" },
+                                }}
+                                onClick={() => joinGroup(group?.id)}
+                              >
+                                Join
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                )}
+              </AccordionDetails>
+            </Accordion>
 
 
-            
-           
+
+
 
           </Box>
         </>
