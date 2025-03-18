@@ -12,7 +12,12 @@ import CardDataSpace from "../components/CardDataSpace";
 import TabletAndroidIcon from "@mui/icons-material/TabletAndroid";
 import ReactGA from "react-ga4";
 import { GAactionsDataSpace } from "../utils/GA";
-
+interface ApiResponse {
+  success: boolean;
+  PORT?: number;
+  message?: string;
+  error_code?: number;
+}
 export default function DataSpace() {
   const { keycloak } = useKeycloak();
   const [datasteamSize, setDatastreamSize] = useState<number>(0);
@@ -84,27 +89,53 @@ export default function DataSpace() {
 
   const getNodeRedPort = async () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL;
-    const selectedOthers = localStorage.getItem("selected_others") === "true";
-    const email = selectedOthers
-      ? localStorage.getItem("user_email")
-      : userInfo?.preferred_username;
-
-    if (email) {
-      try {
-        const res = await axios.get(`${backend_url}/node-red?email=${email}`, {
+    if (!backend_url) {
+      toast.error("Backend URL is missing.");
+      return;
+    }
+  
+    const email: string | null =
+      localStorage.getItem("selected_others") === "true"
+        ? localStorage.getItem("user_email")
+        : userInfo?.preferred_username || "";
+    const group_id = localStorage.getItem("group_id");
+  
+    if (!email || !group_id) {
+      // toast.error("User email and group ID are required.");
+      return;
+    }
+  
+    try {
+      const response = await axios.post<ApiResponse>(
+        `${backend_url}/node-red`,
+        {
+          user_email: email,
+          group_id: group_id
+        },
+        {
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`, // ✅ Include Keycloak token
           },
-        });
-        if (res.status === 200 && res.data.PORT) {
-          setNodeRedPort(res.data.PORT);
+          validateStatus: (status) => true,
         }
-      } catch (error) {
-        console.error("Error fetching Node-RED port:", error);
+      );
+  
+      if (response.status === 200 && response.data.success) {
+        setNodeRedPort(response.data.PORT!);
+      } else {
+        toast.error(response.data.message || "Failed to fetch Node-RED port.");
       }
+    } catch (error: any) {
+      if (axios.isAxiosError(error)) {
+        const errorResponse = error.response?.data as ApiResponse;
+        toast.error(errorResponse.message || "An error occurred.");
+      } else {
+        toast.error("An unexpected error occurred.");
+      }
+      console.error("Error fetching Node-RED port:", error);
     }
   };
-
   const asyncGetDevices = async (retryCount = 3) => {
     const backend_url = process.env.REACT_APP_FROST_URL;
     const isDev = process.env.REACT_APP_IS_DEVELOPMENT === "true";
