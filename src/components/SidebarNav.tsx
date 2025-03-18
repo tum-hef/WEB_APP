@@ -73,10 +73,10 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
   const [group_id, setGroup_id] = useState<string | null>(null);
   const userInfo = keycloak?.idTokenParsed;
   const location = useLocation();
+  const token = keycloak?.token;
   const currentUrl = location.pathname;
   const getNodeRedPort = async () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL;
-  
     if (!backend_url) {
       toast.error("Backend URL is missing.");
       return;
@@ -86,43 +86,41 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
       localStorage.getItem("selected_others") === "true"
         ? localStorage.getItem("user_email")
         : userInfo?.preferred_username || "";
+    const group_id = localStorage.getItem("group_id");
   
-    if (!email) {
-      toast.error("User email is missing.");
+    if (!email || !group_id) {
+      // toast.error("User email and group ID are required.");
       return;
     }
   
     try {
-      const response = await axios.get<ApiResponse>(`${backend_url}/node-red?email=${email}`, {
-        headers: {
-          "Content-Type": "application/json",
+      const response = await axios.post<ApiResponse>(
+        `${backend_url}/node-red`,
+        {
+          user_email: email,
+          group_id: group_id
         },
-        validateStatus: (status) => true, // Prevents Axios from throwing for 400/404 errors
-      });
-  
-      if (response.status >= 200 && response.status < 300) {
-        if (response.data.success) {
-          setNodeRedPort(response.data.PORT!);
-        } else {
-          toast.error(response.data.message || "Failed to fetch Node-RED port.");
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`, // ✅ Include Keycloak token
+          },
+          validateStatus: (status) => true,
         }
-      } else if (response.status !== 400) {
-        // Only show toast for non-400 errors
-        toast.error(response.data.message || "Error fetching Node-RED port.");
+      );
+  
+      if (response.status === 200 && response.data.success) {
+        setNodeRedPort(response.data.PORT!);
+      } else {
+        toast.error(response.data.message || "Failed to fetch Node-RED port.");
       }
     } catch (error: any) {
       if (axios.isAxiosError(error)) {
         const errorResponse = error.response?.data as ApiResponse;
-  
-        if (error.response?.status === 500) {
-          toast.error("Internal server error. Please try again later.");
-        } else if (error.response?.status !== 400) {
-          toast.error(errorResponse.message || "An error occurred.");
-        }
+        toast.error(errorResponse.message || "An error occurred.");
       } else {
         toast.error("An unexpected error occurred.");
       }
-  
       console.error("Error fetching Node-RED port:", error);
     }
   };
