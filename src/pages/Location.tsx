@@ -9,6 +9,12 @@ import { MapContainer, Marker, TileLayer } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import LinkCustom from "../components/LinkCustom";
+interface ApiResponse {
+  success: boolean;
+  PORT?: number;
+  message?: string;
+  error_code?: number;
+}
 const Location = () => {
   const { keycloak } = useKeycloak();
   const userInfo = keycloak?.idTokenParsed;
@@ -30,22 +36,48 @@ const Location = () => {
   const fetchFrostPort = async () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL;
     const email =
-    localStorage.getItem("selected_others") === "true"
-      ? localStorage.getItem("user_email")
-      : userInfo?.preferred_username;
-
-    await axios
-      .get(`${backend_url}/frost-server?email=${email}`, {
-        headers: {
-          "Content-Type": "application/json",
+      localStorage.getItem("selected_others") === "true"
+        ? localStorage.getItem("user_email")
+        : userInfo?.preferred_username;
+    const group_id = localStorage.getItem("group_id");
+  
+    if (!email || !group_id) {
+      toast.error("User email and group ID are required.");
+      return;
+    }
+  
+    try {
+      const response = await axios.post<ApiResponse>(
+        `${backend_url}/frost-server`,
+        {
+          user_email: email,
+          group_id: group_id
         },
-      })
-      .then((res) => {
-        if (res.status === 200 && res.data.PORT) {
-          setFrostServerPort(res.data.PORT);
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`, // ✅ Include Keycloak token
+          },
+          validateStatus: (status) => true,
         }
-      });
+      );
+  
+      if (response.status === 200 && response.data.PORT) {
+        setFrostServerPort(response.data.PORT);
+      } else {
+        toast.error(response.data.message || "Failed to fetch Frost Server port.");
+      }
+    } catch (error: any) {
+      if (axios.isAxiosError(error)) {
+        const errorResponse = error.response?.data as ApiResponse;
+        toast.error(errorResponse.message || "An error occurred.");
+      } else {
+        toast.error("An unexpected error occurred.");
+      }
+      console.error("Error fetching Frost Server port:", error);
+    }
   };
+  
 
   const getLocation = async () => {
     try {

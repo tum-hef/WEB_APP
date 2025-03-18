@@ -125,95 +125,99 @@ function StepperStore() {
   const [optionalDatastreamData, setOptionalDatastreamData] =
     useState<boolean>(false);
 
-  const fetchFrostPort = async () => {
-    const backend_url = process.env.REACT_APP_BACKEND_URL;
-    const backend_url_root = process.env.REACT_APP_BACKEND_URL_ROOT; 
-    const isDev = process.env.REACT_APP_IS_DEVELOPMENT === 'true';  
-    const selectedOthers = localStorage.getItem("selected_others") === "true";
-    const email = selectedOthers
-    ? localStorage.getItem("user_email")
-    : userInfo?.preferred_username;
-    await axios
-      .get(`${backend_url}/frost-server?email=${email}`, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
-      .then((res) => {
-        if (res.status === 200 && res.data.PORT) {
-          setFrostServerPort(res.data.PORT); 
-          const url = isDev ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${res.data.PORT}/FROST-Server/v1.0/Datastreams` : `https://${res.data.PORT}-${process.env.FROST_URL}/FROST-Server/v1.0/Things`
-          axios
-            .get(
-              url,
-              {
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: `Bearer ${token}`,
-                },
-              }
-            )
-            .then((result) => {
-              if (result.status === 200 && result.data.value) {
-                console.log(result.data.value);
-                for (let i = 0; i < result.data.value.length; i++) { 
-                  let location_url = isDev ?  `${backend_url_root}:${res.data.PORT}/FROST-Server/v1.0/Things(${result.data.value[i]["@iot.id"]})/Locations` :  `https://${res.data.PORT}-${process.env.FROST_URL}/FROST-Server/v1.0/Things(${result.data.value[i]["@iot.id"]})/Locations`
-                  axios
-                    .get(
-                      location_url,
-                      {
-                        headers: {
-                          "Content-Type": "application/json",
-                          Authorization: `Bearer ${token}`,
-                        },
-                      }
-                    )
-                    .then((res) => {
-                      if (res.status === 200 && res.data.value) {
-                        result.data.value[i].Location = res.data.value[0];
-                        setDevices(result.data.value);
-                      }
-                    })
-                    .catch((err) => {
-                      console.log(err);
-                    });
-                }
-
-                console.log(devices);
-              }
-            })
-            .catch((err) => {
-              console.log(err);
-              toast.error("Error Getting Devices");
-            });
-
-          axios
-            .get(
-              isDev ?   `${backend_url_root}:${res.data.PORT}/FROST-Server/v1.0/ObservedProperties` :   `https://${res.data.PORT}-${process.env.FROST_URL}/FROST-Server/v1.0/ObservedProperties`,
-              {
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: `Bearer ${token}`,
-                },
-              }
-            )
-            .then((res) => {
-              if (res.status === 200 && res.data.value) {
-                console.log(res.data.value);
-                setObservedProperties(res.data.value);
-              }
-            })
-            .catch((err) => {
-              console.log(err);
-              toast.error("Error Getting Measurement Properties");
-            });
+    const fetchFrostPort = async () => {
+      const backend_url = process.env.REACT_APP_BACKEND_URL;
+      const backend_url_root = process.env.REACT_APP_BACKEND_URL_ROOT;
+      const isDev = process.env.REACT_APP_IS_DEVELOPMENT === "true";
+      const selectedOthers = localStorage.getItem("selected_others") === "true";
+      const email = selectedOthers
+        ? localStorage.getItem("user_email")
+        : userInfo?.preferred_username;
+      const group_id = localStorage.getItem("group_id");
+    
+      if (!email || !group_id) {
+        toast.error("User email and group ID are required.");
+        return;
+      }
+    
+      try {
+        const frostResponse = await axios.get(`${backend_url}/frost-server`, {
+          params: { email, group_id }, // ✅ Added `group_id`
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`, // ✅ Included Keycloak token
+          },
+          validateStatus: (status) => true,
+        });
+    
+        if (frostResponse.status !== 200 || !frostResponse.data.PORT) {
+          throw new Error(frostResponse.data.message || "Failed to fetch Frost Server port.");
         }
-      })
-      .catch((err) => {
-        console.log(err);
-        toast.error("Error Getting Frost Server Port");
-      });
-  };
+    
+        setFrostServerPort(frostResponse.data.PORT);
+        const port = frostResponse.data.PORT;
+    
+        const baseUrl = isDev
+          ? `${backend_url_root}:${port}/FROST-Server/v1.0`
+          : `https://${port}-${process.env.FROST_URL}/FROST-Server/v1.0`;
+    
+        const devicesResponse = await axios.get(`${baseUrl}/Datastreams`, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+    
+        if (devicesResponse.status === 200 && devicesResponse.data.value) {
+          console.log(devicesResponse.data.value);
+    
+          for (let i = 0; i < devicesResponse.data.value.length; i++) {
+            const locationUrl = isDev
+              ? `${backend_url_root}:${port}/FROST-Server/v1.0/Things(${devicesResponse.data.value[i]["@iot.id"]})/Locations`
+              : `https://${port}-${process.env.FROST_URL}/FROST-Server/v1.0/Things(${devicesResponse.data.value[i]["@iot.id"]})/Locations`;
+    
+            try {
+              const locationResponse = await axios.get(locationUrl, {
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+              });
+    
+              if (locationResponse.status === 200 && locationResponse.data.value) {
+                devicesResponse.data.value[i].Location = locationResponse.data.value[0];
+                setDevices(devicesResponse.data.value);
+              }
+            } catch (locationError) {
+              console.error("Error fetching location:", locationError);
+            }
+          }
+    
+          console.log(devices);
+        }
+    
+        try {
+          const observedPropsResponse = await axios.get(`${baseUrl}/ObservedProperties`, {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          });
+    
+          if (observedPropsResponse.status === 200 && observedPropsResponse.data.value) {
+            console.log(observedPropsResponse.data.value);
+            setObservedProperties(observedPropsResponse.data.value);
+          }
+        } catch (observedPropsError) {
+          console.error("Error fetching observed properties:", observedPropsError);
+          toast.error("Error Getting Measurement Properties");
+        }
+      } catch (error: any) {
+        console.error("Error fetching Frost Server Port:", error);
+        toast.error(error.message || "Error Getting Frost Server Port");
+      }
+    };
+    
 
   const handleOnChangeExistingDevice = (
     event: any,
