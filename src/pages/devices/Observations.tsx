@@ -53,14 +53,18 @@ const Observations = () => {
     localStorage.getItem("selected_others") === "true"
       ? localStorage.getItem("user_email")
       : userInfo?.preferred_username;
-
+      const group_id = localStorage.getItem("group_id");
     await axios
-      .get(`${backend_url}/frost-server?email=${email}`, {
+    .post(
+      `${backend_url}/frost-server`,
+      { user_email: email, group_id: group_id }, // ✅ Adding group_id to the request body
+      {
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`, // ✅ Added Authorization header
         },
-      })
-      .then((res) => {
+      }
+    ).then((res) => {
         if (res.status === 200 && res.data.PORT) {
           setFrostServerPort(res.data.PORT);
         }

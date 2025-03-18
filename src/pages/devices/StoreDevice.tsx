@@ -20,6 +20,7 @@ import Swal from "sweetalert2";
 function StoreDevice() {
   const { keycloak } = useKeycloak();
   const userInfo = keycloak?.idTokenParsed;
+  const token = keycloak?.token;
   const [error, setError] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [frostServerPort, setFrostServerPort] = useState<number | null>(null);
@@ -102,16 +103,18 @@ function StoreDevice() {
       ? localStorage.getItem("user_email")
       : userInfo?.preferred_username;
 
-
+      const group_id = localStorage.getItem("group_id");
     try {
-      const response = await axios.get(
-        `${backend_url}/frost-server?email=${email}`,
+      const response = await axios.post(
+        `${backend_url}/frost-server`,
+        { user_email: email, group_id: group_id }, // ✅ Adding group_id to the request body
         {
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`, // ✅ Added Authorization header
           },
         }
-      );
+      );;
 
       if (response.status === 200 && response.data.PORT) {
         setFrostServerPort(response.data.PORT);

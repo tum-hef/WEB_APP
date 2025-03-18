@@ -21,6 +21,7 @@ function StoreSensor() {
   const [error, setError] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [frostServerPort, setFrostServerPort] = useState<number | null>(null);
+  const token = keycloak?.token;
   const formik = useFormik({
     initialValues: sensor_initial_values,
     validationSchema: sensor_validationSchema,
@@ -85,6 +86,7 @@ function StoreSensor() {
   });
   const fetchData = async () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL;
+    const group_id = localStorage.getItem("group_id");
     const email =
     localStorage.getItem("selected_others") === "true"
       ? localStorage.getItem("user_email")
@@ -92,11 +94,13 @@ function StoreSensor() {
 
 
     try {
-      const response = await axios.get(
-        `${backend_url}/frost-server?email=${email}`,
+      const response = await axios.post(
+        `${backend_url}/frost-server`,
+        { user_email: email, group_id: group_id }, // ✅ Adding group_id to the request body
         {
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`, // ✅ Added Authorization header
           },
         }
       );

@@ -46,21 +46,37 @@ const ListDatastream = () => {
 
   const fetchFrostPort = async () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL;
-   const email= localStorage.getItem("selected_others") === "true"
-    ? localStorage.getItem("user_email")
-    : userInfo?.preferred_username;
-    await axios
-      .get(`${backend_url}/frost-server?email=${email}`, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
-      .then((res) => {
-        if (res.status === 200 && res.data.PORT) {
-          setFrostServerPort(res.data.PORT);
+    const email = localStorage.getItem("selected_others") === "true"
+      ? localStorage.getItem("user_email")
+      : userInfo?.preferred_username;
+    const group_id = localStorage.getItem("group_id");
+  
+    if (!email || !group_id) {
+      toast.error("User email and group ID are required.");
+      return;
+    }
+  
+    try {
+      const res = await axios.post(
+        `${backend_url}/frost-server`,
+        { user_email: email, group_id: group_id }, // ✅ Adding group_id to the request body
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`, // ✅ Added Authorization header
+          },
         }
-      });
+      );
+  
+      if (res.status === 200 && res.data.PORT) {
+        setFrostServerPort(res.data.PORT);
+      }
+    } catch (error) {
+      console.error("Error fetching Frost Server Port:", error);
+      toast.error("An error occurred while fetching the Frost Server port.");
+    }
   };
+  
 
   useEffect(() => {
     ReactGA.event({
