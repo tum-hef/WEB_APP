@@ -92,95 +92,138 @@ export default function DashboardPage() {
   const fetchData = async () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL;
     const email = localStorage.getItem("selected_others") === "true"
-    ? localStorage.getItem("user_email")
-    : userInfo?.preferred_username;
-    await axios
-      .get(`${backend_url}/frost-server?email=${email}`, {
-        headers: {
-          "Content-Type": "application/json",
+      ? localStorage.getItem("user_email")
+      : userInfo?.preferred_username;
+    const group_id = localStorage.getItem("group_id");
+  
+    if (!email || !group_id) {
+      toast.error("User email and group ID are required.");
+      return;
+    }
+  
+    try {
+      const response = await axios.post<ApiResponse>(
+        `${backend_url}/frost-server`,
+        {
+          user_email: email,
+          group_id: group_id
         },
-      })
-      .then((res) => {
-        if (res.status === 200 && res.data.PORT) {
-          setFrostServerPort(res.data.PORT);
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`, // ✅ Include Keycloak token
+          },
+          validateStatus: (status) => true,
         }
-      });
+      );
+  
+      if (response.status === 200 && response.data.success) {
+        setFrostServerPort(response.data.PORT!);
+      } else {
+        toast.error(response.data.message || "Failed to fetch Frost Server port.");
+      }
+    } catch (error: any) {
+      if (axios.isAxiosError(error)) {
+        const errorResponse = error.response?.data as ApiResponse;
+        toast.error(errorResponse.message || "An error occurred.");
+      } else {
+        toast.error("An unexpected error occurred.");
+      }
+      console.error("Error fetching Frost Server port:", error);
+    }
   };
+  
   useEffect(() => {
     const groupId = localStorage.getItem("group_id");
     const selectedOthers = localStorage.getItem("selected_others");
   
-    if (frostServerPort !== null && !hasFetched) {
-      fetchGroups();
-      getNodeRedPort();
-      asyncGetDevices();
-      setHasFetched(true); // Set this to true so it doesn't run again
-      setLoading(false);
-    } else if (frostServerPort === null) {
-      fetchData();
-      setLoading(false);
-    }
+    const fetchDataAndServices = async () => {
+      try {
+        if (!hasFetched) {
+          setLoading(true);
   
-    // Refetch group data when group selection changes
+          // Fetch groups first
+          await fetchGroups();
+  
+          // Fetch Node-RED port and Frost Server port
+          await getNodeRedPort();
+          await fetchData();
+  
+          // Fetch devices if Frost Server is available
+          if (frostServerPort) {
+            await asyncGetDevices();
+          }
+  
+          setHasFetched(true); // Prevents unnecessary re-fetching
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        toast.error("An error occurred while loading data.");
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+    fetchDataAndServices();
+  
+    // Re-fetch groups when user switches group
     if (groupId && selectedOthers === "true") {
       fetchGroups();
     }
   }, [frostServerPort, hasFetched]);
   
+  
 
- const getNodeRedPort = async () => {
-  const backend_url = process.env.REACT_APP_BACKEND_URL;
-
-  if (!backend_url) {
-    toast.error("Backend URL is missing.");
-    return;
-  }
-
-  const email: string | null =
-    localStorage.getItem("selected_others") === "true"
-      ? localStorage.getItem("user_email")
-      : userInfo?.preferred_username || "";
-
-  if (!email) {
-    toast.error("User email is missing.");
-    return;
-  }
-
-  try {
-    const response = await axios.get<ApiResponse>(`${backend_url}/node-red?email=${email}`, {
-      headers: {
-        "Content-Type": "application/json",
-      },
-      validateStatus: (status) => true, // ✅ Prevents Axios from throwing for 400/404 errors
-    });
-
-    if (response.status >= 200 && response.status < 300) {
-      if (response.data.success) {
+  const getNodeRedPort = async () => {
+    const backend_url = process.env.REACT_APP_BACKEND_URL;
+    if (!backend_url) {
+      toast.error("Backend URL is missing.");
+      return;
+    }
+  
+    const email: string | null =
+      localStorage.getItem("selected_others") === "true"
+        ? localStorage.getItem("user_email")
+        : userInfo?.preferred_username || "";
+    const group_id = localStorage.getItem("group_id");
+  
+    if (!email || !group_id) {
+      toast.error("User email and group ID are required.");
+      return;
+    }
+  
+    try {
+      const response = await axios.post<ApiResponse>(
+        `${backend_url}/node-red`,
+        {
+          user_email: email,
+          group_id: group_id
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`, // ✅ Include Keycloak token
+          },
+          validateStatus: (status) => true,
+        }
+      );
+  
+      if (response.status === 200 && response.data.success) {
         setNodeRedPort(response.data.PORT!);
       } else {
-        // toast.error(response.data.message || "Failed to fetch Node-RED port.");
+        toast.error(response.data.message || "Failed to fetch Node-RED port.");
       }
-    } else {
-      toast.error(response.data.message || "Error fetching Node-RED port.");
-    }
-  } catch (error: any) {
-    if (axios.isAxiosError(error)) {
-      const errorResponse = error.response?.data as ApiResponse;
-
-      if (error.response?.status === 400) {
-        // toast.error(errorResponse.message || "Bad request. Please check your input.");
-      } else if (error.response?.status === 500) {
-        toast.error("Internal server error. Please try again later.");
-      } else {
+    } catch (error: any) {
+      if (axios.isAxiosError(error)) {
+        const errorResponse = error.response?.data as ApiResponse;
         toast.error(errorResponse.message || "An error occurred.");
+      } else {
+        toast.error("An unexpected error occurred.");
       }
-    } else {
-      toast.error("An unexpected error occurred.");
+      console.error("Error fetching Node-RED port:", error);
     }
-
-    console.error("Error fetching Node-RED port:", error);
-  }
-};
+  };
+  
   const asyncGetDevices = async () => {
     try {
       const backend_url = process.env.REACT_APP_FROST_URL;  
