@@ -34,6 +34,12 @@ const steps = [
   "Summary",
 ];
 
+interface ApiResponse {
+  success: boolean;
+  PORT?: number;
+  message?: string;
+  error_code?: number;
+}
 const getValidationSchemaPerStep = (step: number) => {
   switch (step) {
     case 0: {
@@ -141,14 +147,20 @@ function StepperStore() {
       }
     
       try {
-        const frostResponse = await axios.get(`${backend_url}/frost-server`, {
-          params: { email, group_id }, // ✅ Added `group_id`
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`, // ✅ Included Keycloak token
+        const frostResponse = await await axios.post<ApiResponse>(
+          `${backend_url}/frost-server`,
+          {
+            user_email: email,
+            group_id: group_id
           },
-          validateStatus: (status) => true,
-        });
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`, // ✅ Include Keycloak token
+            },
+            validateStatus: (status) => true,
+          }
+        );;
     
         if (frostResponse.status !== 200 || !frostResponse.data.PORT) {
           throw new Error(frostResponse.data.message || "Failed to fetch Frost Server port.");
