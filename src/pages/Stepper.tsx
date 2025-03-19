@@ -171,7 +171,7 @@ function StepperStore() {
     
         const baseUrl = isDev
           ? `${backend_url_root}:${port}/FROST-Server/v1.0`
-          : `https://${port}-${process.env.FROST_URL}/FROST-Server/v1.0`;
+          : `https://${port}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0`;
     
         const devicesResponse = await axios.get(`${baseUrl}/Datastreams`, {
           headers: {
@@ -186,7 +186,7 @@ function StepperStore() {
           for (let i = 0; i < devicesResponse.data.value.length; i++) {
             const locationUrl = isDev
               ? `${backend_url_root}:${port}/FROST-Server/v1.0/Things(${devicesResponse.data.value[i]["@iot.id"]})/Locations`
-              : `https://${port}-${process.env.FROST_URL}/FROST-Server/v1.0/Things(${devicesResponse.data.value[i]["@iot.id"]})/Locations`;
+              : `https://${port}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Things(${devicesResponse.data.value[i]["@iot.id"]})/Locations`;
     
             try {
               const locationResponse = await axios.get(locationUrl, {
@@ -197,7 +197,8 @@ function StepperStore() {
               });
     
               if (locationResponse.status === 200 && locationResponse.data.value) {
-                devicesResponse.data.value[i].Location = locationResponse.data.value[0];
+                devicesResponse.data.value[i].Location = locationResponse.data.value[0]; 
+                console.log("devicesResponse",devicesResponse)
                 setDevices(devicesResponse.data.value);
               }
             } catch (locationError) {
@@ -280,6 +281,10 @@ function StepperStore() {
     setLoading(false);
   }, []);
 
+  useEffect(()=>{
+    console.log("devices",devices)
+
+  },[devices])
   return (
     <>
       <Dashboard>
