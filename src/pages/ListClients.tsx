@@ -40,6 +40,8 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle"; // Approve Icon
 import CancelIcon from "@mui/icons-material/Cancel"; // Reject Icon
 import CloseIcon from "@mui/icons-material/Close"; // Close Popover Ico
 import RemoveCircleIcon from "@mui/icons-material/RemoveCircle"; // Remove Member Icon
+import Tooltip from "@mui/material/Tooltip";
+import HelpOutlineIcon from "@mui/icons-material/HelpOutline"
 import { useFormik } from "formik";
 import * as Yup from "yup";
 
@@ -515,6 +517,11 @@ export default function ListClients() {
                 id="panel2-header"
               >
                 <Typography variant="h5">Own and Joined Projects</Typography>
+
+                {/* Question Mark Help Icon */}
+                <Tooltip title="Here you can see all the projects you own or have joined. You also have the option to view members, approve/reject pending requests on the projects that you owned, and leave the other joined project.">
+                  <HelpOutlineIcon sx={{ marginLeft: 1, fontSize: "1.4rem", color: "#555" }} />
+                </Tooltip>
               </AccordionSummary>
               <AccordionDetails>
                 {myGroups?.length === 0 ? (
@@ -699,6 +706,9 @@ export default function ListClients() {
                 id="panel3-header"
               >
                 <Typography variant="h5">Create New Project</Typography>
+                <Tooltip title="Here you can create a new project by providing a project name and description. You can create maximum 2 projects.">
+                  <HelpOutlineIcon sx={{ marginLeft: 1, fontSize: "1.4rem", color: "#555" }} />
+                </Tooltip>
               </AccordionSummary>
               <AccordionDetails>
                 <Box component="form" onSubmit={formikCreateProject.handleSubmit} sx={{ width: "100%" }}>
@@ -750,6 +760,9 @@ export default function ListClients() {
             <Accordion defaultExpanded={true}>
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <Typography variant="h5">Join Existing Project</Typography>
+                <Tooltip title="Here you can search for a project by its Group ID and join it.">
+                  <HelpOutlineIcon sx={{ marginLeft: 1, fontSize: "1.4rem", color: "#555" }} />
+                </Tooltip>
               </AccordionSummary>
               <AccordionDetails>
                 <Box component="form" onSubmit={formik.handleSubmit} sx={{ width: "100%" }}>
