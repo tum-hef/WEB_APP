@@ -147,8 +147,11 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
   }, [nodeRedPort]);
 
   const handleLogout = () => {
-    localStorage.removeItem("group_id");
-    keycloak.logout();
+    console.log("Logging out...");
+    localStorage.clear();
+    keycloak.logout({ redirectUri: window.location.origin }).then(() => {
+      console.log("Logout successful");
+    }).catch(err => console.error("Logout failed", err));
   };
   const theme = useTheme();
   const matches = useMediaQuery(theme.breakpoints.up("md"));

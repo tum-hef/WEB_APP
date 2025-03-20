@@ -22,9 +22,11 @@ export const DrawerSideBar = () => {
   const { keycloak } = useKeycloak();
 
   const handleLogout = () => {
-    localStorage.clear()
-    keycloak.logout();
-    
+    console.log("Logging out...");
+    localStorage.clear();
+    keycloak.logout({ redirectUri: window.location.origin }).then(() => {
+      console.log("Logout successful");
+    }).catch(err => console.error("Logout failed", err));
   };
   return (
     <div>
