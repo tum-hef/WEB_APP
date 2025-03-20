@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Form, Formik } from "formik";
+import { FieldArray, Form, Formik } from "formik";
 import Dashboard from "../components/DashboardComponent";
 import * as yup from "yup";
 import CreateOutlinedIcon from "@mui/icons-material/CreateOutlined";
@@ -108,10 +108,21 @@ const getValidationSchemaPerStep = (step: number) => {
           }),
       });
 
-    case 2:
-      return yup.object({
-        datastream_name: yup.string().required("Name is required"),
-      });
+      case 2:
+  return yup.object({
+    datastreams: yup.array().of(
+      yup.object({
+        name: yup.string().required("Name is required"),
+        description: yup.string(), // Optional
+        observationType: yup.string(), // Optional
+        unitOfMeasurement: yup.object({
+          name: yup.string(), // Optional
+          symbol: yup.string(), // Optional
+          definition: yup.string(), // Optional
+        }),
+      })
+    ),
+  });
   }
 };
 
@@ -131,105 +142,105 @@ function StepperStore() {
   const [optionalDatastreamData, setOptionalDatastreamData] =
     useState<boolean>(false);
 
-    const fetchFrostPort = async () => {
-      const backend_url = process.env.REACT_APP_BACKEND_URL;
-      const backend_url_root = process.env.REACT_APP_BACKEND_URL_ROOT;
-      const isDev = process.env.REACT_APP_IS_DEVELOPMENT === "true";
-      const selectedOthers = localStorage.getItem("selected_others") === "true";
-      const email = selectedOthers
-        ? localStorage.getItem("user_email")
-        : userInfo?.preferred_username;
-      const group_id = localStorage.getItem("group_id");
-    
-      if (!email || !group_id) {
-        toast.error("User email and group ID are required.");
-        return;
-      }
-    
-      try {
-        const frostResponse = await await axios.post<ApiResponse>(
-          `${backend_url}/frost-server`,
-          {
-            user_email: email,
-            group_id: group_id
+  const fetchFrostPort = async () => {
+    const backend_url = process.env.REACT_APP_BACKEND_URL;
+    const backend_url_root = process.env.REACT_APP_BACKEND_URL_ROOT;
+    const isDev = process.env.REACT_APP_IS_DEVELOPMENT === "true";
+    const selectedOthers = localStorage.getItem("selected_others") === "true";
+    const email = selectedOthers
+      ? localStorage.getItem("user_email")
+      : userInfo?.preferred_username;
+    const group_id = localStorage.getItem("group_id");
+
+    if (!email || !group_id) {
+      toast.error("User email and group ID are required.");
+      return;
+    }
+
+    try {
+      const frostResponse = await await axios.post<ApiResponse>(
+        `${backend_url}/frost-server`,
+        {
+          user_email: email,
+          group_id: group_id
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`, // ✅ Include Keycloak token
           },
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`, // ✅ Include Keycloak token
-            },
-            validateStatus: (status) => true,
-          }
-        );;
-    
-        if (frostResponse.status !== 200 || !frostResponse.data.PORT) {
-          throw new Error(frostResponse.data.message || "Failed to fetch Frost Server port.");
+          validateStatus: (status) => true,
         }
-    
-        setFrostServerPort(frostResponse.data.PORT);
-        const port = frostResponse.data.PORT;
-    
-        const baseUrl = isDev
-          ? `${backend_url_root}:${port}/FROST-Server/v1.0`
-          : `https://${port}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0`;
-    
-        const devicesResponse = await axios.get(`${baseUrl}/Datastreams`, {
+      );;
+
+      if (frostResponse.status !== 200 || !frostResponse.data.PORT) {
+        throw new Error(frostResponse.data.message || "Failed to fetch Frost Server port.");
+      }
+
+      setFrostServerPort(frostResponse.data.PORT);
+      const port = frostResponse.data.PORT;
+
+      const baseUrl = isDev
+        ? `${backend_url_root}:${port}/FROST-Server/v1.0`
+        : `https://${port}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0`;
+
+      const devicesResponse = await axios.get(`${baseUrl}/Datastreams`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (devicesResponse.status === 200 && devicesResponse.data.value) {
+        console.log(devicesResponse.data.value);
+
+        for (let i = 0; i < devicesResponse.data.value.length; i++) {
+          const locationUrl = isDev
+            ? `${backend_url_root}:${port}/FROST-Server/v1.0/Things(${devicesResponse.data.value[i]["@iot.id"]})/Locations`
+            : `https://${port}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Things(${devicesResponse.data.value[i]["@iot.id"]})/Locations`;
+
+          try {
+            const locationResponse = await axios.get(locationUrl, {
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+            });
+
+            if (locationResponse.status === 200 && locationResponse.data.value) {
+              devicesResponse.data.value[i].Location = locationResponse.data.value[0];
+              setDevices(devicesResponse.data.value);
+            }
+          } catch (locationError) {
+            console.error("Error fetching location:", locationError);
+          }
+        }
+
+        console.log(devices);
+      }
+
+      try {
+        const observedPropsResponse = await axios.get(`${baseUrl}/ObservedProperties`, {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
         });
-    
-        if (devicesResponse.status === 200 && devicesResponse.data.value) {
-          console.log(devicesResponse.data.value);
-    
-          for (let i = 0; i < devicesResponse.data.value.length; i++) {
-            const locationUrl = isDev
-              ? `${backend_url_root}:${port}/FROST-Server/v1.0/Things(${devicesResponse.data.value[i]["@iot.id"]})/Locations`
-              : `https://${port}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Things(${devicesResponse.data.value[i]["@iot.id"]})/Locations`;
-    
-            try {
-              const locationResponse = await axios.get(locationUrl, {
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: `Bearer ${token}`,
-                },
-              });
-    
-              if (locationResponse.status === 200 && locationResponse.data.value) {
-                devicesResponse.data.value[i].Location = locationResponse.data.value[0];
-                setDevices(devicesResponse.data.value);
-              }
-            } catch (locationError) {
-              console.error("Error fetching location:", locationError);
-            }
-          }
-    
-          console.log(devices);
+
+        if (observedPropsResponse.status === 200 && observedPropsResponse.data.value) {
+          console.log(observedPropsResponse.data.value);
+          setObservedProperties(observedPropsResponse.data.value);
         }
-    
-        try {
-          const observedPropsResponse = await axios.get(`${baseUrl}/ObservedProperties`, {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          });
-    
-          if (observedPropsResponse.status === 200 && observedPropsResponse.data.value) {
-            console.log(observedPropsResponse.data.value);
-            setObservedProperties(observedPropsResponse.data.value);
-          }
-        } catch (observedPropsError) {
-          console.error("Error fetching observed properties:", observedPropsError);
-          toast.error("Error Getting Measurement Properties");
-        }
-      } catch (error: any) {
-        console.error("Error fetching Frost Server Port:", error);
-        toast.error(error.message || "Error Getting Frost Server Port");
+      } catch (observedPropsError) {
+        console.error("Error fetching observed properties:", observedPropsError);
+        toast.error("Error Getting Measurement Properties");
       }
-    };
-    
+    } catch (error: any) {
+      console.error("Error fetching Frost Server Port:", error);
+      toast.error(error.message || "Error Getting Frost Server Port");
+    }
+  };
+
 
   const handleOnChangeExistingDevice = (
     event: any,
@@ -322,12 +333,18 @@ function StepperStore() {
               observeProperty_description: "",
 
               // Third Step
-              datastream_name: "",
-              datastram_description: "",
-              datastream_observation_type: "",
-              datastream_unit_of_measurement_name: "",
-              datastream_unit_of_measurement_symbol: "",
-              datastream_unit_of_measurement_definition: "",
+              datastreams: [
+                {
+                  name: "",
+                  description: "",
+                  observationType: "",
+                  unitOfMeasurement: {
+                    name: "",
+                    symbol: "",
+                    definition: ""
+                  }
+                }
+              ]
             }}
             validationSchema={getValidationSchemaPerStep(activeStep)}
             onSubmit={async (values: any, helpers: any) => { 
@@ -336,11 +353,12 @@ function StepperStore() {
                 setLoading(true);
                 helpers.resetForm();
                 setActiveStep(0);
+                
                 try {
                   // 1: Store the Device 
-                 
                   const response_post_device = await axios.post(
-                    isDev ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Things`  :    `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Things`,
+                    isDev ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Things`  
+                         : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Things`,
                     {
                       name: values.device_name,
                       description: values.device_description,
@@ -351,10 +369,7 @@ function StepperStore() {
                           encodingType: "application/vnd.geo+json",
                           location: {
                             type: "Point",
-                            coordinates: [
-                              values.device_longitude,
-                              values.device_latitude,
-                            ],
+                            coordinates: [values.device_longitude, values.device_latitude],
                           },
                         },
                       ],
@@ -366,17 +381,19 @@ function StepperStore() {
                       },
                     }
                   );
-
-                  if (!values.observedProperty_existing_id) {
-                    // 2: Store the Observed Property
+            
+                  // 2: Store the Observed Property (if not existing)
+                  let observed_property_id = values.observedProperty_existing_id;
+                  
+                  if (!observed_property_id) {
                     const response_post_observed_property = await axios.post(
-                     isDev ?  `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/ObservedProperties` :  `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/ObservedProperties`,
+                      isDev ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/ObservedProperties` 
+                           : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/ObservedProperties`,
                       {
                         name: values.observeProperty_name,
                         definition: values.observeProperty_definition,
                         description: values.observeProperty_description,
                       },
-
                       {
                         headers: {
                           "Content-Type": "application/json",
@@ -384,16 +401,26 @@ function StepperStore() {
                         },
                       }
                     );
+            
+                    // Get the ID of the newly created Observed Property
+                    const response_get_observed_property = await axios.get(
+                      isDev ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/ObservedProperties?$filter=name eq '${encodeURIComponent(values.observeProperty_name)}'`
+                           : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/ObservedProperties?$filter=name eq '${encodeURIComponent(values.observeProperty_name)}'`,
+                      {
+                        headers: {
+                          "Content-Type": "application/json",
+                          Authorization: `Bearer ${keycloak?.token}`,
+                        },
+                      }
+                    );
+            
+                    observed_property_id = response_get_observed_property.data.value[0]["@iot.id"];
                   }
-
+            
                   // 3: Get the ID of the Device
-                  let respons_get_devi_url = isDev ?  `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Things?$filter=name%20eq%20%27${encodeURIComponent(
-                      values.device_name
-                    )}%27`  : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Things?$filter=name%20eq%20%27${encodeURIComponent(
-                      values.device_name
-                    )}%27` 
                   const response_get_device = await axios.get(
-                    respons_get_devi_url,
+                    isDev ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Things?$filter=name eq '${encodeURIComponent(values.device_name)}'`
+                         : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Things?$filter=name eq '${encodeURIComponent(values.device_name)}'`,
                     {
                       headers: {
                         "Content-Type": "application/json",
@@ -401,72 +428,18 @@ function StepperStore() {
                       },
                     }
                   );
-
-                  const device_id =
-                    response_get_device.data.value[0]["@iot.id"];
-
-                  // 4: Get the ID of the Observed Property
-
-                  let observed_property_id = null;
-
-                  if (!values.observedProperty_existing_id) { 
-                 let     response_get_observed_property_url = isDev  ?    `${
-                      process.env.REACT_APP_BACKEND_URL_ROOT
-                    }:${frostServerPort}/FROST-Server/v1.0/ObservedProperties?$filter=name%20eq%20%27${encodeURIComponent(
-                      values.observeProperty_name
-                    )}%27` :    `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/ObservedProperties?$filter=name%20eq%20%27${encodeURIComponent(
-                      values.observeProperty_name
-                    )}%27`
-                    const response_get_observed_property = await axios.get(
-                      response_get_observed_property_url,
-                      {
-                        headers: {
-                          "Content-Type": "application/json",
-                          Authorization: `Bearer ${keycloak?.token}`,
-                        },
-                      }
-                    );
-                    observed_property_id =
-                      response_get_observed_property.data.value[0]["@iot.id"];
-                  } else {
-                    observed_property_id = values.observedProperty_existing_id;
-                  }
-
-                  // 5: Store the Sensor
-                  let name_of_the_sensor = null;
-                  let description_of_the_sensor = null;
-                  let metadata_of_the_sensor = null;
-
-                  if (values.observedProperty_existing_id) {
-                    // 5.1: Get the name of the Observed Property from the ID
-                    const response_get_observed_property = await axios.get(
-                    isDev ?   `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/ObservedProperties(${values.observedProperty_existing_id})` : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/ObservedProperties(${values.observedProperty_existing_id})`,
-                      {
-                        headers: {
-                          "Content-Type": "application/json",
-                          Authorization: `Bearer ${keycloak?.token}`,
-                        },
-                      }
-                    );
-
-                    const observed_property_name =
-                      response_get_observed_property.data.name;
-
-                    name_of_the_sensor = `sensor_${values.device_name}_${observed_property_name}`;
-                    description_of_the_sensor = `Sensor for ${values.device_name} and ${observed_property_name}`;
-                    metadata_of_the_sensor = `Sensor MetaData for ${values.device_name} and ${observed_property_name}`;
-                  } else {
-                    name_of_the_sensor = `sensor_${values.device_name}_${values.observeProperty_name}`;
-                    description_of_the_sensor = `Sensor for ${values.device_name} and ${values.observeProperty_name}`;
-                    metadata_of_the_sensor = `Sensor MetaData for ${values.device_name} and ${values.observeProperty_name}`;
-                  }
-
+            
+                  const device_id = response_get_device.data.value[0]["@iot.id"];
+            
+                  // 4: Store the Sensor
+                  const sensor_name = `sensor_${values.device_name}_${values.observeProperty_name}`;
                   const response_post_sensor = await axios.post(
-                  isDev ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Sensors` :   `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Sensors`,
+                    isDev ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Sensors` 
+                         : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Sensors`,
                     {
-                      name: name_of_the_sensor,
-                      description: description_of_the_sensor,
-                      metadata: metadata_of_the_sensor,
+                      name: sensor_name,
+                      description: `Sensor for ${values.device_name} and ${values.observeProperty_name}`,
+                      metadata: `Sensor MetaData for ${values.device_name} and ${values.observeProperty_name}`,
                       encodingType: "application/pdf",
                     },
                     {
@@ -476,17 +449,11 @@ function StepperStore() {
                       },
                     }
                   );
-
-                  // 6: Get the ID of the Sensor
-
+            
+                  // 5: Get the Sensor ID
                   const response_get_sensor = await axios.get(
-                   isDev ?   `${
-                    process.env.REACT_APP_BACKEND_URL_ROOT
-                  }:${frostServerPort}/FROST-Server/v1.0/Sensors?$filter=name%20eq%20%27${encodeURIComponent(
-                    name_of_the_sensor
-                  )}%27` : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Sensors?$filter=name%20eq%20%27${encodeURIComponent(
-                      name_of_the_sensor
-                    )}%27`,
+                    isDev ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Sensors?$filter=name eq '${encodeURIComponent(sensor_name)}'`
+                         : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Sensors?$filter=name eq '${encodeURIComponent(sensor_name)}'`,
                     {
                       headers: {
                         "Content-Type": "application/json",
@@ -494,84 +461,80 @@ function StepperStore() {
                       },
                     }
                   );
-
-                  const sensor_id =
-                    response_get_sensor.data.value[0]["@iot.id"];
-
-                  // Get the current date and time
+            
+                  const sensor_id = response_get_sensor.data.value[0]["@iot.id"];
+            
+                  // Get current timestamp in the correct timezone
                   const currentDate = new Date();
-
-                  // Set the target time zone to Europe/Rome
                   const targetTimeZone = "Europe/Rome";
-
-                  // Convert the current date to the local time of Rome
                   const localDate = utcToZonedTime(currentDate, targetTimeZone);
-
-                  // Format the local date
-                  const formattedDate = format(
-                    localDate,
-                    "yyyy-MM-dd'T'HH:mm:ss.SS'Z'"
-                  );
-
-                  const phenphenomenonTimeFormated = `${formattedDate}/${formattedDate}`;
-
-                  // 7: Store the Datastream
-                  const response_post_datastream = await axios.post(
-                  isDev  ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Datastreams` :  `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Datastreams`,
-                    {
-                      name: values.datastream_name,
-                      unitOfMeasurement: {
-                        name: values.datastream_unit_of_measurement_name,
-                        symbol: values.datastream_unit_of_measurement_symbol,
-                        definition:
-                          values.datastream_unit_of_measurement_definition,
-                      },
-                      Thing: {
-                        "@iot.id": device_id,
-                      },
-                      description: values.datastram_description,
-                      Sensor: {
-                        "@iot.id": sensor_id,
-                      },
-                      ObservedProperty: {
-                        "@iot.id": observed_property_id,
-                      },
-                      observationType: values.datastream_observation_type,
-                      phenomenonTime: phenphenomenonTimeFormated,
-                    },
-                    {
-                      headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${keycloak?.token}`,
-                      },
+                  const formattedDate = format(localDate, "yyyy-MM-dd'T'HH:mm:ss.SS'Z'");
+                  const phenomenonTimeFormatted = `${formattedDate}/${formattedDate}`;
+            
+                  // 6: Bulk Create Datastreams
+                  if (sensor_id && device_id && observed_property_id) {
+                    const datastreamPromises = values.datastreams.map(async (datastream:any) => {
+                      return axios.post(
+                        isDev ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Datastreams`
+                             : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Datastreams`,
+                        {
+                          name: datastream.name,
+                          unitOfMeasurement: {
+                            name: datastream.unitOfMeasurement.name,
+                            symbol: datastream.unitOfMeasurement.symbol,
+                            definition: datastream.unitOfMeasurement.definition,
+                          },
+                          Thing: {
+                            "@iot.id": device_id,
+                          },
+                          description: datastream.description,
+                          Sensor: {
+                            "@iot.id": sensor_id,
+                          },
+                          ObservedProperty: {
+                            "@iot.id": observed_property_id,
+                          },
+                          observationType: datastream.observationType,
+                          phenomenonTime: phenomenonTimeFormatted,
+                        },
+                        {
+                          headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${keycloak?.token}`,
+                          },
+                        }
+                      );
+                    });
+            
+                    try {
+                      const responses = await Promise.all(datastreamPromises);
+                      if (responses.every((response) => response.status === 201)) {
+                        Swal.fire({
+                          icon: "success",
+                          title: "Success!",
+                          text: `${responses.length} Datastreams created successfully!`,
+                        });
+                      } else {
+                        Swal.fire({
+                          icon: "error",
+                          title: "Oops...",
+                          text: "Some datastreams failed to create!",
+                        });
+                      }
+                    } catch (error) {
+                      Swal.fire({
+                        icon: "error",
+                        title: "Oops...",
+                        text: "Something went wrong! Some datastreams were not created.",
+                      });
                     }
-                  );
-
-                  if (
-                    sensor_id &&
-                    device_id &&
-                    observed_property_id &&
-                    response_post_device.status === 201 &&
-                    response_post_sensor.status === 201 &&
-                    response_post_datastream.status === 201
-                  ) {
-                    Swal.fire({
-                      icon: "success",
-                      title: "Success!",
-                      text: "Device, Measurement Property, Sensor and Datastream created!",
-                    });
-                  } else {
-                    Swal.fire({
-                      icon: "error",
-                      title: "Oops...",
-                      text: "Something went wrong! Device, Measurement Property, Sensor and Datastream not created!",
-                    });
                   }
+                  
                 } catch (error) {
                   Swal.fire({
                     icon: "error",
                     title: "Oops...",
-                    text: "Something went wrong! Device, Measurement Property, Sensor and Datastream not created!",
+                    text: "Something went wrong! Device, Sensor, or Datastreams were not created!",
                   });
                 }
                 setLoading(false);
@@ -580,6 +543,7 @@ function StepperStore() {
               }
               helpers.setSubmitting(false);
             }}
+            
           >
             {({
               isSubmitting,
@@ -662,7 +626,7 @@ function StepperStore() {
                                 label="Select Existing Device"
                                 error={Boolean(
                                   touched.device_existing_id &&
-                                    errors.device_existing_id
+                                  errors.device_existing_id
                                 )}
                                 InputLabelProps={{ shrink: true }}
                                 helperText={
@@ -986,192 +950,233 @@ function StepperStore() {
 
                   {/* DataStream Step */}
                   {activeStep === 2 && (
-                    <Grid container spacing={2}>
-                      <Grid item xs={12} md={6}>
-                        <TextField
-                          fullWidth
-                          required
-                          label="Datastream Name"
-                          name="datastream_name"
-                          onChange={handleChange}
-                          value={values.datastream_name}
-                          variant="outlined"
-                          error={
-                            touched.datastream_name &&
-                            Boolean(errors.datastream_name)
-                          }
-                          helperText={
-                            (touched.datastream_name &&
-                              errors.datastream_name) ||
-                            "Datastream Name Is Required"
-                          }
-                        />
-                      </Grid>{" "}
-                      <Grid item xs={12} md={12}>
-                        {/* create a button that generates a generic datastream name */}
-                        <Button
-                          onClick={() => {
-                            setFieldValue(
-                              "datastream_name",
-                              "datastream_" +
-                                values.device_name +
-                                "_" +
-                                values.observeProperty_name
-                            );
-                          }}
-                        >
-                          Generate Datastream Name
-                        </Button>
-                      </Grid>
-                      <Grid item xs={12} md={12}>
-                        <Button
-                          onClick={() => {
-                            setOptionalDatastreamData(!optionalDatastreamData);
-                            if (optionalDatastreamData) {
-                              setFieldValue("datastram_description", "");
-                              setFieldValue("datastream_observation_type", "");
-                              setFieldValue(
-                                "datastream_unit_of_measurement_name",
-                                ""
-                              );
-                              setFieldValue(
-                                "datastream_unit_of_measurement_symbol",
-                                ""
-                              );
-                              setFieldValue(
-                                "datastream_unit_of_measurement_symbol",
-                                ""
-                              );
-                              setFieldValue(
-                                "datastream_unit_of_measurement_definition",
-                                ""
-                              );
-                            }
-                          }}
-                        >
-                          {optionalDatastreamData
-                            ? "Clear Optional Data"
-                            : "Show Optional Data"}
-                        </Button>
-                      </Grid>
-                      {optionalDatastreamData && (
-                        <>
-                          <Grid item xs={12} md={6}>
-                            <TextField
-                              fullWidth
-                              name="datastram_description"
-                              label="Datastream Description"
-                              onChange={handleChange}
-                              value={values.datastram_description}
-                              variant="outlined"
-                              error={
-                                touched.datastram_description &&
-                                Boolean(errors.datastram_description)
-                              }
-                              helperText={
-                                touched.datastram_description &&
-                                errors.datastram_description
-                              }
-                            />
-                          </Grid>{" "}
-                          <Grid item xs={12} md={6}>
-                            <TextField
-                              fullWidth
-                              name="datastream_observation_type"
-                              label="Datastream Observation Type"
-                              onChange={handleChange}
-                              value={values.datastream_observation_type}
-                              variant="outlined"
-                              error={
-                                touched.datastream_observation_type &&
-                                Boolean(errors.datastream_observation_type)
-                              }
-                              helperText={
-                                touched.datastream_observation_type &&
-                                errors.datastream_observation_type
-                              }
-                            />
-                          </Grid>{" "}
-                          <Grid item xs={12} md={6}>
-                            <TextField
-                              fullWidth
-                              name="datastream_unit_of_measurement_name"
-                              label="Datastream Unit of Measurement Name"
-                              onChange={handleChange}
-                              value={values.datastream_unit_of_measurement_name}
-                              variant="outlined"
-                              error={
-                                touched.datastream_unit_of_measurement_name &&
-                                Boolean(
-                                  errors.datastream_unit_of_measurement_name
-                                )
-                              }
-                              helperText={
-                                touched.datastream_unit_of_measurement_name &&
-                                errors.datastream_unit_of_measurement_name
-                              }
-                            />
-                          </Grid>{" "}
-                          <Grid item xs={12} md={6}>
-                            <TextField
-                              fullWidth
-                              name="datastream_unit_of_measurement_symbol"
-                              label="Datastream Unit of Measurement Symbol"
-                              onChange={handleChange}
-                              value={
-                                values.datastream_unit_of_measurement_symbol
-                              }
-                              variant="outlined"
-                              error={
-                                touched.datastream_unit_of_measurement_symbol &&
-                                Boolean(
-                                  errors.datastream_unit_of_measurement_symbol
-                                )
-                              }
-                              helperText={
-                                touched.datastream_unit_of_measurement_symbol &&
-                                errors.datastream_unit_of_measurement_symbol
-                              }
-                            />
-                          </Grid>{" "}
-                          <Grid item xs={12} md={6}>
-                            <TextField
-                              fullWidth
-                              name="datastream_unit_of_measurement_definition"
-                              label="Datastream Unit of Measurement Definition"
-                              onChange={handleChange}
-                              value={
-                                values.datastream_unit_of_measurement_definition
-                              }
-                              variant="outlined"
-                              error={
-                                touched.datastream_unit_of_measurement_definition &&
-                                Boolean(
-                                  errors.datastream_unit_of_measurement_definition
-                                )
-                              }
-                              helperText={
-                                touched.datastream_unit_of_measurement_definition &&
-                                errors.datastream_unit_of_measurement_definition
-                              }
-                            />
-                          </Grid>
-                        </>
-                      )}
+  <Grid container spacing={2}>
+    {/* Render FieldArray for Datastreams */}
+    <FieldArray
+      name="datastreams"
+      render={({ push, remove }) => (
+        <>
+          {values.datastreams.map((datastream, index) => (
+            <React.Fragment key={index}>
+              {/* Datastream Group */}
+              <Grid container spacing={2} style={{ marginBottom: "20px" }}>
+                {/* Datastream Name */}
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    label={`Datastream Name ${index + 1}`}
+                    name={`datastreams[${index}].name`}
+                    value={datastream.name}
+                    onChange={handleChange}
+                    error={
+                      touched.datastreams?.[index]?.name &&
+                      Boolean(errors.datastreams?.[index]?.name)
+                    }
+                    helperText={
+                      touched.datastreams?.[index]?.name &&
+                      errors.datastreams?.[index]?.name
+                    }
+                  />
+                </Grid>
+
+                {/* Generate Datastream Name Button */}
+                <Grid item xs={12} md={12}>
+                  <Button
+                    onClick={() =>
+                      setFieldValue(
+                        `datastreams[${index}].name`,
+                        `datastream_${values.device_name}_${values.observeProperty_name}`
+                      )
+                    }
+                  >
+                    Generate Datastream Name
+                  </Button>
+                </Grid>
+
+                {/* Show/Hide Optional Data Button */}
+                <Grid item xs={12} md={12}>
+                  <Button
+                    onClick={() =>
+                      setOptionalDatastreamData({
+                        ...optionalDatastreamData,
+                        [index]: !optionalDatastreamData[index],
+                      })
+                    }
+                  >
+                    {optionalDatastreamData[index]
+                      ? "Hide Optional Data"
+                      : "Show Optional Data"}
+                  </Button>
+                </Grid>
+
+                {/* Optional Fields */}
+                {optionalDatastreamData[index] && (
+                  <>
+                    {/* Datastream Description */}
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        label="Datastream Description"
+                        name={`datastreams[${index}].description`}
+                        value={datastream.description || ""}
+                        onChange={handleChange}
+                        error={
+                          touched.datastreams?.[index]?.description &&
+                          Boolean(errors.datastreams?.[index]?.description)
+                        }
+                        helperText={
+                          touched.datastreams?.[index]?.description &&
+                          errors.datastreams?.[index]?.description
+                        }
+                      />
                     </Grid>
-                  )}
+
+                    {/* Observation Type */}
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        label="Observation Type"
+                        name={`datastreams[${index}].observationType`}
+                        value={datastream.observationType || ""}
+                        onChange={handleChange}
+                        error={
+                          touched.datastreams?.[index]?.observationType &&
+                          Boolean(
+                            typeof errors.datastreams?.[index] === "object" &&
+                              errors.datastreams?.[index]?.observationType
+                          )
+                        }
+                        helperText={
+                          touched.datastreams?.[index]?.observationType &&
+                          typeof errors.datastreams?.[index] === "object" &&
+                          errors.datastreams?.[index]?.observationType
+                        }
+                      />
+                    </Grid>
+
+                    {/* Unit of Measurement Name */}
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        label="Unit of Measurement Name"
+                        name={`datastreams[${index}].unitOfMeasurement.name`}
+                        value={datastream.unitOfMeasurement?.name || ""}
+                        onChange={handleChange}
+                        error={
+                          touched.datastreams?.[index]?.unitOfMeasurement?.name &&
+                          Boolean(
+                            typeof errors.datastreams?.[index] === "object" &&
+                              errors.datastreams?.[index]?.unitOfMeasurement?.name
+                          )
+                        }
+                        helperText={
+                          touched.datastreams?.[index]?.unitOfMeasurement?.name &&
+                          typeof errors.datastreams?.[index] === "object" &&
+                          errors.datastreams?.[index]?.unitOfMeasurement?.name
+                        }
+                      />
+                    </Grid>
+
+                    {/* Unit of Measurement Symbol */}
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        label="Unit of Measurement Symbol"
+                        name={`datastreams[${index}].unitOfMeasurement.symbol`}
+                        value={datastream.unitOfMeasurement?.symbol || ""}
+                        onChange={handleChange}
+                        error={
+                          touched.datastreams?.[index]?.unitOfMeasurement?.symbol &&
+                          Boolean(
+                            typeof errors.datastreams?.[index] === "object" &&
+                              errors.datastreams?.[index]?.unitOfMeasurement?.symbol
+                          )
+                        }
+                        helperText={
+                          touched.datastreams?.[index]?.unitOfMeasurement?.symbol &&
+                          typeof errors.datastreams?.[index] === "object" &&
+                          errors.datastreams?.[index]?.unitOfMeasurement?.symbol
+                        }
+                      />
+                    </Grid>
+
+                    {/* Unit of Measurement Definition */}
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        label="Unit of Measurement Definition"
+                        name={`datastreams[${index}].unitOfMeasurement.definition`}
+                        value={datastream.unitOfMeasurement?.definition || ""}
+                        onChange={handleChange}
+                        error={
+                          touched.datastreams?.[index]?.unitOfMeasurement?.definition &&
+                          Boolean(
+                            typeof errors.datastreams?.[index] === "object" &&
+                              errors.datastreams?.[index]?.unitOfMeasurement?.definition
+                          )
+                        }
+                        helperText={
+                          touched.datastreams?.[index]?.unitOfMeasurement?.definition &&
+                          typeof errors.datastreams?.[index] === "object" &&
+                          errors.datastreams?.[index]?.unitOfMeasurement?.definition
+                        }
+                      />
+                    </Grid>
+                  </>
+                )}
+              </Grid>
+
+              {/* Remove Button */}
+              {index > 0 && (
+                <Grid item xs={12}>
+                  <Button onClick={() => remove(index)}>Remove</Button>
+                </Grid>
+              )}
+
+              {/* Divider Between Datastreams */}
+              {index < values.datastreams.length - 1 && (
+                <Grid item xs={12}>
+                  <Divider style={{ marginTop: "20px", marginBottom: "20px" }} />
+                </Grid>
+              )}
+            </React.Fragment>
+          ))}
+
+          {/* Add Datastream Button */}
+          <Grid item xs={12}>
+            <Button
+              onClick={() =>
+                push({
+                  name: "",
+                  description: "",
+                  observationType: "",
+                  unitOfMeasurement: {
+                    name: "",
+                    symbol: "",
+                    definition: "",
+                  },
+                })
+              }
+            >
+              Add Datastream
+            </Button>
+          </Grid>
+        </>
+      )}
+    />
+  </Grid>
+)}
                   {/* Summary Step */}
                   {activeStep === 3 && (
                     <Grid container spacing={2}>
+                      {/* Device Information */}
                       <Grid item xs={12} md={12}>
                         <Typography variant="h2" gutterBottom>
                           Device Information{" "}
                           <Button
                             variant="outlined"
                             color="primary"
-                            onClick={() => {
-                              setActiveStep(0);
-                            }}
+                            onClick={() => setActiveStep(0)}
                           >
                             <CreateOutlinedIcon />
                           </Button>
@@ -1179,102 +1184,50 @@ function StepperStore() {
                       </Grid>
                       <Grid item xs={12} md={4}>
                         <Typography gutterBottom>
-                          <span
-                            style={{
-                              fontWeight: "bold",
-                              color: "#233044",
-                            }}
-                          >
-                            {" "}
-                            Device Name:
-                          </span>{" "}
+                          <span style={{ fontWeight: "bold", color: "#233044" }}>Device Name:</span>{" "}
                           {values.device_name}
                         </Typography>
-                      </Grid>{" "}
+                      </Grid>
                       <Grid item xs={12} md={4}>
                         <Typography gutterBottom>
-                          <span
-                            style={{
-                              fontWeight: "bold",
-                              color: "#233044",
-                            }}
-                          >
-                            {" "}
+                          <span style={{ fontWeight: "bold", color: "#233044" }}>
                             Device Description:
                           </span>{" "}
                           {values.device_description}
                         </Typography>
-                      </Grid>{" "}
+                      </Grid>
                       <Grid item xs={12} md={4}>
                         <Typography gutterBottom>
-                          <span
-                            style={{
-                              fontWeight: "bold",
-                              color: "#233044",
-                            }}
-                          >
-                            {" "}
+                          <span style={{ fontWeight: "bold", color: "#233044" }}>
                             Device Location Name:
                           </span>{" "}
                           {values.device_location_name}
                         </Typography>
-                      </Grid>{" "}
+                      </Grid>
                       <Grid item xs={12} md={4}>
                         <Typography gutterBottom>
-                          <span
-                            style={{
-                              fontWeight: "bold",
-                              color: "#233044",
-                            }}
-                          >
-                            {" "}
+                          <span style={{ fontWeight: "bold", color: "#233044" }}>
                             Device Location Description:
                           </span>{" "}
                           {values.device_location_description}
                         </Typography>
-                      </Grid>{" "}
+                      </Grid>
                       <Grid item xs={12} md={4}>
                         <Typography gutterBottom>
-                          <span
-                            style={{
-                              fontWeight: "bold",
-                              color: "#233044",
-                            }}
-                          >
-                            {" "}
-                            Device Location Description:
-                          </span>{" "}
-                          {values.device_location_description}
-                        </Typography>
-                      </Grid>{" "}
-                      <Grid item xs={12} md={4}>
-                        <Typography gutterBottom>
-                          <span
-                            style={{
-                              fontWeight: "bold",
-                              color: "#233044",
-                            }}
-                          >
-                            {" "}
-                            Device Latitude:
-                          </span>{" "}
+                          <span style={{ fontWeight: "bold", color: "#233044" }}>Device Latitude:</span>{" "}
                           {values.device_latitude}
                         </Typography>
-                      </Grid>{" "}
+                      </Grid>
                       <Grid item xs={12} md={4}>
                         <Typography gutterBottom>
-                          <span
-                            style={{
-                              fontWeight: "bold",
-                              color: "#233044",
-                            }}
-                          >
-                            {" "}
+                          <span style={{ fontWeight: "bold", color: "#233044" }}>
                             Device Longitude:
                           </span>{" "}
                           {values.device_longitude}
                         </Typography>
                       </Grid>
+
+                      {/* Divider */}
                       <Grid item xs={12} md={12}>
                         <Divider
                           style={{
@@ -1283,85 +1236,61 @@ function StepperStore() {
                             width: "100%",
                           }}
                         />
-                      </Grid>{" "}
+                      </Grid>
+
+                      {/* Measurement Property Information */}
                       <Grid item xs={12} md={12}>
                         <Typography variant="h2" gutterBottom>
                           Measurement Property Information{" "}
                           <Button
                             variant="outlined"
                             color="primary"
-                            onClick={() => {
-                              setActiveStep(1);
-                            }}
+                            onClick={() => setActiveStep(1)}
                           >
                             <CreateOutlinedIcon />
                           </Button>
                         </Typography>
                       </Grid>
                       {values.observedProperty_existing_id &&
-                      values.observed_property_using_existing === "yes" ? (
-                        <>
-                          <Grid item xs={12} md={4}>
-                            <Typography gutterBottom>
-                              <span
-                                style={{
-                                  fontWeight: "bold",
-                                  color: "#233044",
-                                }}
-                              >
-                                {" "}
-                                Existing Measurement Property ID:{" "}
-                              </span>{" "}
-                              {values.observedProperty_existing_id}
-                            </Typography>
-                          </Grid>{" "}
-                        </>
+                        values.observed_property_using_existing === "yes" ? (
+                        <Grid item xs={12} md={4}>
+                          <Typography gutterBottom>
+                            <span style={{ fontWeight: "bold", color: "#233044" }}>
+                              Existing Measurement Property ID:
+                            </span>{" "}
+                            {values.observedProperty_existing_id}
+                          </Typography>
+                        </Grid>
                       ) : (
                         <>
                           <Grid item xs={12} md={4}>
                             <Typography gutterBottom>
-                              <span
-                                style={{
-                                  fontWeight: "bold",
-                                  color: "#233044",
-                                }}
-                              >
-                                {" "}
-                                Device Name:
+                              <span style={{ fontWeight: "bold", color: "#233044" }}>
+                                Measurement Property Name:
                               </span>{" "}
                               {values.observeProperty_name}
                             </Typography>
-                          </Grid>{" "}
+                          </Grid>
                           <Grid item xs={12} md={4}>
                             <Typography gutterBottom>
-                              <span
-                                style={{
-                                  fontWeight: "bold",
-                                  color: "#233044",
-                                }}
-                              >
-                                {" "}
-                                Measurement Property Name:{" "}
+                              <span style={{ fontWeight: "bold", color: "#233044" }}>
+                                Measurement Property Definition:
                               </span>{" "}
                               {values.observeProperty_definition}
                             </Typography>
-                          </Grid>{" "}
+                          </Grid>
                           <Grid item xs={12} md={4}>
                             <Typography gutterBottom>
-                              <span
-                                style={{
-                                  fontWeight: "bold",
-                                  color: "#233044",
-                                }}
-                              >
-                                {" "}
-                                Measurement Property Name:{" "}
+                              <span style={{ fontWeight: "bold", color: "#233044" }}>
+                                Measurement Property Description:
                               </span>{" "}
                               {values.observeProperty_description}
                             </Typography>
-                          </Grid>{" "}
+                          </Grid>
                         </>
                       )}
+
+                      {/* Divider */}
                       <Grid item xs={12} md={12}>
                         <Divider
                           style={{
@@ -1371,125 +1300,84 @@ function StepperStore() {
                           }}
                         />
                       </Grid>
-                      {/* Datastream */}
+
+                      {/* Datastream Information */}
                       <Grid item xs={12} md={12}>
                         <Typography variant="h2" gutterBottom>
                           Datastream Information{" "}
                           <Button
                             variant="outlined"
                             color="primary"
-                            onClick={() => {
-                              setActiveStep(2);
-                            }}
+                            onClick={() => setActiveStep(2)}
                           >
                             <CreateOutlinedIcon />
                           </Button>
                         </Typography>
                       </Grid>
-                      <Grid item xs={12} md={4}>
-                        <Typography gutterBottom>
-                          <span
-                            style={{
-                              fontWeight: "bold",
-                              color: "#233044",
-                            }}
-                          >
-                            {" "}
-                            Datastream Name:
-                          </span>{" "}
-                          {values.datastream_name}
-                        </Typography>
-                      </Grid>{" "}
-                      <Grid item xs={12} md={4}>
-                        <Typography gutterBottom>
-                          <span
-                            style={{
-                              fontWeight: "bold",
-                              color: "#233044",
-                            }}
-                          >
-                            {" "}
-                            Datastream Description:
-                          </span>{" "}
-                          {values.datastram_description ? (
-                            values.datastram_description
-                          ) : (
-                            <em>Not defined</em>
+                      {values.datastreams.map((datastream, index) => (
+                        <React.Fragment key={index}>
+                          <Grid item xs={12} md={4}>
+                            <Typography gutterBottom>
+                              <span style={{ fontWeight: "bold", color: "#233044" }}>
+                                Datastream Name {index + 1}:
+                              </span>{" "}
+                              {datastream.name}
+                            </Typography>
+                          </Grid>
+                          <Grid item xs={12} md={4}>
+                            <Typography gutterBottom>
+                              <span style={{ fontWeight: "bold", color: "#233044" }}>
+                                Datastream Description {index + 1}:
+                              </span>{" "}
+                              {datastream.description || <em>Not defined</em>}
+                            </Typography>
+                          </Grid>
+                          <Grid item xs={12} md={4}>
+                            <Typography gutterBottom>
+                              <span style={{ fontWeight: "bold", color: "#233044" }}>
+                                Observation Type {index + 1}:
+                              </span>{" "}
+                              {datastream.observationType || <em>Not defined</em>}
+                            </Typography>
+                          </Grid>
+                          <Grid item xs={12} md={4}>
+                            <Typography gutterBottom>
+                              <span style={{ fontWeight: "bold", color: "#233044" }}>
+                                Unit of Measurement Name {index + 1}:
+                              </span>{" "}
+                              {datastream.unitOfMeasurement?.name || <em>Not defined</em>}
+                            </Typography>
+                          </Grid>
+                          <Grid item xs={12} md={4}>
+                            <Typography gutterBottom>
+                              <span style={{ fontWeight: "bold", color: "#233044" }}>
+                                Unit of Measurement Symbol {index + 1}:
+                              </span>{" "}
+                              {datastream.unitOfMeasurement?.symbol || <em>Not defined</em>}
+                            </Typography>
+                          </Grid>
+                          <Grid item xs={12} md={4}>
+                            <Typography gutterBottom>
+                              <span style={{ fontWeight: "bold", color: "#233044" }}>
+                                Unit of Measurement Definition {index + 1}:
+                              </span>{" "}
+                              {datastream.unitOfMeasurement?.definition || <em>Not defined</em>}
+                            </Typography>
+                          </Grid>
+                          {/* Add a divider between Datastreams */}
+                          {index < values.datastreams.length - 1 && (
+                            <Grid item xs={12} md={12}>
+                              <Divider
+                                style={{
+                                  marginTop: "20px",
+                                  marginBottom: "20px",
+                                  width: "100%",
+                                }}
+                              />
+                            </Grid>
                           )}
-                        </Typography>
-                      </Grid>{" "}
-                      <Grid item xs={12} md={4}>
-                        <Typography gutterBottom>
-                          <span
-                            style={{
-                              fontWeight: "bold",
-                              color: "#233044",
-                            }}
-                          >
-                            {" "}
-                            Datastream Observation Type:
-                          </span>{" "}
-                          {values.datastream_observation_type ? (
-                            values.datastream_observation_type
-                          ) : (
-                            <em>Not defined</em>
-                          )}
-                        </Typography>
-                      </Grid>{" "}
-                      <Grid item xs={12} md={4}>
-                        <Typography gutterBottom>
-                          <span
-                            style={{
-                              fontWeight: "bold",
-                              color: "#233044",
-                            }}
-                          >
-                            {" "}
-                            Datastream Unit of Measurement Name:
-                          </span>{" "}
-                          {values.datastream_unit_of_measurement_name ? (
-                            values.datastream_unit_of_measurement_name
-                          ) : (
-                            <em>Not defined</em>
-                          )}
-                        </Typography>
-                      </Grid>{" "}
-                      <Grid item xs={12} md={4}>
-                        <Typography gutterBottom>
-                          <span
-                            style={{
-                              fontWeight: "bold",
-                              color: "#233044",
-                            }}
-                          >
-                            {" "}
-                            Datastream Unit of Measurement Symbol:
-                          </span>{" "}
-                          {values.datastream_unit_of_measurement_symbol ? (
-                            values.datastream_unit_of_measurement_symbol
-                          ) : (
-                            <em>Not defined</em>
-                          )}
-                        </Typography>
-                      </Grid>{" "}
-                      <Grid item xs={12} md={4}>
-                        <Typography gutterBottom>
-                          <span
-                            style={{
-                              fontWeight: "bold",
-                              color: "#233044",
-                            }}
-                          >
-                            {" "}
-                            Datastream Unit of Measurement Definition:
-                          </span>{" "}
-                          {values.datastream_unit_of_measurement_definition ? (
-                            values.datastream_unit_of_measurement_definition
-                          ) : (
-                            <em>Not defined</em>
-                          )}
-                        </Typography>
-                      </Grid>{" "}
+                        </React.Fragment>
+                      ))}
                     </Grid>
                   )}
                   {/* Stepper Controls */}
@@ -1514,18 +1402,15 @@ function StepperStore() {
                         }
                         variant="contained"
                         onClick={() => {
-                          const isDev = process.env.REACT_APP_IS_DEVELOPMENT === 'true';  
-                          if (activeStep === 0 && values.device_name !== "") { 
-                            
+                          const isDev = process.env.REACT_APP_IS_DEVELOPMENT === 'true';
+
+                          // Step 0: Validate Device Name
+                          if (activeStep === 0 && values.device_name !== "") {
                             axios
                               .get(
-                                isDev  ?  `${
-                                  process.env.REACT_APP_BACKEND_URL_ROOT
-                                }:${frostServerPort}/FROST-Server/v1.0/Things?$filter=name%20eq%20%27${encodeURIComponent(
-                                  values.device_name
-                                )}%27`   :    `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Things?$filter=name%20eq%20%27${encodeURIComponent(
-                                  values.device_name
-                                )}%27`,
+                                isDev
+                                  ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Things?$filter=name%20eq%20%27${encodeURIComponent(values.device_name)}%27`
+                                  : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Things?$filter=name%20eq%20%27${encodeURIComponent(values.device_name)}%27`,
                                 {
                                   headers: {
                                     "Content-Type": "application/json",
@@ -1534,14 +1419,8 @@ function StepperStore() {
                                 }
                               )
                               .then((response) => {
-                                console.log(response.data);
                                 if (response.data.value.length > 0) {
-                                  // make error on device name field name
-                                  setFieldError(
-                                    "device_name",
-                                    "Device name is already taken, please choose another one"
-                                  );
-
+                                  setFieldError("device_name", "Device name is already taken, please choose another one");
                                   Swal.fire({
                                     icon: "error",
                                     title: "Oops...",
@@ -1551,21 +1430,17 @@ function StepperStore() {
                                 }
                               })
                               .catch((error) => {
-                                console.log(error);
+                                console.error("Error checking device name:", error);
                               });
-                          } else if (
-                            activeStep === 1 &&
-                            values.observeProperty_name !== ""
-                          ) {
+                          }
+
+                          // Step 1: Validate Observed Property Name
+                          else if (activeStep === 1 && values.observeProperty_name !== "") {
                             axios
                               .get(
-                              isDev ?  `${
-                                  process.env.REACT_APP_BACKEND_URL_ROOT
-                                }:${frostServerPort}/FROST-Server/v1.0/ObservedProperties?$filter=name%20eq%20%27${encodeURIComponent(
-                                  values.observeProperty_name
-                                )}%27`  :   `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/ObservedProperties?$filter=name%20eq%20%27${encodeURIComponent(
-                                  values.observeProperty_name
-                                )}%27`,
+                                isDev
+                                  ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/ObservedProperties?$filter=name%20eq%20%27${encodeURIComponent(values.observeProperty_name)}%27`
+                                  : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/ObservedProperties?$filter=name%20eq%20%27${encodeURIComponent(values.observeProperty_name)}%27`,
                                 {
                                   headers: {
                                     "Content-Type": "application/json",
@@ -1575,11 +1450,7 @@ function StepperStore() {
                               )
                               .then((response) => {
                                 if (response.data.value.length > 0) {
-                                  setFieldError(
-                                    "observeProperty_name",
-                                    "Measurement Property name is already taken, please choose another one"
-                                  );
-
+                                  setFieldError("observeProperty_name", "Measurement Property name is already taken, please choose another one");
                                   Swal.fire({
                                     icon: "error",
                                     title: "Oops...",
@@ -1589,47 +1460,51 @@ function StepperStore() {
                                 }
                               })
                               .catch((error) => {
-                                console.log(error);
+                                console.error("Error checking observed property name:", error);
                               });
-                          } else if (
-                            activeStep === 2 &&
-                            values.datastream_name !== ""
-                          ) {
-                            axios
-                              .get(
-                              isDev ?  `${
-                                  process.env.REACT_APP_BACKEND_URL_ROOT
-                                }:${frostServerPort}/FROST-Server/v1.0/Datastreams?$filter=name%20eq%20%27${encodeURIComponent(
-                                  values.datastream_name
-                                )}%27`  :   `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Datastreams?$filter=name%20eq%20%27${encodeURIComponent(
-                                  values.datastream_name
-                                )}%27`,
-                                {
-                                  headers: {
-                                    "Content-Type": "application/json",
-                                    Authorization: `Bearer ${token}`,
-                                  },
-                                }
-                              )
-                              .then((response) => {
-                                console.log(response.data);
-                                if (response.data.value.length > 0) {
-                                  setFieldError(
-                                    "datastream_name",
-                                    "Datastream name is already taken, please choose another one"
-                                  );
+                          }
 
+                          // Step 2: Validate Datastream Names Dynamically
+                          else if (activeStep === 2) {
+                            // Array to track duplicate checks
+                            const duplicatePromises = values.datastreams.map(async (datastream, index) => {
+                              if (datastream.name.trim() === "") {
+                                return; // Skip empty names
+                              }
+
+                              try {
+                                const response = await axios.get(
+                                  isDev
+                                    ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Datastreams?$filter=name%20eq%20%27${encodeURIComponent(datastream.name)}%27`
+                                    : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Datastreams?$filter=name%20eq%20%27${encodeURIComponent(datastream.name)}%27`,
+                                  {
+                                    headers: {
+                                      "Content-Type": "application/json",
+                                      Authorization: `Bearer ${token}`,
+                                    },
+                                  }
+                                );
+
+                                if (response.data.value.length > 0) {
+                                  // Set error for the specific datastream
+                                  setFieldError(`datastreams[${index}].name`, "Datastream name is already taken, please choose another one");
                                   Swal.fire({
                                     icon: "error",
                                     title: "Oops...",
-                                    text: "Datastream name is already taken, please choose another one",
+                                    text: `Datastream name "${datastream.name}" is already taken, please choose another one`,
                                   });
-                                  setActiveStep(2);
+                                  setActiveStep(2); // Stay on the current step
                                 }
-                              })
-                              .catch((error) => {
-                                console.log(error);
-                              });
+                              } catch (error) {
+                                console.error(`Error checking Datastream name "${datastream.name}":`, error);
+                              }
+                            });
+
+                            // Wait for all duplicate checks to complete
+                            Promise.all(duplicatePromises).then(() => {
+                              // If no duplicates, proceed to the next step
+                              setActiveStep(activeStep + 1);
+                            });
                           }
                         }}
                         style={{
@@ -1645,8 +1520,8 @@ function StepperStore() {
                         {isSubmitting
                           ? "Submitting"
                           : isLastStep
-                          ? "Finish"
-                          : "Next step"}
+                            ? "Finish"
+                            : "Next step"}
                       </Button>
                     </Grid>
                   </Grid>
