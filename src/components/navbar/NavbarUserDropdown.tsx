@@ -24,8 +24,11 @@ function NavbarUserDropdown() {
   const { keycloak } = useKeycloak();
 
   const handleLogout = () => {
-    keycloak.logout(); 
-    localStorage.clear()
+    console.log("Logging out...");
+    localStorage.clear();
+    keycloak.logout({ redirectUri: window.location.origin }).then(() => {
+      console.log("Logout successful");
+    }).catch(err => console.error("Logout failed", err));
   };
 
   return (
