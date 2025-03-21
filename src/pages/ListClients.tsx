@@ -210,7 +210,7 @@ export default function ListClients() {
   }, [keycloak, userInfo, message]);
   useEffect(() => {
     getAllGroups();
-  }, [userID]);
+  }, [userID]); 
 
   useEffect(() => {
     console.log("pendingPopover", pendingPopover)

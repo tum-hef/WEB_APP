@@ -40,6 +40,16 @@ interface ApiResponse {
   message?: string;
   error_code?: number;
 }
+interface Datastream {
+  name: string;
+  description?: string;
+  observationType?: string;
+  unitOfMeasurement: {
+    name?: string;
+    symbol?: string;
+    definition?: string;
+  };
+}
 const getValidationSchemaPerStep = (step: number) => {
   switch (step) {
     case 0: {
@@ -108,21 +118,21 @@ const getValidationSchemaPerStep = (step: number) => {
           }),
       });
 
-      case 2:
-  return yup.object({
-    datastreams: yup.array().of(
-      yup.object({
-        name: yup.string().required("Name is required"),
-        description: yup.string(), // Optional
-        observationType: yup.string(), // Optional
-        unitOfMeasurement: yup.object({
-          name: yup.string(), // Optional
-          symbol: yup.string(), // Optional
-          definition: yup.string(), // Optional
-        }),
-      })
-    ),
-  });
+    case 2:
+      return yup.object({
+        datastreams: yup.array().of(
+          yup.object({
+            name: yup.string().required("Name is required"),
+            description: yup.string(), // Optional
+            observationType: yup.string(), // Optional
+            unitOfMeasurement: yup.object({
+              name: yup.string(), // Optional
+              symbol: yup.string(), // Optional
+              definition: yup.string(), // Optional
+            }),
+          })
+        ),
+      });
   }
 };
 
@@ -140,7 +150,7 @@ function StepperStore() {
     null
   );
   const [optionalDatastreamData, setOptionalDatastreamData] =
-    useState<boolean>(false);
+    useState<any>(false);
 
   const fetchFrostPort = async () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL;
@@ -347,18 +357,18 @@ function StepperStore() {
               ]
             }}
             validationSchema={getValidationSchemaPerStep(activeStep)}
-            onSubmit={async (values: any, helpers: any) => { 
-              const isDev = process.env.REACT_APP_IS_DEVELOPMENT === 'true';  
+            onSubmit={async (values: any, helpers: any) => {
+              const isDev = process.env.REACT_APP_IS_DEVELOPMENT === 'true';
               if (isLastStep) {
                 setLoading(true);
                 helpers.resetForm();
                 setActiveStep(0);
-                
+
                 try {
                   // 1: Store the Device 
                   const response_post_device = await axios.post(
-                    isDev ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Things`  
-                         : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Things`,
+                    isDev ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Things`
+                      : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Things`,
                     {
                       name: values.device_name,
                       description: values.device_description,
@@ -381,14 +391,14 @@ function StepperStore() {
                       },
                     }
                   );
-            
+
                   // 2: Store the Observed Property (if not existing)
                   let observed_property_id = values.observedProperty_existing_id;
-                  
+
                   if (!observed_property_id) {
                     const response_post_observed_property = await axios.post(
-                      isDev ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/ObservedProperties` 
-                           : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/ObservedProperties`,
+                      isDev ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/ObservedProperties`
+                        : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/ObservedProperties`,
                       {
                         name: values.observeProperty_name,
                         definition: values.observeProperty_definition,
@@ -401,11 +411,11 @@ function StepperStore() {
                         },
                       }
                     );
-            
+
                     // Get the ID of the newly created Observed Property
                     const response_get_observed_property = await axios.get(
                       isDev ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/ObservedProperties?$filter=name eq '${encodeURIComponent(values.observeProperty_name)}'`
-                           : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/ObservedProperties?$filter=name eq '${encodeURIComponent(values.observeProperty_name)}'`,
+                        : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/ObservedProperties?$filter=name eq '${encodeURIComponent(values.observeProperty_name)}'`,
                       {
                         headers: {
                           "Content-Type": "application/json",
@@ -413,14 +423,14 @@ function StepperStore() {
                         },
                       }
                     );
-            
+
                     observed_property_id = response_get_observed_property.data.value[0]["@iot.id"];
                   }
-            
+
                   // 3: Get the ID of the Device
                   const response_get_device = await axios.get(
                     isDev ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Things?$filter=name eq '${encodeURIComponent(values.device_name)}'`
-                         : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Things?$filter=name eq '${encodeURIComponent(values.device_name)}'`,
+                      : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Things?$filter=name eq '${encodeURIComponent(values.device_name)}'`,
                     {
                       headers: {
                         "Content-Type": "application/json",
@@ -428,14 +438,14 @@ function StepperStore() {
                       },
                     }
                   );
-            
+
                   const device_id = response_get_device.data.value[0]["@iot.id"];
-            
+
                   // 4: Store the Sensor
                   const sensor_name = `sensor_${values.device_name}_${values.observeProperty_name}`;
                   const response_post_sensor = await axios.post(
-                    isDev ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Sensors` 
-                         : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Sensors`,
+                    isDev ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Sensors`
+                      : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Sensors`,
                     {
                       name: sensor_name,
                       description: `Sensor for ${values.device_name} and ${values.observeProperty_name}`,
@@ -449,11 +459,11 @@ function StepperStore() {
                       },
                     }
                   );
-            
+
                   // 5: Get the Sensor ID
                   const response_get_sensor = await axios.get(
                     isDev ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Sensors?$filter=name eq '${encodeURIComponent(sensor_name)}'`
-                         : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Sensors?$filter=name eq '${encodeURIComponent(sensor_name)}'`,
+                      : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Sensors?$filter=name eq '${encodeURIComponent(sensor_name)}'`,
                     {
                       headers: {
                         "Content-Type": "application/json",
@@ -461,22 +471,22 @@ function StepperStore() {
                       },
                     }
                   );
-            
+
                   const sensor_id = response_get_sensor.data.value[0]["@iot.id"];
-            
+
                   // Get current timestamp in the correct timezone
                   const currentDate = new Date();
                   const targetTimeZone = "Europe/Rome";
                   const localDate = utcToZonedTime(currentDate, targetTimeZone);
                   const formattedDate = format(localDate, "yyyy-MM-dd'T'HH:mm:ss.SS'Z'");
                   const phenomenonTimeFormatted = `${formattedDate}/${formattedDate}`;
-            
+
                   // 6: Bulk Create Datastreams
                   if (sensor_id && device_id && observed_property_id) {
-                    const datastreamPromises = values.datastreams.map(async (datastream:any) => {
+                    const datastreamPromises = values.datastreams.map(async (datastream: any) => {
                       return axios.post(
                         isDev ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Datastreams`
-                             : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Datastreams`,
+                          : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Datastreams`,
                         {
                           name: datastream.name,
                           unitOfMeasurement: {
@@ -505,7 +515,7 @@ function StepperStore() {
                         }
                       );
                     });
-            
+
                     try {
                       const responses = await Promise.all(datastreamPromises);
                       if (responses.every((response) => response.status === 201)) {
@@ -529,7 +539,7 @@ function StepperStore() {
                       });
                     }
                   }
-                  
+
                 } catch (error) {
                   Swal.fire({
                     icon: "error",
@@ -543,7 +553,7 @@ function StepperStore() {
               }
               helpers.setSubmitting(false);
             }}
-            
+
           >
             {({
               isSubmitting,
@@ -553,6 +563,14 @@ function StepperStore() {
               values,
               setFieldValue,
               setFieldError,
+            }: {
+              isSubmitting: boolean;
+              errors: any; // Type errors as any
+              touched: any; // You can also type touched as `any` if you prefer
+              handleChange: (event: React.ChangeEvent<any>) => void;
+              values: any;
+              setFieldValue: (field: string, value: any) => void;
+              setFieldError: (field: string, value: any) => void;
             }) => (
               <>
                 <Breadcrumbs
@@ -950,222 +968,222 @@ function StepperStore() {
 
                   {/* DataStream Step */}
                   {activeStep === 2 && (
-  <Grid container spacing={2}>
-    {/* Render FieldArray for Datastreams */}
-    <FieldArray
-      name="datastreams"
-      render={({ push, remove }) => (
-        <>
-          {values.datastreams.map((datastream, index) => (
-            <React.Fragment key={index}>
-              {/* Datastream Group */}
-              <Grid container spacing={2} style={{ marginBottom: "20px" }}>
-                {/* Datastream Name */}
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label={`Datastream Name ${index + 1}`}
-                    name={`datastreams[${index}].name`}
-                    value={datastream.name}
-                    onChange={handleChange}
-                    error={
-                      touched.datastreams?.[index]?.name &&
-                      Boolean(errors.datastreams?.[index]?.name)
-                    }
-                    helperText={
-                      touched.datastreams?.[index]?.name &&
-                      errors.datastreams?.[index]?.name
-                    }
-                  />
-                </Grid>
+                    <Grid container spacing={2}>
+                      {/* Render FieldArray for Datastreams */}
+                      <FieldArray
+                        name="datastreams"
+                        render={({ push, remove }) => (
+                          <>
+                            {values.datastreams.map((datastream: Datastream, index: number) => (
+                              <React.Fragment key={index}>
+                                {/* Datastream Group */}
+                                <Grid container spacing={2} style={{ marginBottom: "20px" }}>
+                                  {/* Datastream Name */}
+                                  <Grid item xs={12} md={6}>
+                                    <TextField
+                                      fullWidth
+                                      label={`Datastream Name ${index + 1}`}
+                                      name={`datastreams[${index}].name`}
+                                      value={datastream.name}
+                                      onChange={handleChange}
+                                      error={
+                                        touched.datastreams?.[index]?.name &&
+                                        Boolean(errors.datastreams?.[index]?.name)
+                                      }
+                                      helperText={
+                                        touched.datastreams?.[index]?.name &&
+                                        errors.datastreams?.[index]?.name
+                                      }
+                                    />
+                                  </Grid>
 
-                {/* Generate Datastream Name Button */}
-                <Grid item xs={12} md={12}>
-                  <Button
-                    onClick={() =>
-                      setFieldValue(
-                        `datastreams[${index}].name`,
-                        `datastream_${values.device_name}_${values.observeProperty_name}`
-                      )
-                    }
-                  >
-                    Generate Datastream Name
-                  </Button>
-                </Grid>
+                                  {/* Generate Datastream Name Button */}
+                                  <Grid item xs={12} md={12}>
+                                    <Button
+                                      onClick={() =>
+                                        setFieldValue(
+                                          `datastreams[${index}].name`,
+                                          `datastream_${values.device_name}_${values.observeProperty_name}`
+                                        )
+                                      }
+                                    >
+                                      Generate Datastream Name
+                                    </Button>
+                                  </Grid>
 
-                {/* Show/Hide Optional Data Button */}
-                <Grid item xs={12} md={12}>
-                  <Button
-                    onClick={() =>
-                      setOptionalDatastreamData({
-                        ...optionalDatastreamData,
-                        [index]: !optionalDatastreamData[index],
-                      })
-                    }
-                  >
-                    {optionalDatastreamData[index]
-                      ? "Hide Optional Data"
-                      : "Show Optional Data"}
-                  </Button>
-                </Grid>
+                                  {/* Show/Hide Optional Data Button */}
+                                  <Grid item xs={12} md={12}>
+                                    <Button
+                                      onClick={() =>
+                                        setOptionalDatastreamData({
+                                          ...optionalDatastreamData,
+                                          [index]: !optionalDatastreamData[index],
+                                        })
+                                      }
+                                    >
+                                      {optionalDatastreamData[index]
+                                        ? "Hide Optional Data"
+                                        : "Show Optional Data"}
+                                    </Button>
+                                  </Grid>
 
-                {/* Optional Fields */}
-                {optionalDatastreamData[index] && (
-                  <>
-                    {/* Datastream Description */}
-                    <Grid item xs={12} md={6}>
-                      <TextField
-                        fullWidth
-                        label="Datastream Description"
-                        name={`datastreams[${index}].description`}
-                        value={datastream.description || ""}
-                        onChange={handleChange}
-                        error={
-                          touched.datastreams?.[index]?.description &&
-                          Boolean(errors.datastreams?.[index]?.description)
-                        }
-                        helperText={
-                          touched.datastreams?.[index]?.description &&
-                          errors.datastreams?.[index]?.description
-                        }
+                                  {/* Optional Fields */}
+                                  {optionalDatastreamData[index] && (
+                                    <>
+                                      {/* Datastream Description */}
+                                      <Grid item xs={12} md={6}>
+                                        <TextField
+                                          fullWidth
+                                          label="Datastream Description"
+                                          name={`datastreams[${index}].description`}
+                                          value={datastream.description || ""}
+                                          onChange={handleChange}
+                                          error={
+                                            touched.datastreams?.[index]?.description &&
+                                            Boolean(errors.datastreams?.[index]?.description)
+                                          }
+                                          helperText={
+                                            touched.datastreams?.[index]?.description &&
+                                            errors.datastreams?.[index]?.description
+                                          }
+                                        />
+                                      </Grid>
+
+                                      {/* Observation Type */}
+                                      <Grid item xs={12} md={6}>
+                                        <TextField
+                                          fullWidth
+                                          label="Observation Type"
+                                          name={`datastreams[${index}].observationType`}
+                                          value={datastream.observationType || ""}
+                                          onChange={handleChange}
+                                          error={
+                                            touched.datastreams?.[index]?.observationType &&
+                                            Boolean(
+                                              typeof errors.datastreams?.[index] === "object" &&
+                                              errors.datastreams?.[index]?.observationType
+                                            )
+                                          }
+                                          helperText={
+                                            touched.datastreams?.[index]?.observationType &&
+                                            typeof errors.datastreams?.[index] === "object" &&
+                                            errors.datastreams?.[index]?.observationType
+                                          }
+                                        />
+                                      </Grid>
+
+                                      {/* Unit of Measurement Name */}
+                                      <Grid item xs={12} md={6}>
+                                        <TextField
+                                          fullWidth
+                                          label="Unit of Measurement Name"
+                                          name={`datastreams[${index}].unitOfMeasurement.name`}
+                                          value={datastream.unitOfMeasurement?.name || ""}
+                                          onChange={handleChange}
+                                          error={
+                                            touched.datastreams?.[index]?.unitOfMeasurement?.name &&
+                                            Boolean(
+                                              typeof errors.datastreams?.[index] === "object" &&
+                                              errors.datastreams?.[index]?.unitOfMeasurement?.name
+                                            )
+                                          }
+                                          helperText={
+                                            touched.datastreams?.[index]?.unitOfMeasurement?.name &&
+                                            typeof errors.datastreams?.[index] === "object" &&
+                                            errors.datastreams?.[index]?.unitOfMeasurement?.name
+                                          }
+                                        />
+                                      </Grid>
+
+                                      {/* Unit of Measurement Symbol */}
+                                      <Grid item xs={12} md={6}>
+                                        <TextField
+                                          fullWidth
+                                          label="Unit of Measurement Symbol"
+                                          name={`datastreams[${index}].unitOfMeasurement.symbol`}
+                                          value={datastream.unitOfMeasurement?.symbol || ""}
+                                          onChange={handleChange}
+                                          error={
+                                            touched.datastreams?.[index]?.unitOfMeasurement?.symbol &&
+                                            Boolean(
+                                              typeof errors.datastreams?.[index] === "object" &&
+                                              errors.datastreams?.[index]?.unitOfMeasurement?.symbol
+                                            )
+                                          }
+                                          helperText={
+                                            touched.datastreams?.[index]?.unitOfMeasurement?.symbol &&
+                                            typeof errors.datastreams?.[index] === "object" &&
+                                            errors.datastreams?.[index]?.unitOfMeasurement?.symbol
+                                          }
+                                        />
+                                      </Grid>
+
+                                      {/* Unit of Measurement Definition */}
+                                      <Grid item xs={12} md={6}>
+                                        <TextField
+                                          fullWidth
+                                          label="Unit of Measurement Definition"
+                                          name={`datastreams[${index}].unitOfMeasurement.definition`}
+                                          value={datastream.unitOfMeasurement?.definition || ""}
+                                          onChange={handleChange}
+                                          error={
+                                            touched.datastreams?.[index]?.unitOfMeasurement?.definition &&
+                                            Boolean(
+                                              typeof errors.datastreams?.[index] === "object" &&
+                                              errors.datastreams?.[index]?.unitOfMeasurement?.definition
+                                            )
+                                          }
+                                          helperText={
+                                            touched.datastreams?.[index]?.unitOfMeasurement?.definition &&
+                                            typeof errors.datastreams?.[index] === "object" &&
+                                            errors.datastreams?.[index]?.unitOfMeasurement?.definition
+                                          }
+                                        />
+                                      </Grid>
+                                    </>
+                                  )}
+                                </Grid>
+
+                                {/* Remove Button */}
+                                {index > 0 && (
+                                  <Grid item xs={12}>
+                                    <Button onClick={() => remove(index)}>Remove</Button>
+                                  </Grid>
+                                )}
+
+                                {/* Divider Between Datastreams */}
+                                {index < values.datastreams.length - 1 && (
+                                  <Grid item xs={12}>
+                                    <Divider style={{ marginTop: "20px", marginBottom: "20px" }} />
+                                  </Grid>
+                                )}
+                              </React.Fragment>
+                            ))}
+
+                            {/* Add Datastream Button */}
+                            <Grid item xs={12}>
+                              <Button
+                                onClick={() =>
+                                  push({
+                                    name: "",
+                                    description: "",
+                                    observationType: "",
+                                    unitOfMeasurement: {
+                                      name: "",
+                                      symbol: "",
+                                      definition: "",
+                                    },
+                                  })
+                                }
+                              >
+                                Add Datastream
+                              </Button>
+                            </Grid>
+                          </>
+                        )}
                       />
                     </Grid>
-
-                    {/* Observation Type */}
-                    <Grid item xs={12} md={6}>
-                      <TextField
-                        fullWidth
-                        label="Observation Type"
-                        name={`datastreams[${index}].observationType`}
-                        value={datastream.observationType || ""}
-                        onChange={handleChange}
-                        error={
-                          touched.datastreams?.[index]?.observationType &&
-                          Boolean(
-                            typeof errors.datastreams?.[index] === "object" &&
-                              errors.datastreams?.[index]?.observationType
-                          )
-                        }
-                        helperText={
-                          touched.datastreams?.[index]?.observationType &&
-                          typeof errors.datastreams?.[index] === "object" &&
-                          errors.datastreams?.[index]?.observationType
-                        }
-                      />
-                    </Grid>
-
-                    {/* Unit of Measurement Name */}
-                    <Grid item xs={12} md={6}>
-                      <TextField
-                        fullWidth
-                        label="Unit of Measurement Name"
-                        name={`datastreams[${index}].unitOfMeasurement.name`}
-                        value={datastream.unitOfMeasurement?.name || ""}
-                        onChange={handleChange}
-                        error={
-                          touched.datastreams?.[index]?.unitOfMeasurement?.name &&
-                          Boolean(
-                            typeof errors.datastreams?.[index] === "object" &&
-                              errors.datastreams?.[index]?.unitOfMeasurement?.name
-                          )
-                        }
-                        helperText={
-                          touched.datastreams?.[index]?.unitOfMeasurement?.name &&
-                          typeof errors.datastreams?.[index] === "object" &&
-                          errors.datastreams?.[index]?.unitOfMeasurement?.name
-                        }
-                      />
-                    </Grid>
-
-                    {/* Unit of Measurement Symbol */}
-                    <Grid item xs={12} md={6}>
-                      <TextField
-                        fullWidth
-                        label="Unit of Measurement Symbol"
-                        name={`datastreams[${index}].unitOfMeasurement.symbol`}
-                        value={datastream.unitOfMeasurement?.symbol || ""}
-                        onChange={handleChange}
-                        error={
-                          touched.datastreams?.[index]?.unitOfMeasurement?.symbol &&
-                          Boolean(
-                            typeof errors.datastreams?.[index] === "object" &&
-                              errors.datastreams?.[index]?.unitOfMeasurement?.symbol
-                          )
-                        }
-                        helperText={
-                          touched.datastreams?.[index]?.unitOfMeasurement?.symbol &&
-                          typeof errors.datastreams?.[index] === "object" &&
-                          errors.datastreams?.[index]?.unitOfMeasurement?.symbol
-                        }
-                      />
-                    </Grid>
-
-                    {/* Unit of Measurement Definition */}
-                    <Grid item xs={12} md={6}>
-                      <TextField
-                        fullWidth
-                        label="Unit of Measurement Definition"
-                        name={`datastreams[${index}].unitOfMeasurement.definition`}
-                        value={datastream.unitOfMeasurement?.definition || ""}
-                        onChange={handleChange}
-                        error={
-                          touched.datastreams?.[index]?.unitOfMeasurement?.definition &&
-                          Boolean(
-                            typeof errors.datastreams?.[index] === "object" &&
-                              errors.datastreams?.[index]?.unitOfMeasurement?.definition
-                          )
-                        }
-                        helperText={
-                          touched.datastreams?.[index]?.unitOfMeasurement?.definition &&
-                          typeof errors.datastreams?.[index] === "object" &&
-                          errors.datastreams?.[index]?.unitOfMeasurement?.definition
-                        }
-                      />
-                    </Grid>
-                  </>
-                )}
-              </Grid>
-
-              {/* Remove Button */}
-              {index > 0 && (
-                <Grid item xs={12}>
-                  <Button onClick={() => remove(index)}>Remove</Button>
-                </Grid>
-              )}
-
-              {/* Divider Between Datastreams */}
-              {index < values.datastreams.length - 1 && (
-                <Grid item xs={12}>
-                  <Divider style={{ marginTop: "20px", marginBottom: "20px" }} />
-                </Grid>
-              )}
-            </React.Fragment>
-          ))}
-
-          {/* Add Datastream Button */}
-          <Grid item xs={12}>
-            <Button
-              onClick={() =>
-                push({
-                  name: "",
-                  description: "",
-                  observationType: "",
-                  unitOfMeasurement: {
-                    name: "",
-                    symbol: "",
-                    definition: "",
-                  },
-                })
-              }
-            >
-              Add Datastream
-            </Button>
-          </Grid>
-        </>
-      )}
-    />
-  </Grid>
-)}
+                  )}
                   {/* Summary Step */}
                   {activeStep === 3 && (
                     <Grid container spacing={2}>
@@ -1314,7 +1332,7 @@ function StepperStore() {
                           </Button>
                         </Typography>
                       </Grid>
-                      {values.datastreams.map((datastream, index) => (
+                      {values.datastreams.map((datastream:Datastream, index:number) => (
                         <React.Fragment key={index}>
                           <Grid item xs={12} md={4}>
                             <Typography gutterBottom>
@@ -1467,7 +1485,7 @@ function StepperStore() {
                           // Step 2: Validate Datastream Names Dynamically
                           else if (activeStep === 2) {
                             // Array to track duplicate checks
-                            const duplicatePromises = values.datastreams.map(async (datastream, index) => {
+                            const duplicatePromises = values.datastreams.map(async (datastream:Datastream, index:number) => {
                               if (datastream.name.trim() === "") {
                                 return; // Skip empty names
                               }
