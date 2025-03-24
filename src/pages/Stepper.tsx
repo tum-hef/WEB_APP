@@ -64,8 +64,15 @@ interface FormValues {
     definition: string;
   }>;
 
-  // Third Step: Datastream Fields (Dynamic)
-  [key: string]: any; // For dynamic keys like `datastream_name_0`, `datastram_description_0`, etc.
+  // Third Step: Datastreams (Dynamic FieldArray)
+  datastreams: Array<{
+    name: string; // Auto-generated or user-defined
+    description: string; // Optional
+    observation_type: string; // Optional
+    unit_of_measurement_name: string; // Optional
+    unit_of_measurement_symbol: string; // Optional
+    unit_of_measurement_definition: string; // Optional
+  }>;
 }
 const getValidationSchemaPerStep = (step: number) => {
   switch (step) {
@@ -137,21 +144,20 @@ const getValidationSchemaPerStep = (step: number) => {
       });
     case 2:
       return yup.object({
-        observeProperties: yup
+        datastreams: yup
           .array()
           .of(
             yup.object({
-              name: yup.string().required("Name is required"),
+              name: yup.string().required("Datastream Name is required"),
               description: yup.string().nullable(),
-              definition: yup.string().nullable(),
+              observation_type: yup.string().nullable(),
+              unit_of_measurement_name: yup.string().nullable(),
+              unit_of_measurement_symbol: yup.string().nullable(),
+              unit_of_measurement_definition: yup.string().nullable(),
             })
           )
-          .min(1, "At least one Measurement Property is required")
-          .required("Measurement Properties are required"),
-        observedProperty_existing_id: yup
-          .array()
-          .of(yup.string())
-          .nullable(),
+          .min(1, "At least one Datastream is required")
+          .required("Datastreams are required"),
       });
   }
 };
@@ -342,7 +348,7 @@ function StepperStore() {
         ) : (
           <Formik
             initialValues={{
-              // First Step
+              // First Step: Device Fields
               device_existing_id: "",
               device_name: "",
               device_description: "",
@@ -350,19 +356,21 @@ function StepperStore() {
               device_location_description: "",
               device_latitude: "",
               device_longitude: "",
-              // Second Step
+              // Second Step: Observed Properties
               observed_property_using_existing: null,
               observedProperty_existing_id: [], // Array for multi-selection
               observeProperties: [] as ObserveProperty[],
-              // Third Step
-              datastream_name: "",
-              datastram_description: "",
-              datastream_observation_type: "",
-              datastream_unit_of_measurement_name: "",
-              datastream_unit_of_measurement_symbol: "",
-              datastream_unit_of_measurement_definition: "",
+              // Third Step: Datastreams (Dynamic FieldArray)
+              datastreams: [] as Array<{
+                name: string;
+                description: string;
+                observation_type: string;
+                unit_of_measurement_name: string;
+                unit_of_measurement_symbol: string;
+                unit_of_measurement_definition: string;
+              }>,
             }}
-            validationSchema={getValidationSchemaPerStep(activeStep)}
+            enableReinitialize
             onSubmit={async (values: any, helpers: any) => {
               const isDev = process.env.REACT_APP_IS_DEVELOPMENT === 'true';
               if (isLastStep) {
@@ -620,940 +628,916 @@ function StepperStore() {
               values,
               setFieldValue,
               setFieldError,
-            }: FormikProps<FormValues>) => (
-              <>
-                <Breadcrumbs
-                  aria-label="breadcrumb"
-                  style={{
-                    marginBottom: "10px",
-                  }}
-                >
-                  <Typography color="text.primary">Data Space</Typography>
-                  <Typography color="text.primary">Stepper</Typography>
-                </Breadcrumbs>
+            }: FormikProps<FormValues>) => {
+              useEffect(() => {
+                console.log("values", values); // Update state when values change
+              }, [values]);
+              useEffect(() => {
+                if (activeStep !== 2) return; // Only run when activeStep is 2
+              
+                const combinedProperties = [
+                  ...(values.observedProperty_existing_id || []).map((id: string, index: number) => {
+                    const existingProperty = ObservedProperties.find(
+                      (item: any) => item["@iot.id"] === id
+                    );
+                    return {
+                      name: existingProperty?.name || `Property ID: ${id}`,
+                    };
+                  }),
+                  ...values.observeProperties,
+                ];
+              
+                // Merge existing datastreams with new ones
+                const updatedDatastreams = combinedProperties.map((property: any, index: number) => {
+                  const existingDatastream = values.datastreams[index];
+                  return {
+                    name: `datastream_${values.device_name}_${property.name}`, // Update name dynamically
+                    description: existingDatastream?.description || "", // Preserve existing value or default to ""
+                    observation_type: existingDatastream?.observation_type || "",
+                    unit_of_measurement_name: existingDatastream?.unit_of_measurement_name || "",
+                    unit_of_measurement_symbol: existingDatastream?.unit_of_measurement_symbol || "",
+                    unit_of_measurement_definition: existingDatastream?.unit_of_measurement_definition || "",
+                    showOptional: existingDatastream?.showOptional || false, // Preserve showOptional state
+                  };
+                });
+              
+                // Prevent unnecessary updates
+                const isDatastreamsEqual = JSON.stringify(values.datastreams) === JSON.stringify(updatedDatastreams);
+                if (!isDatastreamsEqual) {
+                  setFieldValue("datastreams", updatedDatastreams);
+                }
+              }, [activeStep, values.datastreams]);
+              return (
 
-                <Form
-                  style={{
-                    padding: "2rem",
-                  }}
-                >
-                  <Stepper
-                    activeStep={activeStep}
+                <>
+                  <Breadcrumbs
+                    aria-label="breadcrumb"
                     style={{
-                      backgroundColor: "transparent",
-                      marginBottom: "2rem",
+                      marginBottom: "10px",
                     }}
                   >
-                    {steps.map((label) => (
-                      <Step key={label}>
-                        <StepLabel>{label}</StepLabel>
-                      </Step>
-                    ))}
-                  </Stepper>
-                  {/* Device Step */}
-                  {activeStep === 0 && (
-                    <Grid container spacing={2}>
-                      {useExistingDevice == null ? (
+                    <Typography color="text.primary">Data Space</Typography>
+                    <Typography color="text.primary">Stepper</Typography>
+                  </Breadcrumbs>
+
+                  <Form
+                    style={{
+                      padding: "2rem",
+                    }}
+                  >
+                    <Stepper
+                      activeStep={activeStep}
+                      style={{
+                        backgroundColor: "transparent",
+                        marginBottom: "2rem",
+                      }}
+                    >
+                      {steps.map((label) => (
+                        <Step key={label}>
+                          <StepLabel>{label}</StepLabel>
+                        </Step>
+                      ))}
+                    </Stepper>
+                    {/* Device Step */}
+                    {activeStep === 0 && (
+                      <Grid container spacing={2}>
+                        {useExistingDevice == null ? (
+                          <Grid item xs={12} md={6}>
+                            <TextField
+                              select
+                              fullWidth
+                              name=""
+                              value={values.device_existing_id}
+                              onChange={(event) => {
+                                if (event.target.value === "yes") {
+                                  setUseExistingDevice(true);
+                                } else if (event.target.value === "no") {
+                                  setUseExistingDevice(false);
+                                }
+                              }}
+                              label="Do you want to use a device as a reference?"
+                              variant="outlined"
+                            >
+                              <MenuItem value={"yes"}>Yes</MenuItem>
+                              <MenuItem value={"no"}>No</MenuItem>
+                            </TextField>
+                          </Grid>
+                        ) : (
+                          <>
+                            {useExistingDevice && (
+                              <Grid item xs={12} md={6}>
+                                <TextField
+                                  select
+                                  fullWidth
+                                  name="device_existing_id"
+                                  value={values.device_existing_id}
+                                  onChange={(event) =>
+                                    handleOnChangeExistingDevice(
+                                      event,
+                                      setFieldValue
+                                    )
+                                  }
+                                  variant="outlined"
+                                  label="Select Existing Device"
+                                  error={Boolean(
+                                    touched.device_existing_id &&
+                                    errors.device_existing_id
+                                  )}
+                                  InputLabelProps={{ shrink: true }}
+                                  helperText={
+                                    touched.device_existing_id &&
+                                    errors.device_existing_id
+                                  }
+                                >
+                                  <MenuItem
+                                    value=""
+                                    selected={values.device_existing_id === ""}
+                                  >
+                                    <em>None</em>
+                                  </MenuItem>
+                                  {devices.map((item: any) => (
+                                    <MenuItem
+                                      key={item["@iot.id"]}
+                                      value={item["@iot.id"]}
+                                    >
+                                      {item.name + " - " + item["@iot.id"]}
+                                    </MenuItem>
+                                  ))}
+                                </TextField>
+                              </Grid>
+                            )}
+                            <Grid item xs={12} md={6}>
+                              <TextField
+                                fullWidth
+                                label="Device Name"
+                                name="device_name"
+                                required
+                                onChange={handleChange}
+                                value={values.device_name}
+                                variant="outlined"
+                                error={
+                                  touched.device_name &&
+                                  Boolean(errors.device_name)
+                                }
+                                helperText={
+                                  (touched.device_name && errors.device_name) ||
+                                  "Name Is Required"
+                                }
+                              />
+                            </Grid>{" "}
+                            <Grid item xs={12} md={6}>
+                              <TextField
+                                fullWidth
+                                required
+                                label="Device Description"
+                                name="device_description"
+                                onChange={handleChange}
+                                value={values.device_description}
+                                variant="outlined"
+                                error={
+                                  touched.device_description &&
+                                  Boolean(errors.device_description)
+                                }
+                                helperText={
+                                  (touched.device_description &&
+                                    errors.device_description) ||
+                                  "Description Is Required"
+                                }
+                              />
+                            </Grid>
+                            <Grid item xs={12} md={6}>
+                              <TextField
+                                fullWidth
+                                label="Device Location"
+                                name="device_location_name"
+                                required
+                                onChange={handleChange}
+                                value={values.device_location_name}
+                                variant="outlined"
+                                error={
+                                  touched.device_location_name &&
+                                  Boolean(errors.device_location_name)
+                                }
+                                helperText={
+                                  (touched.device_location_name &&
+                                    errors.device_location_name) ||
+                                  "Location Is Required"
+                                }
+                              />
+                            </Grid>
+                            <Grid item xs={12} md={6}>
+                              <TextField
+                                fullWidth
+                                label="Location Description"
+                                name="device_location_description"
+                                required
+                                onChange={handleChange}
+                                value={values.device_location_description}
+                                variant="outlined"
+                                error={
+                                  touched.device_location_description &&
+                                  Boolean(errors.device_location_description)
+                                }
+                                helperText={
+                                  (touched.device_location_description &&
+                                    errors.device_location_description) ||
+                                  "Description Is Required"
+                                }
+                              />
+                            </Grid>
+                            <Grid item xs={12} md={6}>
+                              <TextField
+                                fullWidth
+                                label="Latitude"
+                                name="device_latitude"
+                                required
+                                onChange={handleChange}
+                                value={values.device_latitude}
+                                variant="outlined"
+                                error={
+                                  touched.device_latitude &&
+                                  Boolean(errors.device_latitude)
+                                }
+                                helperText={
+                                  (touched.device_latitude &&
+                                    errors.device_latitude) ||
+                                  "Latitude Is Required"
+                                }
+                              />
+                            </Grid>
+                            <Grid item xs={12} md={6}>
+                              <TextField
+                                fullWidth
+                                label="Longitude"
+                                required
+                                name="device_longitude"
+                                onChange={handleChange}
+                                value={values.device_longitude}
+                                variant="outlined"
+                                error={
+                                  touched.device_longitude &&
+                                  Boolean(errors.device_longitude)
+                                }
+                                helperText={
+                                  (touched.device_longitude &&
+                                    errors.device_longitude) ||
+                                  "Longitude Is Required"
+                                }
+                              />
+                            </Grid>
+                          </>
+                        )}
+                      </Grid>
+                    )}
+                    {/* Observation Property Step */}
+                    {activeStep === 1 && (
+                      <Grid container spacing={2}>
+                        {/* Section 1: Select Existing Measurement Properties */}
                         <Grid item xs={12} md={6}>
+                          <Typography variant="subtitle1" gutterBottom>
+                            Select Existing Measurement Properties
+                          </Typography>
                           <TextField
                             select
                             fullWidth
-                            name=""
-                            value={values.device_existing_id}
-                            onChange={(event) => {
-                              if (event.target.value === "yes") {
-                                setUseExistingDevice(true);
-                              } else if (event.target.value === "no") {
-                                setUseExistingDevice(false);
-                              }
-                            }}
-                            label="Do you want to use a device as a reference?"
+                            name="observedProperty_existing_id"
+                            value={values.observedProperty_existing_id || []}
+                            label="Choose Existing Measurement Properties"
                             variant="outlined"
+                            SelectProps={{
+                              multiple: true,
+                              renderValue: (selected: any) => (
+                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                  {selected.map((value: any) => {
+                                    const selectedItem = ObservedProperties.find(
+                                      (item: any) => item["@iot.id"] === value
+                                    );
+                                    return (
+                                      <Chip
+                                        key={value}
+                                        label={
+                                          selectedItem
+                                            ? selectedItem.name
+                                            : value
+                                        }
+                                      />
+                                    );
+                                  })}
+                                </Box>
+                              ),
+                            }}
+                            onChange={(event) => {
+                              const selectedValues = event.target.value;
+                              setFieldValue("observedProperty_existing_id", selectedValues);
+                            }}
                           >
-                            <MenuItem value={"yes"}>Yes</MenuItem>
-                            <MenuItem value={"no"}>No</MenuItem>
+                            {ObservedProperties.map((item: any) => (
+                              <MenuItem key={item["@iot.id"]} value={item["@iot.id"]}>
+                                {item.name}
+                              </MenuItem>
+                            ))}
                           </TextField>
                         </Grid>
-                      ) : (
-                        <>
-                          {useExistingDevice && (
-                            <Grid item xs={12} md={6}>
-                              <TextField
-                                select
-                                fullWidth
-                                name="device_existing_id"
-                                value={values.device_existing_id}
-                                onChange={(event) =>
-                                  handleOnChangeExistingDevice(
-                                    event,
-                                    setFieldValue
-                                  )
-                                }
-                                variant="outlined"
-                                label="Select Existing Device"
-                                error={Boolean(
-                                  touched.device_existing_id &&
-                                  errors.device_existing_id
-                                )}
-                                InputLabelProps={{ shrink: true }}
-                                helperText={
-                                  touched.device_existing_id &&
-                                  errors.device_existing_id
-                                }
-                              >
-                                <MenuItem
-                                  value=""
-                                  selected={values.device_existing_id === ""}
-                                >
-                                  <em>None</em>
-                                </MenuItem>
-                                {devices.map((item: any) => (
-                                  <MenuItem
-                                    key={item["@iot.id"]}
-                                    value={item["@iot.id"]}
-                                  >
-                                    {item.name + " - " + item["@iot.id"]}
-                                  </MenuItem>
-                                ))}
-                              </TextField>
-                            </Grid>
-                          )}
-                          <Grid item xs={12} md={6}>
-                            <TextField
-                              fullWidth
-                              label="Device Name"
-                              name="device_name"
-                              required
-                              onChange={handleChange}
-                              value={values.device_name}
-                              variant="outlined"
-                              error={
-                                touched.device_name &&
-                                Boolean(errors.device_name)
-                              }
-                              helperText={
-                                (touched.device_name && errors.device_name) ||
-                                "Name Is Required"
-                              }
-                            />
-                          </Grid>{" "}
-                          <Grid item xs={12} md={6}>
-                            <TextField
-                              fullWidth
-                              required
-                              label="Device Description"
-                              name="device_description"
-                              onChange={handleChange}
-                              value={values.device_description}
-                              variant="outlined"
-                              error={
-                                touched.device_description &&
-                                Boolean(errors.device_description)
-                              }
-                              helperText={
-                                (touched.device_description &&
-                                  errors.device_description) ||
-                                "Description Is Required"
-                              }
-                            />
-                          </Grid>
-                          <Grid item xs={12} md={6}>
-                            <TextField
-                              fullWidth
-                              label="Device Location"
-                              name="device_location_name"
-                              required
-                              onChange={handleChange}
-                              value={values.device_location_name}
-                              variant="outlined"
-                              error={
-                                touched.device_location_name &&
-                                Boolean(errors.device_location_name)
-                              }
-                              helperText={
-                                (touched.device_location_name &&
-                                  errors.device_location_name) ||
-                                "Location Is Required"
-                              }
-                            />
-                          </Grid>
-                          <Grid item xs={12} md={6}>
-                            <TextField
-                              fullWidth
-                              label="Location Description"
-                              name="device_location_description"
-                              required
-                              onChange={handleChange}
-                              value={values.device_location_description}
-                              variant="outlined"
-                              error={
-                                touched.device_location_description &&
-                                Boolean(errors.device_location_description)
-                              }
-                              helperText={
-                                (touched.device_location_description &&
-                                  errors.device_location_description) ||
-                                "Description Is Required"
-                              }
-                            />
-                          </Grid>
-                          <Grid item xs={12} md={6}>
-                            <TextField
-                              fullWidth
-                              label="Latitude"
-                              name="device_latitude"
-                              required
-                              onChange={handleChange}
-                              value={values.device_latitude}
-                              variant="outlined"
-                              error={
-                                touched.device_latitude &&
-                                Boolean(errors.device_latitude)
-                              }
-                              helperText={
-                                (touched.device_latitude &&
-                                  errors.device_latitude) ||
-                                "Latitude Is Required"
-                              }
-                            />
-                          </Grid>
-                          <Grid item xs={12} md={6}>
-                            <TextField
-                              fullWidth
-                              label="Longitude"
-                              required
-                              name="device_longitude"
-                              onChange={handleChange}
-                              value={values.device_longitude}
-                              variant="outlined"
-                              error={
-                                touched.device_longitude &&
-                                Boolean(errors.device_longitude)
-                              }
-                              helperText={
-                                (touched.device_longitude &&
-                                  errors.device_longitude) ||
-                                "Longitude Is Required"
-                              }
-                            />
-                          </Grid>
-                        </>
-                      )}
-                    </Grid>
-                  )}
-                  {/* Observation Property Step */}
-                  {activeStep === 1 && (
-                    <Grid container spacing={2}>
-                      {/* Section 1: Select Existing Measurement Properties */}
-                      <Grid item xs={12} md={6}>
-                        <Typography variant="subtitle1" gutterBottom>
-                          Select Existing Measurement Properties
-                        </Typography>
-                        <TextField
-                          select
-                          fullWidth
-                          name="observedProperty_existing_id"
-                          value={values.observedProperty_existing_id || []}
-                          label="Choose Existing Measurement Properties"
-                          variant="outlined"
-                          SelectProps={{
-                            multiple: true,
-                            renderValue: (selected: any) => (
-                              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                {selected.map((value: any) => {
-                                  const selectedItem = ObservedProperties.find(
-                                    (item: any) => item["@iot.id"] === value
-                                  );
-                                  return (
-                                    <Chip
-                                      key={value}
-                                      label={
-                                        selectedItem
-                                          ? selectedItem.name
-                                          : value
-                                      }
-                                    />
-                                  );
-                                })}
-                              </Box>
-                            ),
-                          }}
-                          onChange={(event) => {
-                            const selectedValues = event.target.value;
-                            setFieldValue("observedProperty_existing_id", selectedValues);
-                          }}
-                        >
-                          {ObservedProperties.map((item: any) => (
-                            <MenuItem key={item["@iot.id"]} value={item["@iot.id"]}>
-                              {item.name}
-                            </MenuItem>
-                          ))}
-                        </TextField>
-                      </Grid>
 
-                      {/* Section 2: Create New Measurement Properties */}
-                      <Grid item xs={12}>
-                        <Typography variant="subtitle1" gutterBottom>
-                          Create New Measurement Properties
-                        </Typography>
-                        <FieldArray name="observeProperties">
+                        {/* Section 2: Create New Measurement Properties */}
+                        <Grid item xs={12}>
+                          <Typography variant="subtitle1" gutterBottom>
+                            Create New Measurement Properties
+                          </Typography>
+                          <FieldArray name="observeProperties">
+                            {({ push, remove, form }) => {
+                              const observeProperties = form.values.observeProperties as ObserveProperty[];
+                              return (
+                                <Grid container spacing={3}>
+                                  {observeProperties.map((_, index) => (
+                                    <Fragment key={index}>
+                                      <Grid item xs={12}>
+                                        <Divider sx={{ my: 2 }} />
+                                      </Grid>
+                                      {/* Name Field */}
+                                      <Grid item xs={12} md={4}>
+                                        <TextField
+                                          fullWidth
+                                          label="Name"
+                                          name={`observeProperties.${index}.name`}
+                                          value={form.values.observeProperties[index]?.name || ""}
+                                          onChange={form.handleChange}
+                                          variant="outlined"
+                                          error={
+                                            Array.isArray(form.touched.observeProperties) &&
+                                            Array.isArray(form.errors.observeProperties) &&
+                                            typeof form.errors.observeProperties[index] === "object" &&
+                                            Boolean(form.touched.observeProperties[index]) &&
+                                            Boolean((form.errors.observeProperties[index] as FormikErrors<any>)?.name)
+                                          }
+                                          helperText={
+                                            Array.isArray(form.errors.observeProperties) &&
+                                            Array.isArray(form.touched.observeProperties) &&
+                                            typeof form.errors.observeProperties[index] === "object" &&
+                                            form.touched.observeProperties[index] &&
+                                            (form.errors.observeProperties[index] as FormikErrors<any>)?.name
+                                          }
+                                        />
+                                      </Grid>
+                                      {/* Definition Field */}
+                                      <Grid item xs={12} md={4}>
+                                        <TextField
+                                          fullWidth
+                                          label="Definition"
+                                          name={`observeProperties.${index}.definition`}
+                                          value={form.values.observeProperties[index]?.definition || ""}
+                                          onChange={form.handleChange}
+                                          variant="outlined"
+                                          error={
+                                            Array.isArray(form.touched.observeProperties) &&
+                                            Array.isArray(form.errors.observeProperties) &&
+                                            typeof form.errors.observeProperties[index] === "object" &&
+                                            Boolean(form.touched.observeProperties[index]) &&
+                                            Boolean((form.errors.observeProperties[index] as FormikErrors<any>)?.definition)
+                                          }
+                                          helperText={
+                                            Array.isArray(form.errors.observeProperties) &&
+                                            Array.isArray(form.touched.observeProperties) &&
+                                            typeof form.errors.observeProperties[index] === "object" &&
+                                            form.touched.observeProperties[index] &&
+                                            (form.errors.observeProperties[index] as FormikErrors<any>)?.definition
+                                          }
+                                        />
+                                      </Grid>
+                                      {/* Description Field */}
+                                      <Grid item xs={12} md={4}>
+                                        <TextField
+                                          fullWidth
+                                          label="Description"
+                                          name={`observeProperties.${index}.description`}
+                                          value={form.values.observeProperties[index]?.description || ""}
+                                          onChange={form.handleChange}
+                                          variant="outlined"
+                                          error={
+                                            Array.isArray(form.touched.observeProperties) &&
+                                            Array.isArray(form.errors.observeProperties) &&
+                                            typeof form.errors.observeProperties[index] === "object" &&
+                                            Boolean(form.touched.observeProperties[index]) &&
+                                            Boolean((form.errors.observeProperties[index] as FormikErrors<any>)?.description)
+                                          }
+                                          helperText={
+                                            Array.isArray(form.errors.observeProperties) &&
+                                            Array.isArray(form.touched.observeProperties) &&
+                                            typeof form.errors.observeProperties[index] === "object" &&
+                                            form.touched.observeProperties[index] &&
+                                            (form.errors.observeProperties[index] as FormikErrors<any>)?.description
+                                          }
+                                        />
+                                      </Grid>
+                                      {/* Remove Button */}
+                                      <Grid item xs={12}>
+                                        <Button
+                                          variant="contained"
+                                          color="error"
+                                          onClick={() => remove(index)}
+                                        >
+                                          Remove Property
+                                        </Button>
+                                      </Grid>
+                                    </Fragment>
+                                  ))}
+                                  {/* Add Button */}
+                                  <Grid item xs={12}>
+                                    <Button
+                                      variant="contained"
+                                      color="primary"
+                                      onClick={() =>
+                                        push({ name: "", definition: "", description: "" })
+                                      }
+                                    >
+                                      Add New Measurement Property
+                                    </Button>
+                                  </Grid>
+                                </Grid>
+                              );
+                            }}
+                          </FieldArray>
+
+                        </Grid>
+                      </Grid>
+                    )}
+
+                    {/* DataStream Step */}
+                    {/* DataStream Step */}
+                    {activeStep === 2 && (
+                      <Grid container spacing={2}>
+                        <FieldArray name="datastreams">
                           {({ push, remove, form }) => {
-                            const observeProperties = form.values.observeProperties as ObserveProperty[];
+                            const { values, touched, errors, handleChange, setFieldValue } = form;
                             return (
-                              <Grid container spacing={3}>
-                                {observeProperties.map((_, index) => (
+                              <>
+                                {values.datastreams.map((_, index:number) => (
                                   <Fragment key={index}>
-                                    <Grid item xs={12}>
-                                      <Divider sx={{ my: 2 }} />
-                                    </Grid>
-                                    {/* Name Field */}
-                                    <Grid item xs={12} md={4}>
+                                    {/* Datastream Name (Auto-generated) */}
+                                    <Grid item xs={12} md={6}>
                                       <TextField
                                         fullWidth
-                                        label="Name"
-                                        name={`observeProperties.${index}.name`}
-                                        value={form.values.observeProperties[index]?.name || ""}
-                                        onChange={form.handleChange}
+                                        label={`Datastream Name`}
+                                        name={`datastreams.${index}.name`}
+                                        value={`datastream_${values.device_name}_${index}`}
                                         variant="outlined"
-                                        error={
-                                          Array.isArray(form.touched.observeProperties) &&
-                                          Array.isArray(form.errors.observeProperties) &&
-                                          typeof form.errors.observeProperties[index] === "object" &&
-                                          Boolean(form.touched.observeProperties[index]) &&
-                                          Boolean((form.errors.observeProperties[index] as FormikErrors<any>)?.name)
-                                        }
-                                        helperText={
-                                          Array.isArray(form.errors.observeProperties) &&
-                                          Array.isArray(form.touched.observeProperties) &&
-                                          typeof form.errors.observeProperties[index] === "object" &&
-                                          form.touched.observeProperties[index] &&
-                                          (form.errors.observeProperties[index] as FormikErrors<any>)?.name
-                                        }
+                                        InputProps={{ readOnly: true }}
+                                        helperText="Auto-generated based on device name"
                                       />
                                     </Grid>
-                                    {/* Definition Field */}
-                                    <Grid item xs={12} md={4}>
-                                      <TextField
-                                        fullWidth
-                                        label="Definition"
-                                        name={`observeProperties.${index}.definition`}
-                                        value={form.values.observeProperties[index]?.definition || ""}
-                                        onChange={form.handleChange}
-                                        variant="outlined"
-                                        error={
-                                          Array.isArray(form.touched.observeProperties) &&
-                                          Array.isArray(form.errors.observeProperties) &&
-                                          typeof form.errors.observeProperties[index] === "object" &&
-                                          Boolean(form.touched.observeProperties[index]) &&
-                                          Boolean((form.errors.observeProperties[index] as FormikErrors<any>)?.definition)
-                                        }
-                                        helperText={
-                                          Array.isArray(form.errors.observeProperties) &&
-                                          Array.isArray(form.touched.observeProperties) &&
-                                          typeof form.errors.observeProperties[index] === "object" &&
-                                          form.touched.observeProperties[index] &&
-                                          (form.errors.observeProperties[index] as FormikErrors<any>)?.definition
-                                        }
-                                      />
-                                    </Grid>
-                                    {/* Description Field */}
-                                    <Grid item xs={12} md={4}>
-                                      <TextField
-                                        fullWidth
-                                        label="Description"
-                                        name={`observeProperties.${index}.description`}
-                                        value={form.values.observeProperties[index]?.description || ""}
-                                        onChange={form.handleChange}
-                                        variant="outlined"
-                                        error={
-                                          Array.isArray(form.touched.observeProperties) &&
-                                          Array.isArray(form.errors.observeProperties) &&
-                                          typeof form.errors.observeProperties[index] === "object" &&
-                                          Boolean(form.touched.observeProperties[index]) &&
-                                          Boolean((form.errors.observeProperties[index] as FormikErrors<any>)?.description)
-                                        }
-                                        helperText={
-                                          Array.isArray(form.errors.observeProperties) &&
-                                          Array.isArray(form.touched.observeProperties) &&
-                                          typeof form.errors.observeProperties[index] === "object" &&
-                                          form.touched.observeProperties[index] &&
-                                          (form.errors.observeProperties[index] as FormikErrors<any>)?.description
-                                        }
-                                      />
-                                    </Grid>
-                                    {/* Remove Button */}
+
+                                    {/* Toggle Button for Optional Fields */}
                                     <Grid item xs={12}>
                                       <Button
                                         variant="contained"
-                                        color="error"
-                                        onClick={() => remove(index)}
+                                        color={values.datastreams[index].showOptional ? "error" : "primary"}
+                                        onClick={() => {
+                                          const updatedDatastreams = [...values.datastreams];
+                                          updatedDatastreams[index].showOptional = !updatedDatastreams[index].showOptional;
+                                          setFieldValue("datastreams", updatedDatastreams);
+                                        }}
                                       >
-                                        Remove Property
+                                        {values.datastreams[index].showOptional ? "Hide Optional Data" : "Show Optional Data"}
                                       </Button>
+                                    </Grid>
+
+                                    {/* Optional Fields */}
+                                    {values.datastreams[index].showOptional && (
+                                      <>
+                                        <Grid item xs={12} md={6}>
+                                          <TextField
+                                            fullWidth
+                                            label="Datastream Description"
+                                            name={`datastreams.${index}.description`}
+                                            value={values.datastreams[index]?.description || ""}
+                                            onChange={handleChange}
+                                            variant="outlined"
+                                          />
+                                        </Grid>
+                                        <Grid item xs={12} md={6}>
+                                          <TextField
+                                            fullWidth
+                                            label="Observation Type"
+                                            name={`datastreams.${index}.observation_type`}
+                                            value={values.datastreams[index]?.observation_type || ""}
+                                            onChange={handleChange}
+                                            variant="outlined"
+                                          />
+                                        </Grid>
+                                        <Grid item xs={12} md={6}>
+                                          <TextField
+                                            fullWidth
+                                            label="Unit of Measurement Name"
+                                            name={`datastreams.${index}.unit_of_measurement_name`}
+                                            value={values.datastreams[index]?.unit_of_measurement_name || ""}
+                                            onChange={handleChange}
+                                            variant="outlined"
+                                          />
+                                        </Grid>
+                                        <Grid item xs={12} md={6}>
+                                          <TextField
+                                            fullWidth
+                                            label="Unit of Measurement Symbol"
+                                            name={`datastreams.${index}.unit_of_measurement_symbol`}
+                                            value={values.datastreams[index]?.unit_of_measurement_symbol || ""}
+                                            onChange={handleChange}
+                                            variant="outlined"
+                                          />
+                                        </Grid>
+                                        <Grid item xs={12} md={6}>
+                                          <TextField
+                                            fullWidth
+                                            label="Unit of Measurement Definition"
+                                            name={`datastreams.${index}.unit_of_measurement_definition`}
+                                            value={values.datastreams[index]?.unit_of_measurement_definition || ""}
+                                            onChange={handleChange}
+                                            variant="outlined"
+                                          />
+                                        </Grid>
+                                      </>
+                                    )}
+
+                                    {/* Remove Button */}
+                                    {/* <Grid item xs={12}>
+                                      <Button variant="contained" color="error" onClick={() => remove(index)}>
+                                        Remove Datastream
+                                      </Button>
+                                    </Grid> */}
+
+                                    {/* Divider */}
+                                    <Grid item xs={12}>
+                                      <Divider sx={{ my: 2 }} />
                                     </Grid>
                                   </Fragment>
                                 ))}
-                                {/* Add Button */}
-                                <Grid item xs={12}>
+
+                                {/* Add New Datastream Button */}
+                                {/* <Grid item xs={12}>
                                   <Button
                                     variant="contained"
                                     color="primary"
                                     onClick={() =>
-                                      push({ name: "", definition: "", description: "" })
+                                      push({
+                                        name: "",
+                                        description: "",
+                                        observation_type: "",
+                                        unit_of_measurement_name: "",
+                                        unit_of_measurement_symbol: "",
+                                        unit_of_measurement_definition: "",
+                                        showOptional: false,
+                                      })
                                     }
                                   >
-                                    Add New Measurement Property
+                                    Add New Datastream
                                   </Button>
-                                </Grid>
-                              </Grid>
+                                </Grid> */}
+                              </>
                             );
                           }}
                         </FieldArray>
-
                       </Grid>
-                    </Grid>
-                  )}
+                    )}
 
-                  {/* DataStream Step */}
-                  {/* DataStream Step */}
-                  {activeStep === 2 && (
-                    <Grid container spacing={2}>
-                      {/* Combine Existing and New Properties */}
-                      {[
-                        ...(values.observedProperty_existing_id || []).map((id: string) => {
-                          const existingProperty = ObservedProperties.find(
-                            (item: any) => item["@iot.id"] === id
-                          );
-                          return {
-                            name: existingProperty?.name || `Property ID: ${id}`,
-                            description: existingProperty?.description || "No description",
-                            definition: existingProperty?.definition || "No definition",
-                          };
-                        }),
-                        ...values.observeProperties,
-                      ].map((property: any, index: number) => (
-                        <Fragment key={index}>
-                          {/* Datastream Name Row */}
-                          <Grid item xs={12} md={6}>
-                            <TextField
-                              fullWidth
-                              required
-                              label={`Datastream Name for ${property.name}`}
-                              name={`datastream_name_${index}`}
-                              value={`datastream_${values.device_name}_${property.name}`}
-                              variant="outlined"
-                              InputProps={{
-                                readOnly: true,
-                              }}
-                              helperText={`Datastream Name for ${property.name} is auto-generated`}
-                            />
-                          </Grid>
 
-                          {/* Optional Data Toggle Button Row */}
-                          <Grid item xs={12}>
+
+                    {/* Summary Step */}
+                    {/* Summary Step */}
+                    {activeStep === 3 && (
+                      <Grid container spacing={2}>
+                        {/* Device Information Section */}
+                        <Grid item xs={12}>
+                          <Typography variant="h2" gutterBottom>
+                            Device Information
                             <Button
-                              variant="contained"
-                              color={optionalDatastreamData[index] ? "error" : "primary"}
-                              onClick={() => {
-                                const newOptionalDatastreamData = [...optionalDatastreamData];
-                                newOptionalDatastreamData[index] = !newOptionalDatastreamData[index];
-                                setOptionalDatastreamData(newOptionalDatastreamData);
-
-                                if (!newOptionalDatastreamData[index]) {
-                                  setFieldValue(`datastram_description_${index}`, "");
-                                  setFieldValue(`datastream_observation_type_${index}`, "");
-                                  setFieldValue(`datastream_unit_of_measurement_name_${index}`, "");
-                                  setFieldValue(`datastream_unit_of_measurement_symbol_${index}`, "");
-                                  setFieldValue(`datastream_unit_of_measurement_definition_${index}`, "");
-                                }
-                              }}
+                              variant="outlined"
+                              color="primary"
+                              onClick={() => setActiveStep(0)}
+                              style={{ marginLeft: "10px" }}
                             >
-                              {optionalDatastreamData[index] ? "Clear Optional Data" : "Show Optional Data"}
+                              <CreateOutlinedIcon />
                             </Button>
-                          </Grid>
+                          </Typography>
+                        </Grid>
+                        <Grid item xs={12} md={4}>
+                          <Typography gutterBottom>
+                            <strong style={{ fontWeight: "bold", color: "#233044" }}>Device Name:</strong>{" "}
+                            {values.device_name || <em>Not defined</em>}
+                          </Typography>
+                        </Grid>
+                        <Grid item xs={12} md={4}>
+                          <Typography gutterBottom>
+                            <strong style={{ fontWeight: "bold", color: "#233044" }}>Device Description:</strong>{" "}
+                            {values.device_description || <em>Not defined</em>}
+                          </Typography>
+                        </Grid>
+                        <Grid item xs={12} md={4}>
+                          <Typography gutterBottom>
+                            <strong style={{ fontWeight: "bold", color: "#233044" }}>Device Location Name:</strong>{" "}
+                            {values.device_location_name || <em>Not defined</em>}
+                          </Typography>
+                        </Grid>
+                        <Grid item xs={12} md={4}>
+                          <Typography gutterBottom>
+                            <strong style={{ fontWeight: "bold", color: "#233044" }}>Device Location Description:</strong>{" "}
+                            {values.device_location_description || <em>Not defined</em>}
+                          </Typography>
+                        </Grid>
+                        <Grid item xs={12} md={4}>
+                          <Typography gutterBottom>
+                            <strong style={{ fontWeight: "bold", color: "#233044" }}>Device Latitude:</strong>{" "}
+                            {values.device_latitude || <em>Not defined</em>}
+                          </Typography>
+                        </Grid>
+                        <Grid item xs={12} md={4}>
+                          <Typography gutterBottom>
+                            <strong style={{ fontWeight: "bold", color: "#233044" }}>Device Longitude:</strong>{" "}
+                            {values.device_longitude || <em>Not defined</em>}
+                          </Typography>
+                        </Grid>
+                        <Grid item xs={12}>
+                          <Divider style={{ margin: "20px 0" }} />
+                        </Grid>
 
-                          {/* Divider between rows */}
-                          <Grid item xs={12}>
-                            <Divider sx={{ my: 2 }} />
-                          </Grid>
-
-                          {/* Optional Data Fields */}
-                          {optionalDatastreamData[index] && (
-                            <>
-                              <Grid item xs={12} md={6}>
-                                <TextField
-                                  fullWidth
-                                  name={`datastram_description_${index}`}
-                                  label={`Datastream Description for ${property.name}`}
-                                  onChange={handleChange}
-                                  value={values[`datastram_description_${index}`]}
-                                  variant="outlined"
-                                  error={
-                                    touched[`datastram_description_${index}`] &&
-                                    Boolean(errors[`datastram_description_${index}`])
-                                  }
-                                  helperText={
-                                    touched[`datastram_description_${index}`] &&
-                                    errors[`datastram_description_${index}`]
-                                  }
-                                />
+                        {/* Measurement Properties Section */}
+                        <Grid item xs={12}>
+                          <Typography variant="h2" gutterBottom>
+                            Measurement Properties
+                            <Button
+                              variant="outlined"
+                              color="primary"
+                              onClick={() => setActiveStep(1)}
+                              style={{ marginLeft: "10px" }}
+                            >
+                              <CreateOutlinedIcon />
+                            </Button>
+                          </Typography>
+                        </Grid>
+                        {[
+                          ...(values.observedProperty_existing_id || []).map((id: string) => {
+                            const existingProperty = ObservedProperties.find(
+                              (item: any) => item["@iot.id"] === id
+                            );
+                            return {
+                              name: existingProperty?.name || `Property ID: ${id}`,
+                              description: existingProperty?.description || "No description",
+                              definition: existingProperty?.definition || "No definition",
+                            };
+                          }),
+                          ...values.observeProperties,
+                        ].map((property: any, index: number) => (
+                          <Fragment key={index}>
+                            <Grid item xs={12}>
+                              <Grid container spacing={2}>
+                                <Grid item xs={4}>
+                                  <Typography>
+                                    <strong style={{ fontWeight: "bold", color: "#233044" }}>Name:</strong>{" "}
+                                    {property.name || <em>Not defined</em>}
+                                  </Typography>
+                                </Grid>
+                                <Grid item xs={4}>
+                                  <Typography>
+                                    <strong style={{ fontWeight: "bold", color: "#233044" }}>Description:</strong>{" "}
+                                    {property.description || <em>Not defined</em>}
+                                  </Typography>
+                                </Grid>
+                                <Grid item xs={4}>
+                                  <Typography>
+                                    <strong style={{ fontWeight: "bold", color: "#233044" }}>Definition:</strong>{" "}
+                                    {property.definition || <em>Not defined</em>}
+                                  </Typography>
+                                </Grid>
                               </Grid>
-                              <Grid item xs={12} md={6}>
-                                <TextField
-                                  fullWidth
-                                  name={`datastream_observation_type_${index}`}
-                                  label={`Datastream Observation Type for ${property.name}`}
-                                  onChange={handleChange}
-                                  value={values[`datastream_observation_type_${index}`]}
-                                  variant="outlined"
-                                  error={
-                                    touched[`datastream_observation_type_${index}`] &&
-                                    Boolean(errors[`datastream_observation_type_${index}`])
-                                  }
-                                  helperText={
-                                    touched[`datastream_observation_type_${index}`] &&
-                                    errors[`datastream_observation_type_${index}`]
-                                  }
-                                />
-                              </Grid>
-                              <Grid item xs={12} md={6}>
-                                <TextField
-                                  fullWidth
-                                  name={`datastream_unit_of_measurement_name_${index}`}
-                                  label={`Unit of Measurement Name for ${property.name}`}
-                                  onChange={handleChange}
-                                  value={values[`datastream_unit_of_measurement_name_${index}`]}
-                                  variant="outlined"
-                                  error={
-                                    touched[`datastream_unit_of_measurement_name_${index}`] &&
-                                    Boolean(errors[`datastream_unit_of_measurement_name_${index}`])
-                                  }
-                                  helperText={
-                                    touched[`datastream_unit_of_measurement_name_${index}`] &&
-                                    errors[`datastream_unit_of_measurement_name_${index}`]
-                                  }
-                                />
-                              </Grid>
-                              <Grid item xs={12} md={6}>
-                                <TextField
-                                  fullWidth
-                                  name={`datastream_unit_of_measurement_symbol_${index}`}
-                                  label={`Unit of Measurement Symbol for ${property.name}`}
-                                  onChange={handleChange}
-                                  value={values[`datastream_unit_of_measurement_symbol_${index}`]}
-                                  variant="outlined"
-                                  error={
-                                    touched[`datastream_unit_of_measurement_symbol_${index}`] &&
-                                    Boolean(errors[`datastream_unit_of_measurement_symbol_${index}`])
-                                  }
-                                  helperText={
-                                    touched[`datastream_unit_of_measurement_symbol_${index}`] &&
-                                    errors[`datastream_unit_of_measurement_symbol_${index}`]
-                                  }
-                                />
-                              </Grid>
-                              <Grid item xs={12} md={6}>
-                                <TextField
-                                  fullWidth
-                                  name={`datastream_unit_of_measurement_definition_${index}`}
-                                  label={`Unit of Measurement Definition for ${property.name}`}
-                                  onChange={handleChange}
-                                  value={values[`datastream_unit_of_measurement_definition_${index}`]}
-                                  variant="outlined"
-                                  error={
-                                    touched[`datastream_unit_of_measurement_definition_${index}`] &&
-                                    Boolean(errors[`datastream_unit_of_measurement_definition_${index}`])
-                                  }
-                                  helperText={
-                                    touched[`datastream_unit_of_measurement_definition_${index}`] &&
-                                    errors[`datastream_unit_of_measurement_definition_${index}`]
-                                  }
-                                />
-                              </Grid>
-                            </>
-                          )}
-
-                          {/* Divider after each datastream */}
-                          <Grid item xs={12}>
-                            <Divider sx={{ my: 2 }} />
-                          </Grid>
-                        </Fragment>
-                      ))}
-                    </Grid>
-                  )}
-
-
-                  {/* Summary Step */}
-                  {/* Summary Step */}
-                  {activeStep === 3 && (
-                    <Grid container spacing={2}>
-                      {/* Device Information */}
-                      <Grid item xs={12}>
-                        <Typography variant="h2" gutterBottom>
-                          Device Information
-                          <Button
-                            variant="outlined"
-                            color="primary"
-                            onClick={() => setActiveStep(0)}
-                            style={{ marginLeft: "10px" }}
-                          >
-                            <CreateOutlinedIcon />
-                          </Button>
-                        </Typography>
-                      </Grid>
-                      <Grid item xs={12} md={4}>
-                        <Typography gutterBottom>
-                          <span style={{ fontWeight: "bold", color: "#233044" }}>Device Name:</span>{" "}
-                          {values.device_name}
-                        </Typography>
-                      </Grid>
-                      <Grid item xs={12} md={4}>
-                        <Typography gutterBottom>
-                          <span style={{ fontWeight: "bold", color: "#233044" }}>
-                            Device Description:
-                          </span>{" "}
-                          {values.device_description}
-                        </Typography>
-                      </Grid>
-                      <Grid item xs={12} md={4}>
-                        <Typography gutterBottom>
-                          <span style={{ fontWeight: "bold", color: "#233044" }}>
-                            Device Location Name:
-                          </span>{" "}
-                          {values.device_location_name}
-                        </Typography>
-                      </Grid>
-                      <Grid item xs={12} md={4}>
-                        <Typography gutterBottom>
-                          <span style={{ fontWeight: "bold", color: "#233044" }}>
-                            Device Location Description:
-                          </span>{" "}
-                          {values.device_location_description}
-                        </Typography>
-                      </Grid>
-                      <Grid item xs={12} md={4}>
-                        <Typography gutterBottom>
-                          <span style={{ fontWeight: "bold", color: "#233044" }}>Device Latitude:</span>{" "}
-                          {values.device_latitude}
-                        </Typography>
-                      </Grid>
-                      <Grid item xs={12} md={4}>
-                        <Typography gutterBottom>
-                          <span style={{ fontWeight: "bold", color: "#233044" }}>
-                            Device Longitude:
-                          </span>{" "}
-                          {values.device_longitude}
-                        </Typography>
-                      </Grid>
-
-                      <Grid item xs={12}>
-                        <Divider style={{ margin: "20px 0" }} />
-                      </Grid>
-
-                      {/* Measurement Properties */}
-                      <Grid item xs={12}>
-                        <Typography variant="h2" gutterBottom>
-                          Measurement Properties
-                          <Button
-                            variant="outlined"
-                            color="primary"
-                            onClick={() => setActiveStep(1)}
-                            style={{ marginLeft: "10px" }}
-                          >
-                            <CreateOutlinedIcon />
-                          </Button>
-                        </Typography>
-                      </Grid>
-
-                      {/* Combine Existing and New Properties */}
-                      {[
-                        ...(values.observedProperty_existing_id || []).map((id: string) => {
-                          const existingProperty = ObservedProperties.find(
-                            (item: any) => item["@iot.id"] === id
-                          );
-                          return {
-                            name: existingProperty?.name || `Property ID: ${id}`,
-                            description: existingProperty?.description || "No description",
-                            definition: existingProperty?.definition || "No definition",
-                          };
-                        }),
-                        ...values.observeProperties,
-                      ].map((property: any, index: number) => (
-                        <Fragment key={index}>
-                          <Grid item xs={12}>
-                            <Grid container spacing={2}>
-                              <Grid item xs={4}>
-                                <Typography>
-                                  <strong style={{ fontWeight: "bold", color: "#233044" }}>Measurement Name:</strong> {property.name || <em>Not defined</em>}
-                                </Typography>
-                              </Grid>
-                              <Grid item xs={4}>
-                                <Typography>
-                                  <strong style={{ fontWeight: "bold", color: "#233044" }}>Measurement Description:</strong> {property.description || <em>Not defined</em>}
-                                </Typography>
-                              </Grid>
-                              <Grid item xs={4}>
-                                <Typography>
-                                  <strong style={{ fontWeight: "bold", color: "#233044" }}>Measurement Definition:</strong> {property.definition || <em>Not defined</em>}
-                                </Typography>
-                              </Grid>
-
-
-
-
                             </Grid>
-                          </Grid>
-                          {/* Add Divider After Each Property */}
-                          <Grid item xs={12}>
-                            <Divider sx={{ my: 2 }} />
-                          </Grid>
-                        </Fragment>
-                      ))}
-
-                      <Grid item xs={12}>
-                        <Divider style={{ margin: "20px 0" }} />
-                      </Grid>
-
-                      {/* Datastream Information */}
-                      <Grid item xs={12}>
-                        <Typography variant="h2" gutterBottom>
-                          Datastream Information
-                          <Button
-                            variant="outlined"
-                            color="primary"
-                            onClick={() => setActiveStep(2)}
-                            style={{ marginLeft: "10px" }}
-                          >
-                            <CreateOutlinedIcon />
-                          </Button>
-                        </Typography>
-                      </Grid>
-
-                      {/* Combine Existing and New Properties for Datastreams */}
-                      {[
-                        ...(values.observedProperty_existing_id || []).map((id: string) => {
-                          const existingProperty = ObservedProperties.find(
-                            (item: any) => item["@iot.id"] === id
-                          );
-                          return {
-                            name: existingProperty?.name || `Property ID: ${id}`,
-                          };
-                        }),
-                        ...values.observeProperties,
-                      ].map((property: any, index: number) => (
-                        <Fragment key={index}>
-                          <Grid item xs={12}>
-                            <Grid container spacing={2}>
-                              <Grid item xs={4}>
-                                <Typography>
-                                  <strong style={{ fontWeight: "bold", color: "#233044" }}>Name:</strong> {`datastream_${values.device_name}_${property.name}`}
-                                </Typography>
-                              </Grid>
-                              <Grid item xs={4}>
-                                <Typography>
-                                  <strong style={{ fontWeight: "bold", color: "#233044" }}>Description:</strong> {values[`datastram_description_${index}`] || <em>Not defined</em>}
-                                </Typography>
-                              </Grid>
-                              <Grid item xs={4}>
-                                <Typography>
-                                  <strong style={{ fontWeight: "bold", color: "#233044" }}>Observation Type:</strong> {values[`datastream_observation_type_${index}`] || <em>Not defined</em>}
-                                </Typography>
-                              </Grid>
-                              <Grid item xs={4}>
-                                <Typography>
-                                  <strong style={{ fontWeight: "bold", color: "#233044" }}>Unit of Measurement Name:</strong> {values[`datastream_unit_of_measurement_name_${index}`] || <em>Not defined</em>}
-                                </Typography>
-                              </Grid>
-
-                              <Grid item xs={4}>
-                                <Typography>
-                                  <strong style={{ fontWeight: "bold", color: "#233044" }}>Unit of Measurement Symbol:</strong> {values[`datastream_unit_of_measurement_symbol_${index}`] || <em>Not defined</em>}
-                                </Typography>
-                              </Grid>
-
-                              <Grid item xs={4}>
-
-                                <Typography>
-                                  <strong style={{ fontWeight: "bold", color: "#233044" }}>Unit of Measurement Definition:</strong> {values[`datastream_unit_of_measurement_definition_${index}`] || <em>Not defined</em>}
-                                </Typography>
-                              </Grid>
-
-
-
-
-
-
-
-
-                            </Grid>
-                            {/* Add Divider After Each Datastream */}
                             <Grid item xs={12}>
                               <Divider sx={{ my: 2 }} />
                             </Grid>
-                          </Grid>
-                        </Fragment>
-                      ))}
+                          </Fragment>
+                        ))}
 
-                    </Grid>
-                  )}
-                  {/* Stepper Controls */}
-                  <Grid container spacing={2} justifyContent="center" mt={10}>
-                    {activeStep > 0 && (
-                      <Grid item>
-                        <Button
-                          style={{
-                            backgroundColor: "#233044",
-                          }}
-                          variant="contained"
-                          onClick={() => setActiveStep((s) => s - 1)}
-                        >
-                          Previous Step
-                        </Button>
+                        {/* Datastream Information Section */}
+                        <Grid item xs={12}>
+                          <Typography variant="h2" gutterBottom>
+                            Datastream Information
+                            <Button
+                              variant="outlined"
+                              color="primary"
+                              onClick={() => setActiveStep(2)}
+                              style={{ marginLeft: "10px" }}
+                            >
+                              <CreateOutlinedIcon />
+                            </Button>
+                          </Typography>
+                        </Grid>
+                        {values.datastreams.map((datastream: any, index: number) => (
+                          <Fragment key={index}>
+                            <Grid item xs={12}>
+                              <Grid container spacing={2}>
+                                <Grid item xs={4}>
+                                  <Typography>
+                                    <strong style={{ fontWeight: "bold", color: "#233044" }}>Name:</strong>{" "}
+                                    {datastream.name || <em>Not defined</em>}
+                                  </Typography>
+                                </Grid>
+                                <Grid item xs={4}>
+                                  <Typography>
+                                    <strong style={{ fontWeight: "bold", color: "#233044" }}>Description:</strong>{" "}
+                                    {datastream.description || <em>Not defined</em>}
+                                  </Typography>
+                                </Grid>
+                                <Grid item xs={4}>
+                                  <Typography>
+                                    <strong style={{ fontWeight: "bold", color: "#233044" }}>Observation Type:</strong>{" "}
+                                    {datastream.observation_type || <em>Not defined</em>}
+                                  </Typography>
+                                </Grid>
+                                <Grid item xs={4}>
+                                  <Typography>
+                                    <strong style={{ fontWeight: "bold", color: "#233044" }}>Unit of Measurement Name:</strong>{" "}
+                                    {datastream.unit_of_measurement_name || <em>Not defined</em>}
+                                  </Typography>
+                                </Grid>
+                                <Grid item xs={4}>
+                                  <Typography>
+                                    <strong style={{ fontWeight: "bold", color: "#233044" }}>Unit of Measurement Symbol:</strong>{" "}
+                                    {datastream.unit_of_measurement_symbol || <em>Not defined</em>}
+                                  </Typography>
+                                </Grid>
+                                <Grid item xs={4}>
+                                  <Typography>
+                                    <strong style={{ fontWeight: "bold", color: "#233044" }}>Unit of Measurement Definition:</strong>{" "}
+                                    {datastream.unit_of_measurement_definition || <em>Not defined</em>}
+                                  </Typography>
+                                </Grid>
+                              </Grid>
+                            </Grid>
+                            <Grid item xs={12}>
+                              <Divider sx={{ my: 2 }} />
+                            </Grid>
+                          </Fragment>
+                        ))}
                       </Grid>
                     )}
-                    <Grid item>
-                      <Button
-                        startIcon={
-                          isSubmitting ? <CircularProgress size="1rem" /> : null
-                        }
-                        variant="contained"
-                        onClick={() => {
-                          const isDev = process.env.REACT_APP_IS_DEVELOPMENT === 'true';
-                          if (activeStep === 0 && values.device_name !== "") {
-
-                            axios
-                              .get(
-                                isDev ? `${process.env.REACT_APP_BACKEND_URL_ROOT
-                                  }:${frostServerPort}/FROST-Server/v1.0/Things?$filter=name%20eq%20%27${encodeURIComponent(
-                                    values.device_name
-                                  )}%27` : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Things?$filter=name%20eq%20%27${encodeURIComponent(
-                                    values.device_name
-                                  )}%27`,
-                                {
-                                  headers: {
-                                    "Content-Type": "application/json",
-                                    Authorization: `Bearer ${token}`,
-                                  },
-                                }
-                              )
-                              .then((response) => {
-                                console.log(response.data);
-                                if (response.data.value.length > 0) {
-                                  // make error on device name field name
-                                  // setFieldError(
-                                  //   "device_name",
-                                  //   "Device name is already taken, please choose another one"
-                                  // );
-
-                                  // Swal.fire({
-                                  //   icon: "error",
-                                  //   title: "Oops...",
-                                  //   text: "Device name is already taken, please choose another one",
-                                  // });
-                                  // setActiveStep(0);
-                                }
-                              })
-                              .catch((error) => {
-                                console.log(error);
-                              });
-                          } else if (
-                            activeStep === 1 &&
-                            values.observeProperty_name !== ""
-                          ) {
-                            axios
-                              .get(
-                                isDev ? `${process.env.REACT_APP_BACKEND_URL_ROOT
-                                  }:${frostServerPort}/FROST-Server/v1.0/ObservedProperties?$filter=name%20eq%20%27${encodeURIComponent(
-                                    values.observeProperty_name
-                                  )}%27` : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/ObservedProperties?$filter=name%20eq%20%27${encodeURIComponent(
-                                    values.observeProperty_name
-                                  )}%27`,
-                                {
-                                  headers: {
-                                    "Content-Type": "application/json",
-                                    Authorization: `Bearer ${token}`,
-                                  },
-                                }
-                              )
-                              .then((response) => {
-                                if (response.data.value.length > 0) {
-                                  setFieldError(
-                                    "observeProperty_name",
-                                    "Measurement Property name is already taken, please choose another one"
-                                  );
-
-                                  Swal.fire({
-                                    icon: "error",
-                                    title: "Oops...",
-                                    text: "Measurement Property name is already taken, please choose another one",
-                                  });
-                                  setActiveStep(1);
-                                }
-                              })
-                              .catch((error) => {
-                                console.log(error);
-                              });
-                          } else if (
-                            activeStep === 2 &&
-                            values.datastream_name !== ""
-                          ) {
-                            axios
-                              .get(
-                                isDev ? `${process.env.REACT_APP_BACKEND_URL_ROOT
-                                  }:${frostServerPort}/FROST-Server/v1.0/Datastreams?$filter=name%20eq%20%27${encodeURIComponent(
-                                    values.datastream_name
-                                  )}%27` : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Datastreams?$filter=name%20eq%20%27${encodeURIComponent(
-                                    values.datastream_name
-                                  )}%27`,
-                                {
-                                  headers: {
-                                    "Content-Type": "application/json",
-                                    Authorization: `Bearer ${token}`,
-                                  },
-                                }
-                              )
-                              .then((response) => {
-                                console.log(response.data);
-                                if (response.data.value.length > 0) {
-                                  setFieldError(
-                                    "datastream_name",
-                                    "Datastream name is already taken, please choose another one"
-                                  );
-
-                                  Swal.fire({
-                                    icon: "error",
-                                    title: "Oops...",
-                                    text: "Datastream name is already taken, please choose another one",
-                                  });
-                                  setActiveStep(2);
-                                }
-                              })
-                              .catch((error) => {
-                                console.log(error);
-                              });
+                    {/* Stepper Controls */}
+                    <Grid container spacing={2} justifyContent="center" mt={10}>
+                      {activeStep > 0 && (
+                        <Grid item>
+                          <Button
+                            style={{
+                              backgroundColor: "#233044",
+                            }}
+                            variant="contained"
+                            onClick={() => setActiveStep((s) => s - 1)}
+                          >
+                            Previous Step
+                          </Button>
+                        </Grid>
+                      )}
+                      <Grid item>
+                        <Button
+                          startIcon={
+                            isSubmitting ? <CircularProgress size="1rem" /> : null
                           }
-                        }}
-                        style={{
-                          backgroundColor: "#233044",
-                          color: "#fff",
-                        }}
-                        type="submit"
-                        disabled={
-                          isSubmitting ||
-                          (isLastStep && Object.keys(errors).length > 0)
-                        }
-                      >
-                        {isSubmitting
-                          ? "Submitting"
-                          : isLastStep
-                            ? "Finish"
-                            : "Next step"}
-                      </Button>
+                          variant="contained"
+                          onClick={() => {
+                            const isDev = process.env.REACT_APP_IS_DEVELOPMENT === 'true';
+                            if (activeStep === 0 && values.device_name !== "") {
+
+                              axios
+                                .get(
+                                  isDev ? `${process.env.REACT_APP_BACKEND_URL_ROOT
+                                    }:${frostServerPort}/FROST-Server/v1.0/Things?$filter=name%20eq%20%27${encodeURIComponent(
+                                      values.device_name
+                                    )}%27` : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Things?$filter=name%20eq%20%27${encodeURIComponent(
+                                      values.device_name
+                                    )}%27`,
+                                  {
+                                    headers: {
+                                      "Content-Type": "application/json",
+                                      Authorization: `Bearer ${token}`,
+                                    },
+                                  }
+                                )
+                                .then((response) => {
+                                  console.log(response.data);
+                                  if (response.data.value.length > 0) {
+                                    // make error on device name field name
+                                    // setFieldError(
+                                    //   "device_name",
+                                    //   "Device name is already taken, please choose another one"
+                                    // );
+
+                                    // Swal.fire({
+                                    //   icon: "error",
+                                    //   title: "Oops...",
+                                    //   text: "Device name is already taken, please choose another one",
+                                    // });
+                                    // setActiveStep(0);
+                                  }
+                                })
+                                .catch((error) => {
+                                  console.log(error);
+                                });
+                            } else if (
+                              activeStep === 1 &&
+                              values.observeProperty_name !== ""
+                            ) {
+                              axios
+                                .get(
+                                  isDev ? `${process.env.REACT_APP_BACKEND_URL_ROOT
+                                    }:${frostServerPort}/FROST-Server/v1.0/ObservedProperties?$filter=name%20eq%20%27${encodeURIComponent(
+                                      values.observeProperty_name
+                                    )}%27` : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/ObservedProperties?$filter=name%20eq%20%27${encodeURIComponent(
+                                      values.observeProperty_name
+                                    )}%27`,
+                                  {
+                                    headers: {
+                                      "Content-Type": "application/json",
+                                      Authorization: `Bearer ${token}`,
+                                    },
+                                  }
+                                )
+                                .then((response) => {
+                                  if (response.data.value.length > 0) {
+                                    setFieldError(
+                                      "observeProperty_name",
+                                      "Measurement Property name is already taken, please choose another one"
+                                    );
+
+                                    Swal.fire({
+                                      icon: "error",
+                                      title: "Oops...",
+                                      text: "Measurement Property name is already taken, please choose another one",
+                                    });
+                                    setActiveStep(1);
+                                  }
+                                })
+                                .catch((error) => {
+                                  console.log(error);
+                                });
+                            } else if (
+                              activeStep === 2 &&
+                              values.datastream_name !== ""
+                            ) {
+                              axios
+                                .get(
+                                  isDev ? `${process.env.REACT_APP_BACKEND_URL_ROOT
+                                    }:${frostServerPort}/FROST-Server/v1.0/Datastreams?$filter=name%20eq%20%27${encodeURIComponent(
+                                      values.datastream_name
+                                    )}%27` : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Datastreams?$filter=name%20eq%20%27${encodeURIComponent(
+                                      values.datastream_name
+                                    )}%27`,
+                                  {
+                                    headers: {
+                                      "Content-Type": "application/json",
+                                      Authorization: `Bearer ${token}`,
+                                    },
+                                  }
+                                )
+                                .then((response) => {
+                                  console.log(response.data);
+                                  if (response.data.value.length > 0) {
+                                    setFieldError(
+                                      "datastream_name",
+                                      "Datastream name is already taken, please choose another one"
+                                    );
+
+                                    Swal.fire({
+                                      icon: "error",
+                                      title: "Oops...",
+                                      text: "Datastream name is already taken, please choose another one",
+                                    });
+                                    setActiveStep(2);
+                                  }
+                                })
+                                .catch((error) => {
+                                  console.log(error);
+                                });
+                            }
+                          }}
+                          style={{
+                            backgroundColor: "#233044",
+                            color: "#fff",
+                          }}
+                          type="submit"
+                          disabled={
+                            isSubmitting ||
+                            (isLastStep && Object.keys(errors).length > 0)
+                          }
+                        >
+                          {isSubmitting
+                            ? "Submitting"
+                            : isLastStep
+                              ? "Finish"
+                              : "Next step"}
+                        </Button>
+                      </Grid>
                     </Grid>
-                  </Grid>
-                </Form>
-              </>
-            )}
+                  </Form>
+                </>
+              )
+            }
+
+            }
           </Formik>
         )}
       </Dashboard>
