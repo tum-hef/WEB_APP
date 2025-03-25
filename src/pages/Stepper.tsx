@@ -72,6 +72,7 @@ interface FormValues {
     unit_of_measurement_name: string; // Optional
     unit_of_measurement_symbol: string; // Optional
     unit_of_measurement_definition: string; // Optional
+    showOptional?: boolean; // Optional property to preserve showOptional state
   }>;
 }
 const getValidationSchemaPerStep = (step: number) => {
@@ -306,11 +307,11 @@ function StepperStore() {
 
         // Extract the first error message from validationErrors
         const firstErrorField = Object.keys(validationErrors)[0]; // Get the first field with an error
-        const firstErrorMessage =
-          typeof validationErrors[firstErrorField] === "string"
-            ? validationErrors[firstErrorField] // If it's a string, use it directly
-            : Array.isArray(validationErrors[firstErrorField]) // If it's an array, take the first element
-              ? validationErrors[firstErrorField][0]
+        const firstErrorMessage:any =
+          typeof (validationErrors as Record<string, any>)[firstErrorField] === "string"
+            ? validationErrors[firstErrorField as keyof FormikErrors<FormValues>] // If it's a string, use it directly
+            : Array.isArray(validationErrors[firstErrorField as keyof FormikErrors<FormValues>]) // If it's an array, take the first element
+              ? (validationErrors[firstErrorField as keyof FormikErrors<FormValues>] as string[])[0]
               : "An error occurred"; // Fallback in case of unexpected structure
 
         // Display the first error message
@@ -1173,7 +1174,7 @@ function StepperStore() {
                             const { values, touched, errors, handleChange, setFieldValue } = form;
                             return (
                               <>
-                                {values.datastreams.map((_, index: number) => (
+                                {values.datastreams.map((_:any, index: number) => (
                                   <Fragment key={index}>
                                     {/* Datastream Name (Auto-generated) */}
                                     <Grid item xs={12} md={6}>
