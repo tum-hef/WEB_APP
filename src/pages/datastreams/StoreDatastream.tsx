@@ -54,7 +54,7 @@ function StoreDatastream() {
         console.log(`Current Date and Time in Rome: ${formattedDate}`); 
         const isDev = process.env.REACT_APP_IS_DEVELOPMENT === 'true';  
         const response = await axios.post(
-          isDev  ?  `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Datastreams`  :   `${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Datastreams`,
+          isDev  ?  `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Datastreams`  :   `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Datastreams`,
           {
             name: values.name,
             unitOfMeasurement: {
