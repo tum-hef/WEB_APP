@@ -175,6 +175,7 @@ function StepperStore() {
   const [devices, setDevices] = useState<any>([]);
   const prevStepRef = useRef(activeStep)
   const [ObservedProperties, setObservedProperties] = useState<any>([]);
+  const formikRef = useRef<any>(null);
   const [useExistingDevice, setUseExistingDevice] = useState<boolean | null>(
     null
   );
@@ -282,13 +283,11 @@ function StepperStore() {
 
 
   useEffect(() => {
-    console.log(`Step transitioned from ${prevStepRef.current} to ${activeStep}`);
+    // console.log(`Step transitioned from ${prevStepRef.current} to ${activeStep}`);
     prevStepRef.current = activeStep;
   }, [activeStep]);
 
-  useEffect(() => {
-    console.log("isProcessing", isProcessing)
-  }, [isProcessing])
+
   const handleClick = async (
     values: any,
     setFieldError: any,
@@ -392,7 +391,6 @@ function StepperStore() {
 
       // Step 2: Validate Datastream Names (Custom Logic)
       if (activeStep === 2 && shouldProceed) { 
-        console.log("hereeee")
         for (const datastream of values.datastreams) {
           if (datastream.name !== "") {
             const response = await axios.get(
@@ -490,6 +488,48 @@ function StepperStore() {
     fetchFrostPort();
     setLoading(false);
   }, []);
+
+  useEffect(() => {
+    if (activeStep !== 2) return; // Only run when activeStep is 2
+  
+    const formik = formikRef.current;
+    if (!formik) return;
+  
+    const { values, setFieldValue } = formik; 
+
+  
+    const combinedProperties = [
+      ...(values.observedProperty_existing_id || []).map((id: string, index: number) => {
+        const existingProperty = ObservedProperties.find(
+          (item: any) => item["@iot.id"] === id
+        );
+        return {
+          name: existingProperty?.name || `Property ID: ${id}`,
+        };
+      }),
+      ...values.observeProperties,
+    ];
+  
+    // Merge existing datastreams with new ones
+    const updatedDatastreams = combinedProperties.map((property: any, index: number) => {
+      const existingDatastream = values.datastreams[index];
+      return {
+        name: `datastream_${values.device_name}_${property.name}`, // Update name dynamically
+        description: existingDatastream?.description || "", // Preserve existing value or default to ""
+        observation_type: existingDatastream?.observation_type || "",
+        unit_of_measurement_name: existingDatastream?.unit_of_measurement_name || "",
+        unit_of_measurement_symbol: existingDatastream?.unit_of_measurement_symbol || "",
+        unit_of_measurement_definition: existingDatastream?.unit_of_measurement_definition || "",
+        showOptional: existingDatastream?.showOptional || false, // Preserve showOptional state
+      };
+    });
+  
+    // Prevent unnecessary updates
+    const isDatastreamsEqual = JSON.stringify(values.datastreams) === JSON.stringify(updatedDatastreams);
+    if (!isDatastreamsEqual) {
+      setFieldValue("datastreams", updatedDatastreams);
+    }
+  }, [activeStep, ObservedProperties]);
  
 
   return (
@@ -537,6 +577,9 @@ function StepperStore() {
             }}
             // enableReinitialize
             validationSchema={getValidationSchemaPerStep(activeStep)}
+            innerRef={(instance) => {
+              formikRef.current = instance; // Store the Formik instance
+            }}
             onSubmit={async (values: any, helpers: any) => {
               const isDev = process.env.REACT_APP_IS_DEVELOPMENT === "true";
               const frostServerUrl = isDev
@@ -735,41 +778,7 @@ function StepperStore() {
               validateForm
             }: FormikProps<FormValues>) => {
               
-              useEffect(() => {
-                if (activeStep !== 2) return; // Only run when activeStep is 2
-
-                const combinedProperties = [
-                  ...(values.observedProperty_existing_id || []).map((id: string, index: number) => {
-                    const existingProperty = ObservedProperties.find(
-                      (item: any) => item["@iot.id"] === id
-                    );
-                    return {
-                      name: existingProperty?.name || `Property ID: ${id}`,
-                    };
-                  }),
-                  ...values.observeProperties,
-                ];
-
-                // Merge existing datastreams with new ones
-                const updatedDatastreams = combinedProperties.map((property: any, index: number) => {
-                  const existingDatastream = values.datastreams[index];
-                  return {
-                    name: `datastream_${values.device_name}_${property.name}`, // Update name dynamically
-                    description: existingDatastream?.description || "", // Preserve existing value or default to ""
-                    observation_type: existingDatastream?.observation_type || "",
-                    unit_of_measurement_name: existingDatastream?.unit_of_measurement_name || "",
-                    unit_of_measurement_symbol: existingDatastream?.unit_of_measurement_symbol || "",
-                    unit_of_measurement_definition: existingDatastream?.unit_of_measurement_definition || "",
-                    showOptional: existingDatastream?.showOptional || false, // Preserve showOptional state
-                  };
-                });
-
-                // Prevent unnecessary updates
-                const isDatastreamsEqual = JSON.stringify(values.datastreams) === JSON.stringify(updatedDatastreams);
-                if (!isDatastreamsEqual) {
-                  setFieldValue("datastreams", updatedDatastreams);
-                }
-              }, [activeStep, values.datastreams]);
+              
               return (
 
                 <>
