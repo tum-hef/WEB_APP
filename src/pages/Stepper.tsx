@@ -1,4 +1,4 @@
-import React, { Fragment, useEffect, useState } from "react";
+import React, { Fragment, useEffect, useRef, useState } from "react";
 import { FieldArray, Form, Formik, FormikErrors, FormikProps } from "formik";
 import Dashboard from "../components/DashboardComponent";
 import * as yup from "yup";
@@ -167,10 +167,12 @@ function StepperStore() {
   const isLastStep = activeStep === steps.length - 1;
   const [frostServerPort, setFrostServerPort] = useState<number | null>(null);
   const { keycloak } = useKeycloak();
+  const [isProcessing, setIsProcessing] = useState(false);
   const userInfo = keycloak?.idTokenParsed;
   const token = keycloak?.token;
   const [loading, setLoading] = useState(true);
   const [devices, setDevices] = useState<any>([]);
+  const prevStepRef = useRef(activeStep)
   const [ObservedProperties, setObservedProperties] = useState<any>([]);
   const [useExistingDevice, setUseExistingDevice] = useState<boolean | null>(
     null
@@ -278,6 +280,166 @@ function StepperStore() {
   };
 
 
+  useEffect(() => {
+    // Debugging logs for step transitions
+    if (prevStepRef.current !== activeStep) {
+      console.log(`Step transitioned from ${prevStepRef.current} to ${activeStep}`);
+      prevStepRef.current = activeStep;
+    }
+  }, [activeStep]);
+
+  useEffect(() => {
+    console.log("isProcessing", isProcessing)
+  }, [isProcessing])
+  const handleClick = async (
+    values: any,
+    setFieldError: any,
+    validateForm: () => Promise<FormikErrors<FormValues>>
+  ) => {
+    if (isProcessing) return; // Prevent multiple submissions
+    setIsProcessing(true); // Mark the start of validation process
+
+    try {
+      // Step 1: Trigger Formik validation
+      const validationErrors = await validateForm();
+
+      // Check if there are any validation errors from Yup schema
+      if (Object.keys(validationErrors).length > 0) {
+        console.error("Validation errors:", validationErrors);
+
+        // Extract the first error message from validationErrors
+        const firstErrorField = Object.keys(validationErrors)[0]; // Get the first field with an error
+        const firstErrorMessage =
+          typeof validationErrors[firstErrorField] === "string"
+            ? validationErrors[firstErrorField] // If it's a string, use it directly
+            : Array.isArray(validationErrors[firstErrorField]) // If it's an array, take the first element
+              ? validationErrors[firstErrorField][0]
+              : "An error occurred"; // Fallback in case of unexpected structure
+
+        // Display the first error message
+        Swal.fire({
+          icon: "error",
+          title: "Validation Error",
+          text: firstErrorMessage,
+        });
+
+        return; // Stop further processing
+      }
+
+      // Step 2: Custom Validation Logic
+      let shouldProceed = true; // Control if step should proceed or not
+      const isDev = process.env.REACT_APP_IS_DEVELOPMENT === "true";
+
+      // Step 0: Validate Device Name (Custom Logic)
+      if (activeStep === 0 && values.device_name !== "") {
+        const response = await axios.get(
+          isDev
+            ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Things?$filter=name%20eq%20%27${encodeURIComponent(
+              values.device_name
+            )}%27`
+            : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Things?$filter=name%20eq%20%27${encodeURIComponent(
+              values.device_name
+            )}%27`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        if (response.data.value.length > 0) {
+          setFieldError("device_name", "Device name is already taken, please choose another one");
+          Swal.fire({
+            icon: "error",
+            title: "Oops...",
+            text: "Device name is already taken, please choose another one",
+          });
+          shouldProceed = false; // Stop further processing
+        }
+      }
+
+      // Step 1: Validate Observed Property Names (Custom Logic)
+      if (activeStep === 1 && shouldProceed) {
+        for (const observedProperty of values.observeProperties) {
+          if (observedProperty.name !== "") {
+            const response = await axios.get(
+              isDev
+                ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/ObservedProperties?$filter=name%20eq%20%27${encodeURIComponent(
+                  observedProperty.name
+                )}%27`
+                : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/ObservedProperties?$filter=name%20eq%20%27${encodeURIComponent(
+                  observedProperty.name
+                )}%27`,
+              {
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            );
+            if (response.data.value.length > 0) {
+              setFieldError("observeProperties", `Observed Property "${observedProperty.name}" is already taken, please choose another one`);
+              Swal.fire({
+                icon: "error",
+                title: "Oops...",
+                text: `Observed Property "${observedProperty.name}" is already taken, please choose another one`,
+              });
+              shouldProceed = false; // Stop further processing
+              break; // Exit loop, no need to check further properties
+            }
+          }
+        }
+      }
+
+      // Step 2: Validate Datastream Names (Custom Logic)
+      if (activeStep === 2 && shouldProceed) {
+        for (const datastream of values.datastreams) {
+          if (datastream.name !== "") {
+            const response = await axios.get(
+              isDev
+                ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Datastreams?$filter=name%20eq%20%27${encodeURIComponent(
+                  datastream.name
+                )}%27`
+                : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Datastreams?$filter=name%20eq%20%27${encodeURIComponent(
+                  datastream.name
+                )}%27`,
+              {
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            );
+            if (response.data.value.length > 0) {
+              setFieldError("datastreams", `Datastream "${datastream.name}" is already taken, please choose another one`);
+              Swal.fire({
+                icon: "error",
+                title: "Oops...",
+                text: `Datastream "${datastream.name}" is already taken, please choose another one`,
+              });
+              shouldProceed = false; // Stop further processing
+              break; // Exit loop, no need to check further datastreams
+            }
+          }
+        }
+      }
+
+      // If all validations passed, move to the next step
+      if (shouldProceed) {
+        setActiveStep((prevStep) => Math.min(prevStep + 1, steps.length - 1));
+      }
+    } catch (error) {
+      console.error("Error during validation:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: "Something went wrong while validating the form.",
+      });
+    } finally {
+      setIsProcessing(false); // End the validation process
+    }
+  };
+
   const handleOnChangeExistingDevice = (
     event: any,
     setFieldValue: (field: string, value: any) => void
@@ -326,6 +488,12 @@ function StepperStore() {
     fetchFrostPort();
     setLoading(false);
   }, []);
+  useEffect(() => {
+    // Prevent changing steps multiple times during validation process
+    if (isProcessing) return; // Ensure activeStep changes only once the validation finishes
+
+    console.log(`Active step changed: ${activeStep}`);
+  }, [activeStep, isProcessing]);
 
   return (
     <>
@@ -370,18 +538,23 @@ function StepperStore() {
                 unit_of_measurement_definition: string;
               }>,
             }}
-            enableReinitialize
+            // enableReinitialize
+            validationSchema={getValidationSchemaPerStep(activeStep)}
             onSubmit={async (values: any, helpers: any) => {
-              const isDev = process.env.REACT_APP_IS_DEVELOPMENT === 'true';
+              const isDev = process.env.REACT_APP_IS_DEVELOPMENT === "true";
+              const frostServerUrl = isDev
+                ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0`
+                : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0`;
+
               if (isLastStep) {
                 setLoading(true);
                 helpers.resetForm();
                 setActiveStep(0);
-                try {
-                  // 1: Store the Device 
 
+                try {
+                  // 1️⃣ CREATE DEVICE (THING)
                   const response_post_device = await axios.post(
-                    isDev ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Things` : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Things`,
+                    `${frostServerUrl}/Things`,
                     {
                       name: values.device_name,
                       description: values.device_description,
@@ -392,152 +565,15 @@ function StepperStore() {
                           encodingType: "application/vnd.geo+json",
                           location: {
                             type: "Point",
-                            coordinates: [
-                              values.device_longitude,
-                              values.device_latitude,
-                            ],
+                            coordinates: [values.device_longitude, values.device_latitude],
                           },
                         },
                       ],
                     },
-                    {
-                      headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${keycloak?.token}`,
-                      },
-                    }
+                    { headers: { "Content-Type": "application/json", Authorization: `Bearer ${keycloak?.token}` } }
                   );
 
-                  if (!values.observedProperty_existing_id) {
-                    // 2: Store the Observed Property
-                    const response_post_observed_property = await axios.post(
-                      isDev ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/ObservedProperties` : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/ObservedProperties`,
-                      {
-                        name: values.observeProperty_name,
-                        definition: values.observeProperty_definition,
-                        description: values.observeProperty_description,
-                      },
-
-                      {
-                        headers: {
-                          "Content-Type": "application/json",
-                          Authorization: `Bearer ${keycloak?.token}`,
-                        },
-                      }
-                    );
-                  }
-
-                  // 3: Get the ID of the Device
-                  let respons_get_devi_url = isDev ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Things?$filter=name%20eq%20%27${encodeURIComponent(
-                    values.device_name
-                  )}%27` : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Things?$filter=name%20eq%20%27${encodeURIComponent(
-                    values.device_name
-                  )}%27`
-                  const response_get_device = await axios.get(
-                    respons_get_devi_url,
-                    {
-                      headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${keycloak?.token}`,
-                      },
-                    }
-                  );
-
-                  const device_id =
-                    response_get_device.data.value[0]["@iot.id"];
-
-                  // 4: Get the ID of the Observed Property
-
-                  let observed_property_id = null;
-
-                  if (!values.observedProperty_existing_id) {
-                    let response_get_observed_property_url = isDev ? `${process.env.REACT_APP_BACKEND_URL_ROOT
-                      }:${frostServerPort}/FROST-Server/v1.0/ObservedProperties?$filter=name%20eq%20%27${encodeURIComponent(
-                        values.observeProperty_name
-                      )}%27` : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/ObservedProperties?$filter=name%20eq%20%27${encodeURIComponent(
-                        values.observeProperty_name
-                      )}%27`
-                    const response_get_observed_property = await axios.get(
-                      response_get_observed_property_url,
-                      {
-                        headers: {
-                          "Content-Type": "application/json",
-                          Authorization: `Bearer ${keycloak?.token}`,
-                        },
-                      }
-                    );
-                    observed_property_id =
-                      response_get_observed_property.data.value[0]["@iot.id"];
-                  } else {
-                    observed_property_id = values.observedProperty_existing_id;
-                  }
-
-                  // 5: Store the Sensor
-                  let name_of_the_sensor = null;
-                  let description_of_the_sensor = null;
-                  let metadata_of_the_sensor = null;
-
-                  if (values.observedProperty_existing_id) {
-                    // 5.1: Get the name of the Observed Property from the ID
-                    const response_get_observed_property = await axios.get(
-                      isDev ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/ObservedProperties(${values.observedProperty_existing_id})` : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/ObservedProperties(${values.observedProperty_existing_id})`,
-                      {
-                        headers: {
-                          "Content-Type": "application/json",
-                          Authorization: `Bearer ${keycloak?.token}`,
-                        },
-                      }
-                    );
-
-                    const observed_property_name =
-                      response_get_observed_property.data.name;
-
-                    name_of_the_sensor = `sensor_${values.device_name}_${observed_property_name}`;
-                    description_of_the_sensor = `Sensor for ${values.device_name} and ${observed_property_name}`;
-                    metadata_of_the_sensor = `Sensor MetaData for ${values.device_name} and ${observed_property_name}`;
-                  } else {
-                    name_of_the_sensor = `sensor_${values.device_name}_${values.observeProperty_name}`;
-                    description_of_the_sensor = `Sensor for ${values.device_name} and ${values.observeProperty_name}`;
-                    metadata_of_the_sensor = `Sensor MetaData for ${values.device_name} and ${values.observeProperty_name}`;
-                  }
-
-                  const response_post_sensor = await axios.post(
-                    isDev ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Sensors` : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Sensors`,
-                    {
-                      name: name_of_the_sensor,
-                      description: description_of_the_sensor,
-                      metadata: metadata_of_the_sensor,
-                      encodingType: "application/pdf",
-                    },
-                    {
-                      headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${keycloak?.token}`,
-                      },
-                    }
-                  );
-
-                  // 6: Get the ID of the Sensor
-
-                  const response_get_sensor = await axios.get(
-                    isDev ? `${process.env.REACT_APP_BACKEND_URL_ROOT
-                      }:${frostServerPort}/FROST-Server/v1.0/Sensors?$filter=name%20eq%20%27${encodeURIComponent(
-                        name_of_the_sensor
-                      )}%27` : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Sensors?$filter=name%20eq%20%27${encodeURIComponent(
-                        name_of_the_sensor
-                      )}%27`,
-                    {
-                      headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${keycloak?.token}`,
-                      },
-                    }
-                  );
-
-                  const sensor_id =
-                    response_get_sensor.data.value[0]["@iot.id"];
-
-                  // Get the current date and time
+                  console.log("✅ Device Created:", response_post_device.data);
                   const currentDate = new Date();
 
                   // Set the target time zone to Europe/Rome
@@ -551,74 +587,145 @@ function StepperStore() {
                     localDate,
                     "yyyy-MM-dd'T'HH:mm:ss.SS'Z'"
                   );
-
                   const phenphenomenonTimeFormated = `${formattedDate}/${formattedDate}`;
 
-                  // 7: Store the Datastream
-                  const response_post_datastream = await axios.post(
-                    isDev ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Datastreams` : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Datastreams`,
-                    {
-                      name: values.datastream_name,
-                      unitOfMeasurement: {
-                        name: values.datastream_unit_of_measurement_name,
-                        symbol: values.datastream_unit_of_measurement_symbol,
-                        definition:
-                          values.datastream_unit_of_measurement_definition,
-                      },
-                      Thing: {
-                        "@iot.id": device_id,
-                      },
-                      description: values.datastram_description,
-                      Sensor: {
-                        "@iot.id": sensor_id,
-                      },
-                      ObservedProperty: {
-                        "@iot.id": observed_property_id,
-                      },
-                      observationType: values.datastream_observation_type,
-                      phenomenonTime: phenphenomenonTimeFormated,
-                    },
-                    {
-                      headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${keycloak?.token}`,
-                      },
-                    }
-                  );
+                  // Get Device ID
+                  const deviceResponseUrl = isDev
+                    ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Things?$filter=name%20eq%20%27${encodeURIComponent(values.device_name)}%27`
+                    : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Things?$filter=name%20eq%20%27${encodeURIComponent(values.device_name)}%27`;
+                  const deviceResponse = await axios.get(deviceResponseUrl, {
+                    headers: { "Content-Type": "application/json", Authorization: `Bearer ${keycloak?.token}` },
+                  });
+                  const device_id = deviceResponse.data.value[0]["@iot.id"];
 
-                  if (
-                    sensor_id &&
-                    device_id &&
-                    observed_property_id &&
-                    response_post_device.status === 201 &&
-                    response_post_sensor.status === 201 &&
-                    response_post_datastream.status === 201
-                  ) {
-                    Swal.fire({
-                      icon: "success",
-                      title: "Success!",
-                      text: "Device, Measurement Property, Sensor and Datastream created!",
+                  // 2️⃣ CREATE OBSERVED PROPERTIES (MULTIPLE)
+                  let observedPropertyIds: Record<string, number> = {}; // Use datastream.name as key
+                  for (const observedProperty of values.observeProperties || []) {
+                    // Create the Observed Property
+                    const response_post_observed_property = await axios.post(
+                      `${frostServerUrl}/ObservedProperties`,
+                      {
+                        name: observedProperty.name,
+                        definition: observedProperty.definition,
+                        description: observedProperty.description,
+                      },
+                      { headers: { "Content-Type": "application/json", Authorization: `Bearer ${keycloak?.token}` } }
+                    );
+
+                    // Get the Observed Property ID
+                    const response_get_observed_property_url = `${frostServerUrl}/ObservedProperties?$filter=name%20eq%20%27${encodeURIComponent(observedProperty.name)}%27`;
+                    const response_get_observed_property = await axios.get(response_get_observed_property_url, {
+                      headers: { "Content-Type": "application/json", Authorization: `Bearer ${keycloak?.token}` },
                     });
-                  } else {
-                    Swal.fire({
-                      icon: "error",
-                      title: "Oops...",
-                      text: "Something went wrong! Device, Measurement Property, Sensor and Datastream not created!",
-                    });
+
+                    const observed_property_id = response_get_observed_property.data.value[0]["@iot.id"];
+                    observedPropertyIds[`datastream_${values.device_name}_${observedProperty.name}`] = observed_property_id; // Store by datastream name
+
+                    console.log(`✅ Observed Property Created: ${observedProperty.name} -> ID ${observed_property_id}`);
                   }
+                  for (const existingPropertyId of values.observedProperty_existing_id || []) {
+                    const response_get_observed_property = await axios.get(
+                      `${frostServerUrl}/ObservedProperties(${existingPropertyId})`,
+                      { headers: { "Content-Type": "application/json", Authorization: `Bearer ${keycloak?.token}` } }
+                    );
+                  
+                    const observedProperty = response_get_observed_property.data;
+                    observedPropertyIds[`datastream_${values.device_name}_${observedProperty.name}`] = parseInt(existingPropertyId, 10);
+                  
+                    console.log(`✅ Existing Observed Property Found: ${observedProperty.name} -> ID ${existingPropertyId}`);
+                  }
+
+                  // 3️⃣ CREATE SENSORS (ONE FOR EACH OBSERVED PROPERTY)
+                  let sensorIds: Record<string, number> = {}; // Use datastream.name as key
+                  for (const observedPropertyName in observedPropertyIds) {
+                    const sensorName = `sensor_${values.device_name}_${observedPropertyName}`;
+                    const response_post_sensor = await axios.post(
+                      `${frostServerUrl}/Sensors`,
+                      {
+                        name: sensorName,
+                        description: `Sensor for ${values.device_name} and ${observedPropertyName}`,
+                        metadata: `Sensor MetaData for ${values.device_name} and ${observedPropertyName}`,
+                        encodingType: "application/pdf",
+                      },
+                      { headers: { "Content-Type": "application/json", Authorization: `Bearer ${keycloak?.token}` } }
+                    );
+
+                    console.log("✅ Sensor Created:", response_post_sensor);
+
+                    // Get the Sensor ID
+                    const response_get_sensor_url = `${frostServerUrl}/Sensors?$filter=name%20eq%20%27${encodeURIComponent(sensorName)}%27`;
+                    const response_get_sensor = await axios.get(response_get_sensor_url, {
+                      headers: { "Content-Type": "application/json", Authorization: `Bearer ${keycloak?.token}` },
+                    });
+
+                    const sensor_id = response_get_sensor.data.value[0]["@iot.id"];
+                    sensorIds[observedPropertyName] = sensor_id; // Store by datastream name
+
+                    console.log("✅ Sensor Created:", sensor_id);
+                  }
+
+                  console.log("sensorIds", sensorIds);
+                  console.log("observed_property_id", observedPropertyIds);
+
+                  // 4️⃣ CREATE DATASTREAMS (ONE FOR EACH PROPERTY)
+                  for (const datastream of values.datastreams || []) {
+                    console.log("datastream", datastream);
+
+                    // Retrieve the ObservedProperty ID and Sensor ID using the datastream name
+                    const observed_property_id = observedPropertyIds[datastream.name];
+                    const sensor_id = sensorIds[datastream.name];
+
+                    if (!observed_property_id || !sensor_id) {
+                      console.error("🚨 Skipping Datastream due to missing IDs:", { datastream: datastream.name, observed_property_id, sensor_id });
+                      continue; // Skip this datastream if IDs are missing
+                    }
+
+                    // Create the Datastream
+                    const response_post_datastream = await axios.post(
+                      `${frostServerUrl}/Datastreams`,
+                      {
+                        name: datastream.name,
+                        description: datastream.description,
+                        unitOfMeasurement: {
+                          name: datastream.unit_of_measurement_name,
+                          symbol: datastream.unit_of_measurement_symbol,
+                          definition: datastream.unit_of_measurement_definition,
+                        },
+                        Thing: { "@iot.id": device_id },
+                        Sensor: { "@iot.id": sensor_id },
+                        ObservedProperty: { "@iot.id": observed_property_id },
+                        observationType: datastream.observation_type,
+                        phenomenonTime: phenphenomenonTimeFormated,
+                      },
+                      { headers: { "Content-Type": "application/json", Authorization: `Bearer ${keycloak?.token}` } }
+                    );
+
+                    console.log("✅ Datastream Created:", response_post_datastream.data);
+                  }
+
+                  Swal.fire({
+                    icon: "success",
+                    title: "Success!",
+                    text: "Device, Measurement Properties, Sensors, and Datastreams created successfully!",
+                  });
                 } catch (error) {
+                  console.error("🚨 Error in submission:", error);
                   Swal.fire({
                     icon: "error",
                     title: "Oops...",
-                    text: "Something went wrong! Device, Measurement Property, Sensor and Datastream not created!",
+                    text: "Something went wrong! Some entities were not created.",
                   });
                 }
+
                 setLoading(false);
               } else {
                 setActiveStep((s) => s + 1);
               }
+
               helpers.setSubmitting(false);
             }}
+
+
           >
             {({
               isSubmitting,
@@ -628,13 +735,17 @@ function StepperStore() {
               values,
               setFieldValue,
               setFieldError,
+              validateForm
             }: FormikProps<FormValues>) => {
+              useEffect(() => {
+                console.log("errors", errors)
+              }, [errors])
               useEffect(() => {
                 console.log("values", values); // Update state when values change
               }, [values]);
               useEffect(() => {
                 if (activeStep !== 2) return; // Only run when activeStep is 2
-              
+
                 const combinedProperties = [
                   ...(values.observedProperty_existing_id || []).map((id: string, index: number) => {
                     const existingProperty = ObservedProperties.find(
@@ -646,7 +757,7 @@ function StepperStore() {
                   }),
                   ...values.observeProperties,
                 ];
-              
+
                 // Merge existing datastreams with new ones
                 const updatedDatastreams = combinedProperties.map((property: any, index: number) => {
                   const existingDatastream = values.datastreams[index];
@@ -660,7 +771,7 @@ function StepperStore() {
                     showOptional: existingDatastream?.showOptional || false, // Preserve showOptional state
                   };
                 });
-              
+
                 // Prevent unnecessary updates
                 const isDatastreamsEqual = JSON.stringify(values.datastreams) === JSON.stringify(updatedDatastreams);
                 if (!isDatastreamsEqual) {
@@ -1071,7 +1182,7 @@ function StepperStore() {
                             const { values, touched, errors, handleChange, setFieldValue } = form;
                             return (
                               <>
-                                {values.datastreams.map((_, index:number) => (
+                                {values.datastreams.map((_, index: number) => (
                                   <Fragment key={index}>
                                     {/* Datastream Name (Auto-generated) */}
                                     <Grid item xs={12} md={6}>
@@ -1079,7 +1190,7 @@ function StepperStore() {
                                         fullWidth
                                         label={`Datastream Name`}
                                         name={`datastreams.${index}.name`}
-                                        value={`datastream_${values.device_name}_${index}`}
+                                        value={_?.name}
                                         variant="outlined"
                                         InputProps={{ readOnly: true }}
                                         helperText="Auto-generated based on device name"
@@ -1398,129 +1509,17 @@ function StepperStore() {
                             isSubmitting ? <CircularProgress size="1rem" /> : null
                           }
                           variant="contained"
-                          onClick={() => {
-                            const isDev = process.env.REACT_APP_IS_DEVELOPMENT === 'true';
-                            if (activeStep === 0 && values.device_name !== "") {
+                          onClick={() => handleClick(values, setFieldError, validateForm)}
 
-                              axios
-                                .get(
-                                  isDev ? `${process.env.REACT_APP_BACKEND_URL_ROOT
-                                    }:${frostServerPort}/FROST-Server/v1.0/Things?$filter=name%20eq%20%27${encodeURIComponent(
-                                      values.device_name
-                                    )}%27` : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Things?$filter=name%20eq%20%27${encodeURIComponent(
-                                      values.device_name
-                                    )}%27`,
-                                  {
-                                    headers: {
-                                      "Content-Type": "application/json",
-                                      Authorization: `Bearer ${token}`,
-                                    },
-                                  }
-                                )
-                                .then((response) => {
-                                  console.log(response.data);
-                                  if (response.data.value.length > 0) {
-                                    // make error on device name field name
-                                    // setFieldError(
-                                    //   "device_name",
-                                    //   "Device name is already taken, please choose another one"
-                                    // );
 
-                                    // Swal.fire({
-                                    //   icon: "error",
-                                    //   title: "Oops...",
-                                    //   text: "Device name is already taken, please choose another one",
-                                    // });
-                                    // setActiveStep(0);
-                                  }
-                                })
-                                .catch((error) => {
-                                  console.log(error);
-                                });
-                            } else if (
-                              activeStep === 1 &&
-                              values.observeProperty_name !== ""
-                            ) {
-                              axios
-                                .get(
-                                  isDev ? `${process.env.REACT_APP_BACKEND_URL_ROOT
-                                    }:${frostServerPort}/FROST-Server/v1.0/ObservedProperties?$filter=name%20eq%20%27${encodeURIComponent(
-                                      values.observeProperty_name
-                                    )}%27` : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/ObservedProperties?$filter=name%20eq%20%27${encodeURIComponent(
-                                      values.observeProperty_name
-                                    )}%27`,
-                                  {
-                                    headers: {
-                                      "Content-Type": "application/json",
-                                      Authorization: `Bearer ${token}`,
-                                    },
-                                  }
-                                )
-                                .then((response) => {
-                                  if (response.data.value.length > 0) {
-                                    setFieldError(
-                                      "observeProperty_name",
-                                      "Measurement Property name is already taken, please choose another one"
-                                    );
 
-                                    Swal.fire({
-                                      icon: "error",
-                                      title: "Oops...",
-                                      text: "Measurement Property name is already taken, please choose another one",
-                                    });
-                                    setActiveStep(1);
-                                  }
-                                })
-                                .catch((error) => {
-                                  console.log(error);
-                                });
-                            } else if (
-                              activeStep === 2 &&
-                              values.datastream_name !== ""
-                            ) {
-                              axios
-                                .get(
-                                  isDev ? `${process.env.REACT_APP_BACKEND_URL_ROOT
-                                    }:${frostServerPort}/FROST-Server/v1.0/Datastreams?$filter=name%20eq%20%27${encodeURIComponent(
-                                      values.datastream_name
-                                    )}%27` : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Datastreams?$filter=name%20eq%20%27${encodeURIComponent(
-                                      values.datastream_name
-                                    )}%27`,
-                                  {
-                                    headers: {
-                                      "Content-Type": "application/json",
-                                      Authorization: `Bearer ${token}`,
-                                    },
-                                  }
-                                )
-                                .then((response) => {
-                                  console.log(response.data);
-                                  if (response.data.value.length > 0) {
-                                    setFieldError(
-                                      "datastream_name",
-                                      "Datastream name is already taken, please choose another one"
-                                    );
-
-                                    Swal.fire({
-                                      icon: "error",
-                                      title: "Oops...",
-                                      text: "Datastream name is already taken, please choose another one",
-                                    });
-                                    setActiveStep(2);
-                                  }
-                                })
-                                .catch((error) => {
-                                  console.log(error);
-                                });
-                            }
-                          }}
                           style={{
                             backgroundColor: "#233044",
                             color: "#fff",
                           }}
                           type="submit"
                           disabled={
-                            isSubmitting ||
+                            isSubmitting || isProcessing ||
                             (isLastStep && Object.keys(errors).length > 0)
                           }
                         >
