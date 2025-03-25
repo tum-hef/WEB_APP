@@ -281,11 +281,8 @@ function StepperStore() {
 
 
   useEffect(() => {
-    // Debugging logs for step transitions
-    if (prevStepRef.current !== activeStep) {
-      console.log(`Step transitioned from ${prevStepRef.current} to ${activeStep}`);
-      prevStepRef.current = activeStep;
-    }
+    console.log(`Step transitioned from ${prevStepRef.current} to ${activeStep}`);
+    prevStepRef.current = activeStep;
   }, [activeStep]);
 
   useEffect(() => {
@@ -359,7 +356,8 @@ function StepperStore() {
       }
 
       // Step 1: Validate Observed Property Names (Custom Logic)
-      if (activeStep === 1 && shouldProceed) {
+      if (activeStep === 1 && shouldProceed) { 
+        console.log("step22")
         for (const observedProperty of values.observeProperties) {
           if (observedProperty.name !== "") {
             const response = await axios.get(
@@ -392,7 +390,8 @@ function StepperStore() {
       }
 
       // Step 2: Validate Datastream Names (Custom Logic)
-      if (activeStep === 2 && shouldProceed) {
+      if (activeStep === 2 && shouldProceed) { 
+        console.log("hereeee")
         for (const datastream of values.datastreams) {
           if (datastream.name !== "") {
             const response = await axios.get(
@@ -423,10 +422,12 @@ function StepperStore() {
           }
         }
       }
+      let stepUpdated = false;
 
       // If all validations passed, move to the next step
-      if (shouldProceed) {
+      if (shouldProceed && !stepUpdated) { 
         setActiveStep((prevStep) => Math.min(prevStep + 1, steps.length - 1));
+        stepUpdated = true;
       }
     } catch (error) {
       console.error("Error during validation:", error);
@@ -488,12 +489,7 @@ function StepperStore() {
     fetchFrostPort();
     setLoading(false);
   }, []);
-  useEffect(() => {
-    // Prevent changing steps multiple times during validation process
-    if (isProcessing) return; // Ensure activeStep changes only once the validation finishes
-
-    console.log(`Active step changed: ${activeStep}`);
-  }, [activeStep, isProcessing]);
+ 
 
   return (
     <>
@@ -548,7 +544,7 @@ function StepperStore() {
 
               if (isLastStep) {
                 setLoading(true);
-                helpers.resetForm();
+                helpers.resetForm(); 
                 setActiveStep(0);
 
                 try {
@@ -737,12 +733,7 @@ function StepperStore() {
               setFieldError,
               validateForm
             }: FormikProps<FormValues>) => {
-              useEffect(() => {
-                console.log("errors", errors)
-              }, [errors])
-              useEffect(() => {
-                console.log("values", values); // Update state when values change
-              }, [values]);
+              
               useEffect(() => {
                 if (activeStep !== 2) return; // Only run when activeStep is 2
 
@@ -1517,7 +1508,7 @@ function StepperStore() {
                             backgroundColor: "#233044",
                             color: "#fff",
                           }}
-                          type="submit"
+                          type={isLastStep ? "submit" : "button"}
                           disabled={
                             isSubmitting || isProcessing ||
                             (isLastStep && Object.keys(errors).length > 0)
