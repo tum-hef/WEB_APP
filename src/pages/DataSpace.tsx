@@ -1,4 +1,4 @@
-import { Breadcrumbs, Grid, Paper, Typography } from "@mui/material";
+import { Breadcrumbs, Grid, Paper, Typography, Button, IconButton } from "@mui/material";
 import LinkCustom from "../components/LinkCustom";
 import Dashboard from "../components/DashboardComponent";
 import axios from "axios";
@@ -12,6 +12,7 @@ import CardDataSpace from "../components/CardDataSpace";
 import TabletAndroidIcon from "@mui/icons-material/TabletAndroid";
 import ReactGA from "react-ga4";
 import { GAactionsDataSpace } from "../utils/GA";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 interface ApiResponse {
   success: boolean;
   PORT?: number;
@@ -31,10 +32,13 @@ export default function DataSpace() {
   const [group, setGroup] = useState<any>({});
   const { group_id } = useParams<{ group_id: string }>();
   const [error, setError] = useState<boolean>(false);
+  const [clientDetatils, setClientDetails] = useState<any>({});
+  const [showSecret, setShowSecret] = useState<boolean>(false);
 
+  const toggleVisibility = () => setShowSecret(!showSecret)
 
   const fetchGroups = async () => {
-   const email=  userInfo?.id;
+    const email = userInfo?.id;
 
     if (keycloak && email) {
       try {
@@ -46,6 +50,7 @@ export default function DataSpace() {
           const group = response.data.groups.find(
             (group: any) => group.id === group_id
           );
+
           if (!group) {
             toast.error("Group is not valid");
             setError(true);
@@ -66,9 +71,9 @@ export default function DataSpace() {
 
   const fetchDataStreams = () => {
     console.log(frostServerPort);
-    const backend_url = process.env.REACT_APP_FROST_URL; 
-    const isDev = process.env.REACT_APP_IS_DEVELOPMENT === 'true';  
-    const url = isDev ?  `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Datastreams` :`https://${frostServerPort}-${backend_url}/FROST-Server/v1.0/Datastreams`
+    const backend_url = process.env.REACT_APP_FROST_URL;
+    const isDev = process.env.REACT_APP_IS_DEVELOPMENT === 'true';
+    const url = isDev ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Datastreams` : `https://${frostServerPort}-${backend_url}/FROST-Server/v1.0/Datastreams`
     axios
       .get(url, {
         headers: {
@@ -93,18 +98,18 @@ export default function DataSpace() {
       toast.error("Backend URL is missing.");
       return;
     }
-  
+
     const email: string | null =
       localStorage.getItem("selected_others") === "true"
         ? localStorage.getItem("user_email")
         : userInfo?.preferred_username || "";
     const group_id = localStorage.getItem("group_id");
-  
+
     if (!email || !group_id) {
       // toast.error("User email and group ID are required.");
       return;
     }
-  
+
     try {
       const response = await axios.post<ApiResponse>(
         `${backend_url}/node-red`,
@@ -120,16 +125,16 @@ export default function DataSpace() {
           validateStatus: (status) => true,
         }
       );
-  
+
       if (response.status === 200 && response.data.success) {
         setNodeRedPort(response.data.PORT!);
       } else {
-        toast.error(response.data.message || "Failed to fetch Node-RED port.");
+        toast.error(response?.data?.message || "Failed to fetch Node-RED port.");
       }
     } catch (error: any) {
       if (axios.isAxiosError(error)) {
         const errorResponse = error.response?.data as ApiResponse;
-        toast.error(errorResponse.message || "An error occurred.");
+        toast.error(errorResponse?.message || "An error occurred.");
       } else {
         toast.error("An unexpected error occurred.");
       }
@@ -142,9 +147,9 @@ export default function DataSpace() {
     const url = isDev
       ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Things`
       : `https://${frostServerPort}-${backend_url}/FROST-Server/v1.0/Things`;
-  
+
     let attempt = 0;
-  
+
     while (attempt < retryCount) {
       try {
         const res = await axios.get(url, {
@@ -153,7 +158,7 @@ export default function DataSpace() {
             Authorization: `Bearer ${token}`,
           },
         });
-  
+
         if (res.status === 200 && res.data.value) {
           setDevices(res.data.value.length);
           return; // Exit on success
@@ -165,12 +170,12 @@ export default function DataSpace() {
           toast.error("Error fetching devices. Please try again later.");
         }
       }
-  
+
       // Wait before retrying (exponential backoff)
       await new Promise((resolve) => setTimeout(resolve, 1000 * Math.pow(2, attempt)));
     }
   };
-  
+
 
   const fetchData = async () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL;
@@ -178,12 +183,12 @@ export default function DataSpace() {
       ? localStorage.getItem("user_email")
       : userInfo?.preferred_username;
     const group_id = localStorage.getItem("group_id");
-  
+
     if (!email || !group_id) {
       toast.error("User email and group ID are required.");
       return;
     }
-  
+
     try {
       const response = await axios.post<ApiResponse>(
         `${backend_url}/frost-server`,
@@ -199,7 +204,7 @@ export default function DataSpace() {
           validateStatus: (status) => true,
         }
       );
-  
+
       if (response.status === 200 && response.data.success) {
         setFrostServerPort(response.data.PORT!);
       } else {
@@ -215,23 +220,47 @@ export default function DataSpace() {
       console.error("Error fetching Frost Server port:", error);
     }
   };
+
+  const getClientDetails = async () => {
+    if (frostServerPort) {
+      let backend_url = process.env.REACT_APP_BACKEND_URL;
+      let URL = `${backend_url}/get_client_details?client_id=${`frost_${frostServerPort}`}`;
+      try {
+        const response = await axios.get(URL, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (response.status === 200) {
+          setClientDetails(response.data);
+        }
+      } catch (error) {
+        console.error("Error fetching client details:", error);
+      }
+    }
+
+  }
   useEffect(() => {
     ReactGA.event({
       category: GAactionsDataSpace.category,
       action: GAactionsDataSpace.action,
       label: GAactionsDataSpace.label,
     });
-  
+
     fetchGroups();
     getNodeRedPort();
-  
+    if (frostServerPort) {
+      getClientDetails()
+    }
+
     if (frostServerPort !== null) {
       fetchDataStreams();
       asyncGetDevices(); // Retry logic included
     } else {
       fetchData();
     }
-  
+
     setLoading(false);
   }, [frostServerPort]);
 
@@ -341,7 +370,7 @@ export default function DataSpace() {
                         );
                       }}
                     >
-                      { process.env.REACT_APP_IS_DEVELOPMENT === 'true' ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0` : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0`}
+                      {process.env.REACT_APP_IS_DEVELOPMENT === 'true' ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0` : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0`}
                     </LinkCustom>
                   </Typography>{" "}
                   <Typography
@@ -385,7 +414,49 @@ export default function DataSpace() {
                     </span>{" "}
                     {datasteamSize}
                   </Typography>{" "}
+                  <Typography
+                    variant="h6"
+                    gutterBottom
+                    style={{
+                      marginBottom: "20px",
+                    }}
+                  >
+                    <span
+                      style={{
+                        color: "#233044",
+                      }}
+                    >
+                      Client ID:
+                    </span>{" "}
+                    {datasteamSize}
+                  </Typography>{" "}
+                  <>
+                    <Typography
+                      variant="h6"
+                      gutterBottom
+                      style={{ marginBottom: "20px" }}
+                    >
+                      <span style={{ color: "#233044" }}>Client ID:</span>{" "}
+                      {clientDetatils?.client_id}
+                    </Typography>
+
+                    <Typography
+                      variant="h6"
+                      gutterBottom
+                      style={{ marginBottom: "10px" }}
+                    >
+                      <span style={{ color: "#233044" }}>Client Secret:</span>{" "}
+                      {showSecret ? clientDetatils?.client_secret : "••••••••••••"}
+                      <span><IconButton onClick={toggleVisibility} size="small">
+                        {showSecret ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                      </span>
+                    </Typography>
+
+
+                  </>
                 </Grid>
+
               </Grid>
               <Grid item xs={6} sm container>
                 <Grid item xs>
