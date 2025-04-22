@@ -306,20 +306,27 @@ function StepperStore() {
 
         // Extract the first error message from validationErrors
         const firstErrorField = Object.keys(validationErrors)[0]; // Get the first field with an error
-        const firstErrorMessage:any =
-          typeof (validationErrors as Record<string, any>)[firstErrorField] === "string"
-            ? validationErrors[firstErrorField as keyof FormikErrors<FormValues>] // If it's a string, use it directly
-            : Array.isArray(validationErrors[firstErrorField as keyof FormikErrors<FormValues>]) // If it's an array, take the first element
-              ? (validationErrors[firstErrorField as keyof FormikErrors<FormValues>] as string[])[0]
-              : "An error occurred"; // Fallback in case of unexpected structure
+        const rawError:any = validationErrors[firstErrorField as keyof typeof validationErrors];
 
-        // Display the first error message
+        let firstErrorMessage: any;
+
+        if (typeof rawError === "string") {
+          firstErrorMessage = rawError;
+        } else if (Array.isArray(rawError)) {
+          firstErrorMessage = rawError[0];
+        } else if (typeof rawError === "object" && rawError !== null) {
+          // Extract the first value from the object
+          const firstValue = Object.values(rawError)[0];
+          firstErrorMessage = typeof firstValue === "string" ? firstValue : "An error occurred";
+        } else {
+          firstErrorMessage = "An error occurred";
+        }
+        firstErrorMessage= Object.values(firstErrorMessage)
         Swal.fire({
           icon: "error",
           title: "Validation Error",
-          text: firstErrorMessage,
+          text:firstErrorMessage ,
         });
-
         return; // Stop further processing
       }
 
@@ -356,7 +363,7 @@ function StepperStore() {
       }
 
       // Step 1: Validate Observed Property Names (Custom Logic)
-      if (activeStep === 1 && shouldProceed) { 
+      if (activeStep === 1 && shouldProceed) {
         console.log("step22")
         for (const observedProperty of values.observeProperties) {
           if (observedProperty.name !== "") {
@@ -390,7 +397,7 @@ function StepperStore() {
       }
 
       // Step 2: Validate Datastream Names (Custom Logic)
-      if (activeStep === 2 && shouldProceed) { 
+      if (activeStep === 2 && shouldProceed) {
         for (const datastream of values.datastreams) {
           if (datastream.name !== "") {
             const response = await axios.get(
@@ -424,7 +431,7 @@ function StepperStore() {
       let stepUpdated = false;
 
       // If all validations passed, move to the next step
-      if (shouldProceed && !stepUpdated) { 
+      if (shouldProceed && !stepUpdated) {
         setActiveStep((prevStep) => Math.min(prevStep + 1, steps.length - 1));
         stepUpdated = true;
       }
@@ -491,13 +498,13 @@ function StepperStore() {
 
   useEffect(() => {
     if (activeStep !== 2) return; // Only run when activeStep is 2
-  
+
     const formik = formikRef.current;
     if (!formik) return;
-  
-    const { values, setFieldValue } = formik; 
 
-  
+    const { values, setFieldValue } = formik;
+
+
     const combinedProperties = [
       ...(values.observedProperty_existing_id || []).map((id: string, index: number) => {
         const existingProperty = ObservedProperties.find(
@@ -509,7 +516,7 @@ function StepperStore() {
       }),
       ...values.observeProperties,
     ];
-  
+
     // Merge existing datastreams with new ones
     const updatedDatastreams = combinedProperties.map((property: any, index: number) => {
       const existingDatastream = values.datastreams[index];
@@ -523,14 +530,14 @@ function StepperStore() {
         showOptional: existingDatastream?.showOptional || false, // Preserve showOptional state
       };
     });
-  
+
     // Prevent unnecessary updates
     const isDatastreamsEqual = JSON.stringify(values.datastreams) === JSON.stringify(updatedDatastreams);
     if (!isDatastreamsEqual) {
       setFieldValue("datastreams", updatedDatastreams);
     }
   }, [activeStep, ObservedProperties]);
- 
+
 
   return (
     <>
@@ -588,7 +595,7 @@ function StepperStore() {
 
               if (isLastStep) {
                 setLoading(true);
-                helpers.resetForm(); 
+                helpers.resetForm();
                 setActiveStep(0);
 
                 try {
@@ -668,10 +675,10 @@ function StepperStore() {
                       `${frostServerUrl}/ObservedProperties(${existingPropertyId})`,
                       { headers: { "Content-Type": "application/json", Authorization: `Bearer ${keycloak?.token}` } }
                     );
-                  
+
                     const observedProperty = response_get_observed_property.data;
                     observedPropertyIds[`datastream_${values.device_name}_${observedProperty.name}`] = parseInt(existingPropertyId, 10);
-                  
+
                     console.log(`✅ Existing Observed Property Found: ${observedProperty.name} -> ID ${existingPropertyId}`);
                   }
 
@@ -777,8 +784,8 @@ function StepperStore() {
               setFieldError,
               validateForm
             }: FormikProps<FormValues>) => {
-              
-              
+
+
               return (
 
                 <>
@@ -1183,7 +1190,7 @@ function StepperStore() {
                             const { values, touched, errors, handleChange, setFieldValue } = form;
                             return (
                               <>
-                                {values.datastreams.map((_:any, index: number) => (
+                                {values.datastreams.map((_: any, index: number) => (
                                   <Fragment key={index}>
                                     {/* Datastream Name (Auto-generated) */}
                                     <Grid item xs={12} md={6}>
