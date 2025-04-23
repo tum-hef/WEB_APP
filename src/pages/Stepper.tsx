@@ -497,46 +497,45 @@ function StepperStore() {
   }, []);
 
   useEffect(() => {
-    if (activeStep !== 2) return; // Only run when activeStep is 2
-
     const formik = formikRef.current;
-    if (!formik) return;
-
+    if (!formik || activeStep !== 2) return;
+  
     const { values, setFieldValue } = formik;
-
-
-    const combinedProperties = [
-      ...(values.observedProperty_existing_id || []).map((id: string, index: number) => {
-        const existingProperty = ObservedProperties.find(
-          (item: any) => item["@iot.id"] === id
+  
+    // Delay update to let React finish rendering the new step
+    setTimeout(() => {
+      const combinedProperties = [
+        ...(values.observedProperty_existing_id || []).map((id: string) => {
+          const existingProperty = ObservedProperties.find((item: any) => item["@iot.id"] === id);
+          return { name: existingProperty?.name || `Property ID: ${id}` };
+        }),
+        ...values.observeProperties,
+      ];
+  
+      const updatedDatastreams = combinedProperties.map((property: any) => {
+        const existingDatastream = values.datastreams.find(
+          (d: any) => d.name === `datastream_${values.device_name}_${property.name}`
         );
         return {
-          name: existingProperty?.name || `Property ID: ${id}`,
+          name: `datastream_${values.device_name}_${property.name}`,
+          description: `datastream for ${property?.name} of ${values?.device_name}`,
+          observation_type: existingDatastream?.observation_type || "",
+          unit_of_measurement_name: existingDatastream?.unit_of_measurement_name || "",
+          unit_of_measurement_symbol: existingDatastream?.unit_of_measurement_symbol || "",
+          unit_of_measurement_definition: existingDatastream?.unit_of_measurement_definition || "",
+          showOptional: existingDatastream?.showOptional || false,
         };
-      }),
-      ...values.observeProperties,
-    ];
-
-    // Merge existing datastreams with new ones
-    const updatedDatastreams = combinedProperties.map((property: any, index: number) => {
-      const existingDatastream = values.datastreams[index];
-      return {
-        name: `datastream_${values.device_name}_${property.name}`, // Update name dynamically
-        description: `datastream for ${property?.name} of ${values?.device_name}` , // Preserve existing value or default to ""
-        observation_type: existingDatastream?.observation_type || "",
-        unit_of_measurement_name: existingDatastream?.unit_of_measurement_name || "",
-        unit_of_measurement_symbol: existingDatastream?.unit_of_measurement_symbol || "",
-        unit_of_measurement_definition: existingDatastream?.unit_of_measurement_definition || "",
-        showOptional: existingDatastream?.showOptional || false, // Preserve showOptional state
-      };
-    });
-
-    // Prevent unnecessary updates
-    const isDatastreamsEqual = JSON.stringify(values.datastreams) === JSON.stringify(updatedDatastreams);
-    if (!isDatastreamsEqual) {
-      setFieldValue("datastreams", updatedDatastreams);
-    }
-  }, [activeStep, ObservedProperties]);
+      });
+  
+      setFieldValue("datastreams", updatedDatastreams, false);
+    }, 0); // Run after current render cycle
+  }, [
+    activeStep,
+    ObservedProperties,
+    formikRef.current?.values.observeProperties,
+    formikRef.current?.values.observedProperty_existing_id,
+  ]);
+  
 
 
   return (
