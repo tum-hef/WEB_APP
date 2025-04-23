@@ -522,7 +522,7 @@ function StepperStore() {
       const existingDatastream = values.datastreams[index];
       return {
         name: `datastream_${values.device_name}_${property.name}`, // Update name dynamically
-        description: existingDatastream?.description || "", // Preserve existing value or default to ""
+        description: `datastream for ${property?.name} of ${values?.device_name}` , // Preserve existing value or default to ""
         observation_type: existingDatastream?.observation_type || "",
         unit_of_measurement_name: existingDatastream?.unit_of_measurement_name || "",
         unit_of_measurement_symbol: existingDatastream?.unit_of_measurement_symbol || "",
@@ -1204,6 +1204,17 @@ function StepperStore() {
                                         helperText="Auto-generated based on device name"
                                       />
                                     </Grid>
+                                    <Grid item xs={12} md={6}>
+                                      <TextField
+                                        fullWidth
+                                        label={`Datastream Description`}
+                                        name={`datastreams.${index}.description`}
+                                        onChange={handleChange}
+                                        variant="outlined"
+                                        InputProps={{ defaultValue: _?.description }}
+                                        helperText="Auto-generated based on device name"
+                                      />
+                                    </Grid>
 
                                     {/* Toggle Button for Optional Fields */}
                                     <Grid item xs={12}>
@@ -1223,7 +1234,7 @@ function StepperStore() {
                                     {/* Optional Fields */}
                                     {values.datastreams[index].showOptional && (
                                       <>
-                                        <Grid item xs={12} md={6}>
+                                        {/* <Grid item xs={12} md={6}>
                                           <TextField
                                             fullWidth
                                             label="Datastream Description"
@@ -1232,7 +1243,7 @@ function StepperStore() {
                                             onChange={handleChange}
                                             variant="outlined"
                                           />
-                                        </Grid>
+                                        </Grid> */}
                                         <Grid item xs={12} md={6}>
                                           <TextField
                                             fullWidth
