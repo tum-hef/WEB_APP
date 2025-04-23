@@ -513,12 +513,18 @@ function StepperStore() {
       ];
   
       const updatedDatastreams = combinedProperties.map((property: any) => {
+        const generatedName = `datastream_${values.device_name}_${property.name}`;
+        
         const existingDatastream = values.datastreams.find(
-          (d: any) => d.name === `datastream_${values.device_name}_${property.name}`
+          (d: any) => d.name === generatedName
         );
+        console.log("checking ds", `datastream for ${property?.name} of ${values?.device_name}`)
         return {
-          name: `datastream_${values.device_name}_${property.name}`,
+          name: generatedName,
+          // ✅ Always regenerate the description
           description: `datastream for ${property?.name} of ${values?.device_name}`,
+          
+          // ✅ Optionally reuse other fields
           observation_type: existingDatastream?.observation_type || "",
           unit_of_measurement_name: existingDatastream?.unit_of_measurement_name || "",
           unit_of_measurement_symbol: existingDatastream?.unit_of_measurement_symbol || "",
@@ -526,7 +532,6 @@ function StepperStore() {
           showOptional: existingDatastream?.showOptional || false,
         };
       });
-  
       setFieldValue("datastreams", updatedDatastreams, false);
     }, 0); // Run after current render cycle
   }, [
@@ -536,6 +541,11 @@ function StepperStore() {
     formikRef.current?.values.observedProperty_existing_id,
   ]);
   
+
+  // useEffect(()=>{
+  //   console.log("current formkkil values to check", formikRef.current?.values)
+
+  // },[ formikRef.current?.values])
 
 
   return (
@@ -1067,7 +1077,8 @@ function StepperStore() {
                               const observeProperties = form.values.observeProperties as ObserveProperty[];
                               return (
                                 <Grid container spacing={3}>
-                                  {observeProperties.map((_, index) => (
+                                  {observeProperties.map((datastream:any, index) => (
+                                    
                                     <Fragment key={index}>
                                       <Grid item xs={12}>
                                         <Divider sx={{ my: 2 }} />
@@ -1186,10 +1197,11 @@ function StepperStore() {
                       <Grid container spacing={2}>
                         <FieldArray name="datastreams">
                           {({ push, remove, form }) => {
-                            const { values, touched, errors, handleChange, setFieldValue } = form;
+                            const { values, touched, errors, handleChange, setFieldValue } = form; 
+                      
                             return (
                               <>
-                                {values.datastreams.map((_: any, index: number) => (
+                                {values.datastreams.map((datastream: any, index: number) => (
                                   <Fragment key={index}>
                                     {/* Datastream Name (Auto-generated) */}
                                     <Grid item xs={12} md={6}>
@@ -1197,7 +1209,7 @@ function StepperStore() {
                                         fullWidth
                                         label={`Datastream Name`}
                                         name={`datastreams.${index}.name`}
-                                        value={_?.name}
+                                        value={datastream?.name}
                                         variant="outlined"
                                         InputProps={{ readOnly: true }}
                                         helperText="Auto-generated based on device name"
@@ -1210,7 +1222,7 @@ function StepperStore() {
                                         name={`datastreams.${index}.description`}
                                         onChange={handleChange}
                                         variant="outlined"
-                                        InputProps={{ defaultValue: _?.description }}
+                                        InputProps={{ value: datastream?.description }}
                                         helperText="Auto-generated based on device name"
                                       />
                                     </Grid>
