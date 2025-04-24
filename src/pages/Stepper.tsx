@@ -522,7 +522,7 @@ function StepperStore() {
         return {
           name: generatedName,
           // ✅ Always regenerate the description
-          description: `datastream for ${property?.name} of ${values?.device_name}`,
+          description: existingDatastream?.description || `datastream for ${property?.name} of ${values?.device_name}`,
           
           // ✅ Optionally reuse other fields
           observation_type: existingDatastream?.observation_type || "",
@@ -1215,7 +1215,7 @@ function StepperStore() {
                                         helperText="Auto-generated based on device name"
                                       />
                                     </Grid>
-                                    <Grid item xs={12} md={6}>
+                                    {/* <Grid item xs={12} md={6}>
                                       <TextField
                                         fullWidth
                                         label={`Datastream Description`}
@@ -1225,7 +1225,7 @@ function StepperStore() {
                                         InputProps={{ value: datastream?.description }}
                                         helperText="Auto-generated based on device name"
                                       />
-                                    </Grid>
+                                    </Grid> */}
 
                                     {/* Toggle Button for Optional Fields */}
                                     <Grid item xs={12}>
@@ -1245,16 +1245,17 @@ function StepperStore() {
                                     {/* Optional Fields */}
                                     {values.datastreams[index].showOptional && (
                                       <>
-                                        {/* <Grid item xs={12} md={6}>
+                                        <Grid item xs={12} md={6}>
                                           <TextField
                                             fullWidth
                                             label="Datastream Description"
                                             name={`datastreams.${index}.description`}
-                                            value={values.datastreams[index]?.description || ""}
+                                            value={values.datastreams[index]?.description || ""} 
+                                            // InputProps={{ value: datastream?.description }}
                                             onChange={handleChange}
                                             variant="outlined"
                                           />
-                                        </Grid> */}
+                                        </Grid>
                                         <Grid item xs={12} md={6}>
                                           <TextField
                                             fullWidth
