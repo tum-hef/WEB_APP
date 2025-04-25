@@ -157,13 +157,112 @@ const ListDatastream = () => {
             color: "#233044",
           }}
           onClick={() => {
-            /* Your edit logic here */
+            Swal.fire({
+              title: "Edit Datastream",
+              html:
+                `<div class="swal-input-row-with-label">` +
+                `<label for="name">New Name</label>` +
+                `<div class="swal-input-field">` +
+                `<input id="name" class="swal2-input" placeholder="Enter the new datastream name" value="${
+                  row.name || ""
+                }">` +
+                `</div>` +
+                `</div>` +
+                `<div class="swal-input-row">` +
+                `<label for="description">New Description</label>` +
+                `<input id="description" class="swal2-input" placeholder="Enter the new datastream description" value="${
+                  row.description || ""
+                }">` +
+                `</div>`,
+              showCancelButton: true,
+              confirmButtonText: "Save",
+              showLoaderOnConfirm: true,
+              preConfirm: () => {
+                const name = (document.getElementById("name") as HTMLInputElement).value;
+                const description = (document.getElementById("description") as HTMLInputElement).value;
+                if (!name) {
+                  Swal.showValidationMessage("Please enter a datastream name");
+                } else {
+                  return { name, description };
+                }
+              },
+            }).then((result) => {
+              if (result.isConfirmed) {
+                const { name, description } = result.value as {
+                  name: string;
+                  description: string;
+                };
+    
+                axios
+                  .patch(
+                    `${process.env.REACT_APP_BACKEND_URL}/update`,
+                    {
+                      url: `Datastreams(${row["@iot.id"]})`,
+                      FROST_PORT: frostServerPort,
+                      body: { name, description },
+                      keycloak_id: userInfo?.sub,
+                    },
+                    {
+                      headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${keycloak?.token}`,
+                      },
+                    }
+                  )
+                  .then((response) => {
+                    if (response.status === 200) {
+                      const updatedList = datastreams.map((stream) => {
+                        if (stream["@iot.id"] === row["@iot.id"]) {
+                          stream.name = name;
+                          stream.description = description;
+                        }
+                        return stream;
+                      });
+                      setDatastreams(updatedList);
+                      Swal.fire({
+                        icon: "success",
+                        title: "Success",
+                        text: "Datastream edited successfully!",
+                      });
+                    } else {
+                      Swal.fire({
+                        icon: "error",
+                        title: "Oops...",
+                        text: "Datastream not edited!",
+                      });
+                    }
+                  })
+                  .catch(() => {
+                    axios.post(
+                      `http://localhost:4500/mutation_error_logs`,
+                      {
+                        keycloak_id: userInfo?.sub,
+                        method: "UPDATE",
+                        attribute: "Datastreams",
+                        attribute_id: row["@iot.id"],
+                        frost_port: frostServerPort,
+                      },
+                      {
+                        headers: {
+                          "Content-Type": "application/json",
+                          Authorization: `Bearer ${keycloak?.token}`,
+                        },
+                      }
+                    );
+                    Swal.fire({
+                      icon: "error",
+                      title: "Oops...",
+                      text: "Something went wrong! Datastream not edited!",
+                    });
+                  });
+              }
+            });
           }}
         />
       ),
-      sortable: true,
-      width: "15%", // Allocate 15% for the Edit column
-    },
+      sortable: false,
+      width: "10%",
+    },    
     {
       name: "Delete",
       selector: (row: any) => (
