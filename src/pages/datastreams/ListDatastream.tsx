@@ -161,45 +161,58 @@ const ListDatastream = () => {
               title: "Edit Datastream",
               html:
                 `<div class="swal-input-row-with-label">` +
-                `<label for="name">New Name</label>` +
+                `<label for="description">Description</label>` +
                 `<div class="swal-input-field">` +
-                `<input id="name" class="swal2-input" placeholder="Enter the new datastream name" value="${
-                  row.name || ""
-                }">` +
+                `<input id="description" class="swal2-input" placeholder="Enter description" value="${row.description || ""}">` +
                 `</div>` +
                 `</div>` +
-                `<div class="swal-input-row">` +
-                `<label for="description">New Description</label>` +
-                `<input id="description" class="swal2-input" placeholder="Enter the new datastream description" value="${
-                  row.description || ""
-                }">` +
+                `<div class="swal-input-row-with-label">` +
+                `<label for="unitName">Unit Name</label>` +
+                `<div class="swal-input-field">` +
+                `<input id="unitName" class="swal2-input" placeholder="Enter unit name" value="${row.unitOfMeasurement?.name || ""}">` +
+                `</div>` +
+                `</div>` +
+                `<div class="swal-input-row-with-label">` +
+                `<label for="unitSymbol">Unit Symbol</label>` +
+                `<div class="swal-input-field">` +
+                `<input id="unitSymbol" class="swal2-input" placeholder="Enter unit symbol" value="${row.unitOfMeasurement?.symbol || ""}">` +
+                `</div>` +
+                `</div>` +
+                `<div class="swal-input-row-with-label">` +
+                `<label for="unitDefinition">Unit Definition</label>` +
+                `<div class="swal-input-field">` +
+                `<input id="unitDefinition" class="swal2-input" placeholder="Enter unit definition" value="${row.unitOfMeasurement?.definition || ""}">` +
+                `</div>` +
                 `</div>`,
               showCancelButton: true,
               confirmButtonText: "Save",
               showLoaderOnConfirm: true,
               preConfirm: () => {
-                const name = (document.getElementById("name") as HTMLInputElement).value;
                 const description = (document.getElementById("description") as HTMLInputElement).value;
-                if (!name) {
-                  Swal.showValidationMessage("Please enter a datastream name");
+                const unitName = (document.getElementById("unitName") as HTMLInputElement).value;
+                const unitSymbol = (document.getElementById("unitSymbol") as HTMLInputElement).value;
+                const unitDefinition = (document.getElementById("unitDefinition") as HTMLInputElement).value;
+    
+                if (!description) {
+                  Swal.showValidationMessage("Please enter a description");
                 } else {
-                  return { name, description };
+                  return { description, unitOfMeasurement: { name: unitName, symbol: unitSymbol, definition: unitDefinition } };
                 }
               },
             }).then((result) => {
               if (result.isConfirmed) {
-                const { name, description } = result.value as {
-                  name: string;
+                const { description, unitOfMeasurement } = result.value as {
                   description: string;
+                  unitOfMeasurement: { name: string; symbol: string; definition: string };
                 };
     
                 axios
-                  .patch(
+                  .post(
                     `${process.env.REACT_APP_BACKEND_URL}/update`,
                     {
                       url: `Datastreams(${row["@iot.id"]})`,
                       FROST_PORT: frostServerPort,
-                      body: { name, description },
+                      body: { description, unitOfMeasurement },
                       keycloak_id: userInfo?.sub,
                     },
                     {
@@ -213,8 +226,8 @@ const ListDatastream = () => {
                     if (response.status === 200) {
                       const updatedList = datastreams.map((stream) => {
                         if (stream["@iot.id"] === row["@iot.id"]) {
-                          stream.name = name;
                           stream.description = description;
+                          stream.unitOfMeasurement = unitOfMeasurement;
                         }
                         return stream;
                       });
