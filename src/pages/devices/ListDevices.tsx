@@ -201,7 +201,7 @@ const Devices = () => {
                   description: string;
                 };
                 axios
-                  .patch(
+                  .post(
                     `${process.env.REACT_APP_BACKEND_URL}/update`,
                     {
                       url: `Things(${row["@iot.id"]})`,

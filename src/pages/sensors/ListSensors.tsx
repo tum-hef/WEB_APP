@@ -167,7 +167,7 @@ const ListSensors = () => {
                   metadata: string;
                 };
                 axios
-                  .patch(
+                  .post(
                     `${process.env.REACT_APP_BACKEND_URL}/update`,
                     {
                       url: `Sensors(${row["@iot.id"]})`,

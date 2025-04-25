@@ -173,7 +173,7 @@ const ListObservationProperty = () => {
                   definition: string;
                 };
                 axios
-                  .patch(
+                  .post(
                     `${process.env.REACT_APP_BACKEND_URL}/update`,
                     {
                       url: `ObservedProperties(${row["@iot.id"]})`,
