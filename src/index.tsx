@@ -3,6 +3,8 @@ import ReactDOM from "react-dom";
 import { ReactKeycloakProvider } from "@react-keycloak/web";
 import AppRouter from "./routes/index";
 import keycloak from "./keycloak";
+import { Provider } from 'react-redux';
+import { store } from './store/store';
 
 const eventLogger = (event: unknown, error: unknown) => {
   console.log("onKeycloakEvent", event, error);
@@ -13,7 +15,8 @@ const tokenLogger = (tokens: unknown) => {
 };
  console.log("process.env.REACT_APP_BACKEND_URL",process.env)
 ReactDOM.render(
-  <React.StrictMode>
+  <React.StrictMode> 
+     <Provider store={store}>
     <ReactKeycloakProvider
       authClient={keycloak}
       onEvent={eventLogger}
@@ -25,6 +28,7 @@ ReactDOM.render(
         <AppRouter />
       </div>
     </ReactKeycloakProvider>
+    </Provider>
   </React.StrictMode>,
   document.getElementById("root")
 );
