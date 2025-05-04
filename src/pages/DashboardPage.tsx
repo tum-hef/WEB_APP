@@ -60,14 +60,16 @@ export default function DashboardPage() {
           
           const response = await axios.get(
             `${process.env.REACT_APP_BACKEND_URL}/get_clients?user_id=${userID}`
-          );
-          console.log("response",response?.data?.result)
+          ); 
+          console.log("group_idaa",group_id)
+          console.log("responsess",response?.data)
           if (response.status === 200 && response.data.groups) {
             // check if group_id is in groups
             if (group_id) {
               const group = response.data.groups.find(
-                (group: any) => group.group_name_id === group_id
-              );
+                (group: any) => group.group_name_id === group_id && group.project_name !== null
+              ); 
+              console.log("groupconsole",group)
               if (!group) { 
                 toast.error("Group is not valid");
                 setError(true);

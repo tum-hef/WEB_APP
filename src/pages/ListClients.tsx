@@ -188,7 +188,10 @@ export default function ListClients() {
           }
 
           if (response.status === 200 && response.data.groups && response.data.groups.length > 0) {
-            setGroups(response.data.groups);
+            const validGroups = response.data.groups.filter(
+              (group: any) => group.project_name // ✅ This ensures it's a project group, not a subgroup like "Owners"
+            );
+            setGroups(validGroups);
           } else {
             toast.error("No groups found.");
           }
