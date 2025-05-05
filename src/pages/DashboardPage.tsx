@@ -169,7 +169,7 @@ export default function DashboardPage() {
         }
       } catch (error) {
         console.error("Error fetching data:", error);
-        toast.error("An error occurred while loading data.");
+        // toast.error("An error occurred while loading data.");
       } finally {
         setLoading(false);
       }
