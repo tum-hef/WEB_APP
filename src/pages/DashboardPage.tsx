@@ -20,6 +20,8 @@ import { useLocation, useParams } from "react-router-dom";
 import { NOTFOUND } from "./404";
 import PublicIcon from "@mui/icons-material/Public";
 import CardDataSpace from "../components/CardDataSpace";
+import { useAppSelector } from "../hooks/hooks";
+import { RootState } from "../store/store";
 const Anchor = styled.a`
   text-decoration: none;
   color: inherit;
@@ -36,7 +38,11 @@ interface ApiResponse {
 }
 export default function DashboardPage() {
   const [userID, setUserID] = useState<string | null>(null);
-  const [group, setGroup] = useState<any>({});
+  const group = useAppSelector((state: RootState) => {
+    const id = state.roles.selectedGroupId;
+    return state.roles.groups.find((g) => g.group_name_id === id);
+  });
+  const groupId = useAppSelector((state:any) => state.roles.selectedGroupId);
   const [devices, setDevices] = useState<number | null>(0);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<boolean>(false);
@@ -49,54 +55,56 @@ export default function DashboardPage() {
   const { group_id } = useParams<{ group_id: string }>();
   const location = useLocation();
   const [frostServerPort, setFrostServerPort] = useState<number | null>(null);
-  const queryParams = new URLSearchParams(location.search); 
+  const queryParams = new URLSearchParams(location.search);  
+  const selectedGroupId = useAppSelector(state => state.roles.selectedGroupId); 
+ 
   const otherGroup = queryParams.get('other_group');
-  const fetchGroups = async () => {
-    if (keycloak && userInfo && userInfo.sub) {
-      setUserID(userInfo.sub);
+  // const fetchGroups = async () => {
+  //   if (keycloak && userInfo && userInfo.sub) {
+  //     setUserID(userInfo.sub);
 
-      if (userID) {
-        try { 
+  //     if (userID) {
+  //       try { 
           
-          const response = await axios.get(
-            `${process.env.REACT_APP_BACKEND_URL}/get_clients?user_id=${userID}`
-          ); 
-          console.log("group_idaa",group_id)
-          console.log("responsess",response?.data)
-          if (response.status === 200 && response.data.groups) {
-            // check if group_id is in groups
-            if (group_id) {
-              const group = response.data.groups.find(
-                (group: any) => group.group_name_id === group_id && group.project_name !== null
-              ); 
-              console.log("groupconsole",group)
-              if (!group) { 
-                toast.error("Group is not valid");
-                setError(true);
-              } else {
-                console.log("group111",group)
-                setGroup(group);
-              }
-            }
-          } else if (response.status === 404 && response.data.message) {
-            toast.error(response.data.message);
-          } else {
-            toast.error("Error fetching clients");
-          }
-        } catch (error) {
-          toast.error("An error occurred while fetching clients.");
-          console.log(error);
-        }
-      }
-    }
-  };
+  //         const response = await axios.get(
+  //           `${process.env.REACT_APP_BACKEND_URL}/get_clients?user_id=${userID}`
+  //         ); 
+  //         console.log("group_idaa",group_id)
+  //         console.log("responsess",response?.data)
+  //         if (response.status === 200 && response.data.groups) {
+  //           // check if group_id is in groups
+  //           if (group_id) {
+  //             const group = response.data.groups.find(
+  //               (group: any) => group.group_name_id === group_id && group.project_name !== null
+  //             ); 
+  //             console.log("groupconsole",group)
+  //             if (!group) { 
+  //               toast.error("Group is not valid");
+  //               setError(true);
+  //             } else {
+  //               console.log("group111",group)
+  //               setGroup(group);
+  //             }
+  //           }
+  //         } else if (response.status === 404 && response.data.message) {
+  //           toast.error(response.data.message);
+  //         } else {
+  //           toast.error("Error fetching clients");
+  //         }
+  //       } catch (error) {
+  //         toast.error("An error occurred while fetching clients.");
+  //         console.log(error);
+  //       }
+  //     }
+  //   }
+  // };
 
   const fetchData = async () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL;
     const email = localStorage.getItem("selected_others") === "true"
       ? localStorage.getItem("user_email")
       : userInfo?.preferred_username;
-    const group_id = localStorage.getItem("group_id");
+      const group_id = useAppSelector((state:any) => state.roles.selectedGroupId);
   
     if (!email || !group_id) {
       toast.error("User email and group ID are required.");
@@ -133,19 +141,20 @@ export default function DashboardPage() {
       }
       console.error("Error fetching Frost Server port:", error);
     }
-  };
+  }; 
+
+  useEffect(()=>{
+ console.log("nodeRedPort",group)
+  },[group])
   
   useEffect(() => {
-    const groupId = localStorage.getItem("group_id");
     const selectedOthers = localStorage.getItem("selected_others");
   
     const fetchDataAndServices = async () => {
-      try {
-        if (!hasFetched) {
+      try { 
+        console.log("selectedGroupId",selectedGroupId)
+        if (!hasFetched && selectedGroupId) {
           setLoading(true);
-  
-          // Fetch groups first
-          await fetchGroups();
   
           // Fetch Node-RED port and Frost Server port
           await getNodeRedPort();
@@ -156,7 +165,7 @@ export default function DashboardPage() {
             await asyncGetDevices();
           }
   
-          setHasFetched(true); // Prevents unnecessary re-fetching
+          setHasFetched(true);
         }
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -168,11 +177,11 @@ export default function DashboardPage() {
   
     fetchDataAndServices();
   
-    // Re-fetch groups when user switches group
-    if (groupId && selectedOthers === "true") {
-      fetchGroups();
+    // Optional: re-fetch if user switches to another shared group
+    if (selectedGroupId && selectedOthers === "true") {
+      fetchDataAndServices(); // optionally re-call or just reset hasFetched
     }
-  }, [frostServerPort, hasFetched]);
+  }, [frostServerPort, hasFetched, selectedGroupId]);
   
   
 
@@ -188,6 +197,7 @@ export default function DashboardPage() {
         ? localStorage.getItem("user_email")
         : userInfo?.preferred_username || "";
     const group_id = localStorage.getItem("group_id");
+
   
     if (!email || !group_id) {
       toast.error("User email and group ID are required.");
@@ -209,8 +219,9 @@ export default function DashboardPage() {
           validateStatus: (status) => true,
         }
       );
-  
-      if (response.status === 200 && response.data.success) {
+      console.log("response checking",response)
+      if (response.status === 200 && response.data.success) { 
+        console.log("aaaaa",response.data.PORT!)
         setNodeRedPort(response.data.PORT!);
       } else {
         toast.error(response.data.message || "Failed to fetch Node-RED port.");
@@ -255,11 +266,11 @@ export default function DashboardPage() {
  
 
 
-  useEffect(()=>{
-  if(userID){
-    fetchGroups()
-  }
-  },[userID])
+  // useEffect(()=>{
+  // if(userID){
+  //   fetchGroups()
+  // }
+  // },[userID])
   return (
     <Dashboard>
       {loading ? (

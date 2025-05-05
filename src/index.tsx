@@ -5,6 +5,7 @@ import AppRouter from "./routes/index";
 import keycloak from "./keycloak";
 import { Provider } from 'react-redux';
 import { store } from './store/store';
+import GroupInitializer from "./components/GroupIntializer";
 
 const eventLogger = (event: unknown, error: unknown) => {
   console.log("onKeycloakEvent", event, error);
@@ -24,7 +25,8 @@ ReactDOM.render(
     >
       <div
         style={{ margin: "0px", padding: "0px", width: "100%", height: "100%" }}
-      >
+      > 
+         <GroupInitializer />
         <AppRouter />
       </div>
     </ReactKeycloakProvider>
