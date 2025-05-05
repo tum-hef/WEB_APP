@@ -13,6 +13,7 @@ import TabletAndroidIcon from "@mui/icons-material/TabletAndroid";
 import ReactGA from "react-ga4";
 import { GAactionsDataSpace } from "../utils/GA";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
+import { useAppSelector, useIsOwner } from "../hooks/hooks";
 interface ApiResponse {
   success: boolean;
   PORT?: number;
@@ -29,45 +30,19 @@ export default function DataSpace() {
   const [nodeRedPort, setNodeRedPort] = useState<number | null>(null);
   const [frostServerPort, setFrostServerPort] = useState<number | null>(null);
   const [userID, setUserID] = useState<string | null>(null);
-  const [group, setGroup] = useState<any>({});
   const { group_id } = useParams<{ group_id: string }>();
   const [error, setError] = useState<boolean>(false);
   const [clientDetatils, setClientDetails] = useState<any>({});
   const [showSecret, setShowSecret] = useState<boolean>(false);
+  const selectedGroupId = useAppSelector(state => state.roles.selectedGroupId);
+  const group = useAppSelector(state =>
+    state.roles.groups.find(g => g.group_name_id === selectedGroupId)
+  );
+  const isOwner = useIsOwner();
 
   const toggleVisibility = () => setShowSecret(!showSecret)
 
-  const fetchGroups = async () => {
-    const email = userInfo?.id;
 
-    if (keycloak && email) {
-      try {
-        const response = await axios.get(
-          `${process.env.REACT_APP_BACKEND_URL}/get_clients?user_id=${email}`
-        );
-
-        if (response.status === 200 && response.data.groups) {
-          const group = response.data.groups.find(
-            (group: any) => group.id === group_id
-          );
-
-          if (!group) {
-            toast.error("Group is not valid");
-            setError(true);
-          } else {
-            setGroup(group);
-          }
-        } else if (response.status === 404 && response.data.message) {
-          toast.error(response.data.message);
-        } else {
-          toast.error("Error fetching clients");
-        }
-      } catch (error) {
-        toast.error("An error occurred while fetching clients.");
-        console.error(error);
-      }
-    }
-  };
 
   const fetchDataStreams = () => {
     console.log(frostServerPort);
@@ -248,7 +223,7 @@ export default function DataSpace() {
       label: GAactionsDataSpace.label,
     });
 
-    fetchGroups();
+
     getNodeRedPort();
     if (frostServerPort) {
       getClientDetails()
@@ -302,7 +277,8 @@ export default function DataSpace() {
             <Grid item xs={12} sm={6} md={6} lg={6}>
               <CardDataSpace
                 redirection_path="stepper"
-                card_name="Stepper"
+                card_name="Stepper" 
+                isOwner={isOwner}
                 Icon={
                   <DriveFileRenameOutlineIcon
                     style={{
