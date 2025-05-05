@@ -12,6 +12,7 @@ import DeleteForeverOutlinedIcon from "@mui/icons-material/DeleteForeverOutlined
 import Swal from "sweetalert2";
 import ReactGA from "react-ga4";
 import { GAactionsSensors } from "../../utils/GA";
+import { useAppSelector, useIsOwner } from "../../hooks/hooks";
 
 const ListSensors = () => {
   const { keycloak } = useKeycloak();
@@ -20,13 +21,18 @@ const ListSensors = () => {
 
   const [frostServerPort, setFrostServerPort] = useState<number | null>(null);
   const [sensors, setSensors] = useState<any[]>([]);
+  const selectedGroupId = useAppSelector(state => state.roles.selectedGroupId);
+  const group = useAppSelector(state =>
+    state.roles.groups.find(g => g?.group_name_id === selectedGroupId)
+  );
+  const isOwner = useIsOwner();
 
   const fetchSensors = () => {
-    const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT; 
-    const isDev = process.env.REACT_APP_IS_DEVELOPMENT === 'true';  
+    const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
+    const isDev = process.env.REACT_APP_IS_DEVELOPMENT === 'true';
     console.log(backend_url);
     axios
-      .get(isDev ?  `${backend_url}:${frostServerPort}/FROST-Server/v1.0/Sensors`  : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Sensors`, {
+      .get(isDev ? `${backend_url}:${frostServerPort}/FROST-Server/v1.0/Sensors` : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Sensors`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -48,9 +54,9 @@ const ListSensors = () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL;
     const group_id = localStorage.getItem("group_id");
     const email =
-    localStorage.getItem("selected_others") === "true"
-      ? localStorage.getItem("user_email")
-      : userInfo?.preferred_username;
+      localStorage.getItem("selected_others") === "true"
+        ? localStorage.getItem("user_email")
+        : userInfo?.preferred_username;
 
     await axios.post(
       `${backend_url}/frost-server`,
@@ -62,10 +68,10 @@ const ListSensors = () => {
         },
       }
     ).then((res) => {
-        if (res.status === 200 && res.data.PORT) {
-          setFrostServerPort(res.data.PORT);
-        }
-      });
+      if (res.status === 200 && res.data.PORT) {
+        setFrostServerPort(res.data.PORT);
+      }
+    });
   };
 
   useEffect(() => {
@@ -112,32 +118,32 @@ const ListSensors = () => {
       selector: (row: any) => (
         <EditOutlinedIcon
           style={{
-            cursor: "pointer",
-            color: "#233044",
+            cursor: isOwner ? "pointer" : "not-allowed",
+            color: isOwner ? "red" : "gray",
+            opacity: isOwner ? 1 : 0.4,
+            pointerEvents: isOwner ? "auto" : "none",
           }}
           onClick={() => {
+            if (!isOwner) return;
             Swal.fire({
               title: "Edit Sensor",
               html:
                 `<div class="swal-input-row-with-label">` +
                 `<label for="name">New Name</label>` +
                 `<div class="swal-input-field">` +
-                `<input id="name" class="swal2-input" placeholder="Enter the new Sensor name" value="${
-                  row.name || ""
+                `<input id="name" class="swal2-input" placeholder="Enter the new Sensor name" value="${row.name || ""
                 }">` +
                 `</div>` +
                 `</div>` +
                 `<div class="swal-input-row">` +
                 `<label for="description">New Description</label>` +
-                `<input id="description" class="swal2-input" placeholder="Enter the new Sensor description" value="${
-                  row.description || ""
+                `<input id="description" class="swal2-input" placeholder="Enter the new Sensor description" value="${row.description || ""
                 }">` +
                 `</div>` +
                 `</div>` +
                 `<div class="swal-input-row">` +
                 `<label for="metadata">New metadata</label>` +
-                `<input id="metadata" class="swal2-input" placeholder="Enter the new Sensor metadata" value="${
-                  row.metadata || ""
+                `<input id="metadata" class="swal2-input" placeholder="Enter the new Sensor metadata" value="${row.metadata || ""
                 }">` +
                 `</div>`,
               showCancelButton: true,
@@ -246,10 +252,13 @@ const ListSensors = () => {
       selector: (row: any) => (
         <DeleteForeverOutlinedIcon
           style={{
-            cursor: "pointer",
-            color: "red",
+            cursor: isOwner ? "pointer" : "not-allowed",
+            color: isOwner ? "red" : "gray",
+            opacity: isOwner ? 1 : 0.4,
+            pointerEvents: isOwner ? "auto" : "none",
           }}
           onClick={() => {
+            if (!isOwner) return;
             Swal.fire({
               title: `Are you sure you want to delete ${row.name}?`,
               text: "You will not be able to recover this sensor! Linked datastream might become disfunctional!",
@@ -372,7 +381,7 @@ const ListSensors = () => {
         <Typography color="text.primary">Sensor Types</Typography>
       </Breadcrumbs>
 
-      <LinkCustom to="/sensors/store">
+      {isOwner ? <LinkCustom to="/sensors/store">
         <Button
           variant="contained"
           color="primary"
@@ -382,7 +391,16 @@ const ListSensors = () => {
         >
           Create{" "}
         </Button>
-      </LinkCustom>
+      </LinkCustom> : <Button
+        variant="contained"
+        color="primary"
+        disabled
+        style={{
+          marginBottom: "10px",
+        }}
+      >
+        Create{" "}
+      </Button>}
       <DataTable
         title="Sensor Types"
         columns={columns}

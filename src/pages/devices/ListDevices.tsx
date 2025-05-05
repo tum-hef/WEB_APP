@@ -14,6 +14,7 @@ import Swal from "sweetalert2";
 import MapIcon from "@mui/icons-material/Map";
 import { GAactionsDevices } from "../../utils/GA";
 import ReactGA from "react-ga4";
+import { useAppSelector, useIsOwner } from "../../hooks/hooks";
 const Devices = () => {
   const { keycloak } = useKeycloak();
   const userInfo = keycloak?.idTokenParsed;
@@ -21,6 +22,11 @@ const Devices = () => {
 
   const [frostServerPort, setFrostServerPort] = useState<number | null>(null);
   const [devices, setDevices] = useState<any[]>([]);
+  const selectedGroupId = useAppSelector(state => state.roles.selectedGroupId);
+const group = useAppSelector(state =>
+  state.roles.groups.find(g => g?.group_name_id === selectedGroupId)
+);
+  const isOwner = useIsOwner();
 
   const fetchThings = () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT; 
@@ -157,10 +163,13 @@ const Devices = () => {
       selector: (row: any) => (
         <EditOutlinedIcon
           style={{
-            cursor: "pointer",
-            color: "#233044",
+            cursor: isOwner ? "pointer" : "not-allowed",
+            color: isOwner ? "red" : "gray",
+            opacity: isOwner ? 1 : 0.4,
+            pointerEvents: isOwner ? "auto" : "none",
           }}
-          onClick={() => {
+          onClick={() => { 
+            if (!isOwner) return;
             Swal.fire({
               title: "Edit Device",
               html:
@@ -276,12 +285,15 @@ const Devices = () => {
     {
       name: "Delete",
       selector: (row: any) => (
-        <DeleteForeverOutlinedIcon
+        <DeleteForeverOutlinedIcon 
           style={{
-            cursor: "pointer",
-            color: "red",
+            cursor: isOwner ? "pointer" : "not-allowed",
+    color: isOwner ? "red" : "gray",
+    opacity: isOwner ? 1 : 0.4,
+    pointerEvents: isOwner ? "auto" : "none",
           }}
-          onClick={() => {
+          onClick={() => { 
+            if (!isOwner) return; 
             Swal.fire({
               title: `Are you sure you want to delete ${row.name}?`,
               text: "You will not be able to recover this device! Linked datastream might become disfunctional!",
@@ -420,17 +432,25 @@ const Devices = () => {
         <LinkCustom to="/frost_entities">Data Items</LinkCustom>
         <Typography color="text.primary">Devices</Typography>
       </Breadcrumbs>
-      <LinkCustom to="/devices/store">
-        <Button
-          variant="contained"
-          color="primary"
-          style={{
-            marginBottom: "10px",
-          }}
-        >
-          Create{" "}
-        </Button>
-      </LinkCustom>
+      {isOwner ? (
+  <LinkCustom to="/devices/store">
+    <Button
+      variant="contained"
+      color="primary"
+      style={{ marginBottom: "10px" }}
+    >
+      Create
+    </Button>
+  </LinkCustom> ): 
+  <Button 
+  disabled={true}
+  variant="contained"
+  color="primary"
+  style={{ marginBottom: "10px" }}
+>
+  Create
+</Button>
+}
       <DataTable
         title="Devices"
         columns={columns}

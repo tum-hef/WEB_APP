@@ -13,6 +13,7 @@ import Swal from "sweetalert2";
 import ReactGA from "react-ga4";
 
 import { GAactionsObservationProperties } from "../../utils/GA";
+import { useAppSelector, useIsOwner } from "../../hooks/hooks";
 const ListObservationProperty = () => {
   const { keycloak } = useKeycloak();
   const userInfo = keycloak?.idTokenParsed;
@@ -20,7 +21,13 @@ const ListObservationProperty = () => {
   console.log(token);
 
   const [frostServerPort, setFrostServerPort] = useState<number | null>(null);
-  const [observationProperty, setObservationProperty] = useState<any[]>([]);
+  const [observationProperty, setObservationProperty] = useState<any[]>([]); 
+   const selectedGroupId = useAppSelector(state => state.roles.selectedGroupId);
+  const group = useAppSelector(state =>
+      state.roles.groups.find(g => g?.group_name_id === selectedGroupId)
+    );
+      const isOwner = useIsOwner();
+  
 
   const fetchObservationProperty = () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
@@ -115,11 +122,14 @@ const ListObservationProperty = () => {
       name: "Edit",
       selector: (row: any) => (
         <EditOutlinedIcon
-          style={{
-            cursor: "pointer",
-            color: "#233044",
-          }}
-          onClick={() => {
+        style={{
+          cursor: isOwner ? "pointer" : "not-allowed",
+          color: isOwner ? "red" : "gray",
+          opacity: isOwner ? 1 : 0.4,
+          pointerEvents: isOwner ? "auto" : "none",
+        }}
+          onClick={() => { 
+            if (!isOwner) return;
             Swal.fire({
               title: "Edit Measurement Property",
               html:
@@ -253,11 +263,14 @@ const ListObservationProperty = () => {
       name: "Delete",
       selector: (row: any) => (
         <DeleteForeverOutlinedIcon
-          style={{
-            cursor: "pointer",
-            color: "red",
-          }}
-          onClick={() => {
+        style={{
+          cursor: isOwner ? "pointer" : "not-allowed",
+          color: isOwner ? "red" : "gray",
+          opacity: isOwner ? 1 : 0.4,
+          pointerEvents: isOwner ? "auto" : "none",
+        }}
+          onClick={() => { 
+            if (!isOwner) return;
             Swal.fire({
               title: `Are you sure you want to delete ${row.name}?`,
               text: "You will not be able to recover this Measurement Property! Linked datastream might become disfunctional!",
@@ -381,7 +394,7 @@ const ListObservationProperty = () => {
         <Typography color="text.primary">Measurement Property</Typography>
       </Breadcrumbs>
 
-      <LinkCustom to="/observation_properties/store">
+   {isOwner  ?    <LinkCustom to="/observation_properties/store">
         <Button
           variant="contained"
           color="primary"
@@ -391,7 +404,16 @@ const ListObservationProperty = () => {
         >
           Create{" "}
         </Button>
-      </LinkCustom>
+      </LinkCustom> : <Button
+          variant="contained"
+          color="primary"
+          disabled
+          style={{
+            marginBottom: "10px",
+          }}
+        >
+          Create{" "}
+        </Button> }
       <DataTable
         title="Measurement Property"
         columns={columns}
