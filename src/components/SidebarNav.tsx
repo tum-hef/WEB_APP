@@ -36,11 +36,13 @@ import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 import DnsIcon from "@mui/icons-material/Dns";
 import PublicIcon from "@mui/icons-material/Public";
 import { toast } from "react-toastify";
+import { useIsOwner } from "../hooks/hooks";
 const baseScrollbar = css`
   background-color: ${(props) => props.theme.sidebar.background};
   border-right: 1px solid rgba(0, 0, 0, 0.12);
   flex-grow: 1;
 `;
+
 
 const Scrollbar = styled.div`
   ${baseScrollbar}
@@ -74,7 +76,9 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
   const userInfo = keycloak?.idTokenParsed;
   const location = useLocation();
   const token = keycloak?.token;
-  const currentUrl = location.pathname;
+  const currentUrl = location.pathname; 
+  const isOwner = useIsOwner();
+  
   const getNodeRedPort = async () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL;
     if (!backend_url) {
@@ -236,27 +240,50 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
           <Collapse in={openDataSpace} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
               {group_id && (
-                <LinkCustom to={`/data-spaces/${group_id}`}>
-                  <ListItem key={"Quick Entry"} disablePadding>
-                    <ListItemButton>
-                      <ListItemIcon>
-                        <DisplaySettingsIcon
-                          style={{
-                            color: "white",
-                            marginLeft: "20px",
-                          }}
-                        />
-                      </ListItemIcon>
-                      <ListItemText
-                        style={{
-                          color: "white",
-                        }}
-                        primaryTypographyProps={{ fontSize: "18px" }}
-                        primary={"Quick Entry"}
-                      />
-                    </ListItemButton>
-                  </ListItem>
-                </LinkCustom>
+             
+             <ListItem disabled={isOwner} key={"Quick Entry"} disablePadding>
+             {!isOwner ? (
+               <ListItemButton disabled>
+                 <ListItemIcon>
+                   <DisplaySettingsIcon
+                     style={{
+                       color: "white",
+                       marginLeft: "20px",
+                     }}
+                   />
+                 </ListItemIcon>
+                 <ListItemText
+                   style={{
+                     color: "white",
+                   }}
+                   primaryTypographyProps={{ fontSize: "18px" }}
+                   primary={"Quick Entry"}
+                 />
+               </ListItemButton>
+             ) : (
+               <LinkCustom to={`/data-spaces/${group_id}`}>
+                 <ListItemButton>
+                   <ListItemIcon>
+                     <DisplaySettingsIcon
+                       style={{
+                         color: "white",
+                         marginLeft: "20px",
+                       }}
+                     />
+                   </ListItemIcon>
+                   <ListItemText
+                     style={{
+                       color: "white",
+                     }}
+                     primaryTypographyProps={{ fontSize: "18px" }}
+                     primary={"Quick Entry"}
+                   />
+                 </ListItemButton>
+               </LinkCustom>
+             )}
+           </ListItem>
+           
+               
               )}
 
               <ListItemButton onClick={handleFrostEntities}>
