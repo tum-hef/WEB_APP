@@ -13,7 +13,7 @@ import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import Swal from "sweetalert2";
 import ReactGA from "react-ga4";
 import { GAactionsDataStreams } from "../../utils/GA";
-
+import { useAppSelector, useIsOwner } from "../../hooks/hooks";
 const ListDatastream = () => {
   const { keycloak } = useKeycloak();
   const userInfo = keycloak?.idTokenParsed;
@@ -21,6 +21,11 @@ const ListDatastream = () => {
 
   const [frostServerPort, setFrostServerPort] = useState<number | null>(null);
   const [datastreams, setDatastreams] = useState<any[]>([]);
+   const selectedGroupId = useAppSelector(state => state.roles.selectedGroupId);
+    const group = useAppSelector(state =>
+      state.roles.groups.find(g => g?.group_name_id === selectedGroupId)
+    );
+    const isOwner = useIsOwner();
 
   const fetchDatastreams = () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT; 
@@ -152,11 +157,14 @@ const ListDatastream = () => {
       name: "Edit",
       selector: (row: any) => (
         <EditOutlinedIcon
-          style={{
-            cursor: "pointer",
-            color: "#233044",
-          }}
+        style={{
+          cursor: isOwner ? "pointer" : "not-allowed",
+          color: isOwner ? "red" : "gray",
+          opacity: isOwner ? 1 : 0.4,
+          pointerEvents: isOwner ? "auto" : "none",
+        }}
           onClick={() => {
+            if (!isOwner) return;
             Swal.fire({
               title: "Edit Datastream",
               html:
@@ -280,11 +288,14 @@ const ListDatastream = () => {
       name: "Delete",
       selector: (row: any) => (
         <DeleteForeverOutlinedIcon
-          style={{
-            cursor: "pointer",
-            color: "red",
-          }}
-          onClick={() => {
+        style={{
+          cursor: isOwner ? "pointer" : "not-allowed",
+          color: isOwner ? "red" : "gray",
+          opacity: isOwner ? 1 : 0.4,
+          pointerEvents: isOwner ? "auto" : "none",
+        }}
+          onClick={() => { 
+            if (!isOwner) return;
             Swal.fire({
               title: `Delete "${row.name}"?`,
               text: "This will permanently delete the datastream and its related data!",
@@ -435,7 +446,7 @@ const ListDatastream = () => {
         <Typography color="text.primary">Datastream</Typography>
       </Breadcrumbs>
 
-      <LinkCustom to="/datastreams/store">
+    {isOwner  ?   <LinkCustom to="/datastreams/store">
         <Button
           variant="contained"
           color="primary"
@@ -445,7 +456,16 @@ const ListDatastream = () => {
         >
           Create{" "}
         </Button>
-      </LinkCustom>
+      </LinkCustom> : <Button
+        variant="contained"
+        color="primary"
+        disabled
+        style={{
+          marginBottom: "10px",
+        }}
+      >
+        Create{" "}
+      </Button> }
       <DataTable
         title="Datastreams"
         columns={columns}
