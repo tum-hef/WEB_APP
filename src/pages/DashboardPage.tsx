@@ -104,9 +104,9 @@ export default function DashboardPage() {
     const email = localStorage.getItem("selected_others") === "true"
       ? localStorage.getItem("user_email")
       : userInfo?.preferred_username;
-      const group_id = useAppSelector((state:any) => state.roles.selectedGroupId);
+
   
-    if (!email || !group_id) {
+    if (!email || !selectedGroupId) {
       toast.error("User email and group ID are required.");
       return;
     }
