@@ -20,8 +20,9 @@ import { useLocation, useParams } from "react-router-dom";
 import { NOTFOUND } from "./404";
 import PublicIcon from "@mui/icons-material/Public";
 import CardDataSpace from "../components/CardDataSpace";
-import { useAppSelector } from "../hooks/hooks";
+import { useAppDispatch, useAppSelector } from "../hooks/hooks";
 import { RootState } from "../store/store";
+import { setSelectedGroupId } from "../store/rolesSlice";
 const Anchor = styled.a`
   text-decoration: none;
   color: inherit;
@@ -40,7 +41,7 @@ export default function DashboardPage() {
   const [userID, setUserID] = useState<string | null>(null);
   const group = useAppSelector((state: RootState) => {
     const id = state.roles.selectedGroupId;
-    return state.roles.groups.find((g) => g.group_name_id === id);
+    return state.roles.groups.find((g:any) => g.group_name_id === id);
   });
   const groupId = useAppSelector((state:any) => state.roles.selectedGroupId);
   const [devices, setDevices] = useState<number | null>(0);
@@ -57,6 +58,7 @@ export default function DashboardPage() {
   const [frostServerPort, setFrostServerPort] = useState<number | null>(null);
   const queryParams = new URLSearchParams(location.search);  
   const selectedGroupId = useAppSelector(state => state.roles.selectedGroupId); 
+  const dispatch = useAppDispatch();
  
   const otherGroup = queryParams.get('other_group');
   // const fetchGroups = async () => {
@@ -332,6 +334,7 @@ export default function DashboardPage() {
                               localStorage.removeItem("group_id");
                               localStorage.removeItem("user_email");
                               localStorage.removeItem("selected_others");
+                              // dispatch(setSelectedGroupId(null))
                             }}
                           >
                             {" "}
