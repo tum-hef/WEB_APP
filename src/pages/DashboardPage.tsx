@@ -323,7 +323,7 @@ export default function DashboardPage() {
                             fontSize: "1.0rem",
                           }}
                         >
-                          Project selected: <b>{group?.project_name ? group?.project_name  :  group?.attributes?.group_name} </b>,
+                          Project selected: <b>{selectedGroupId && (group?.project_name ? group?.project_name  :  group?.attributes?.group_name)} </b>,
                           click
                           <LinkCustom
                             style={{
@@ -334,7 +334,7 @@ export default function DashboardPage() {
                               localStorage.removeItem("group_id");
                               localStorage.removeItem("user_email");
                               localStorage.removeItem("selected_others");
-                              // dispatch(setSelectedGroupId(null))
+                              dispatch(setSelectedGroupId(""))
                             }}
                           >
                             {" "}
