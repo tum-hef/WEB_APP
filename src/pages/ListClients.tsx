@@ -44,6 +44,8 @@ import Tooltip from "@mui/material/Tooltip";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline"
 import { useFormik } from "formik";
 import * as Yup from "yup";
+import { setSelectedGroupId } from "../store/rolesSlice";
+import { useAppDispatch } from "../hooks/hooks";
 
 
 interface Group {
@@ -74,6 +76,7 @@ export default function ListClients() {
   const [pendingPopover, setPendingPopover] = useState<{ anchorEl: HTMLElement | null, groupId: number | null }>({ anchorEl: null, groupId: null });
   const [membersPopover, setMembersPopover] = useState<{ anchorEl: HTMLElement | null, groupId: number | null }>({ anchorEl: null, groupId: null });
   const [isCreatingProject, setIsCreatingProject] = useState(false);
+  const dispatch = useAppDispatch();
 
 
 
@@ -682,6 +685,7 @@ export default function ListClients() {
                               >
                                 {!(group?.membership_status === "pending" || group?.membership_status === "rejected" || group?.membership_status === "left" || !group?.is_ready) ? (
                                   <LinkCustom
+                                  onClick={() => dispatch(setSelectedGroupId(group?.keycloak_group_id))}
                                     to={group?.is_owner ? `/dashboard/${group?.keycloak_group_id}` : `/dashboard/${group?.keycloak_group_id}?other_group=true`}
                                     style={{ textDecoration: "none", color: "inherit" }}
                                   >
