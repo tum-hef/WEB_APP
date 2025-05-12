@@ -20,7 +20,7 @@ import { useLocation, useParams } from "react-router-dom";
 import { NOTFOUND } from "./404";
 import PublicIcon from "@mui/icons-material/Public";
 import CardDataSpace from "../components/CardDataSpace";
-import { useAppDispatch, useAppSelector } from "../hooks/hooks";
+import { useAppDispatch, useAppSelector, useIsOwner } from "../hooks/hooks";
 import { RootState } from "../store/store";
 import { setSelectedGroupId } from "../store/rolesSlice";
 const Anchor = styled.a`
@@ -59,6 +59,8 @@ export default function DashboardPage() {
   const queryParams = new URLSearchParams(location.search);  
   const selectedGroupId = useAppSelector(state => state.roles.selectedGroupId); 
   const dispatch = useAppDispatch();
+   const isOwner = useIsOwner();
+  
  
   const otherGroup = queryParams.get('other_group');
   // const fetchGroups = async () => {
@@ -357,22 +359,24 @@ export default function DashboardPage() {
               >
                 {nodeRedPort && (
                   <Grid item lg={6} sm={12} xl={6} xs={12}>
+                  <div
+                    style={{
+                      opacity: (nodeRedPort && isOwner) ? 1 : 0.5,               // Grayed out look if disabled
+                      pointerEvents: (nodeRedPort && isOwner) ? "auto" : "none", // Prevent interaction if disabled
+                    }}
+                  >
                     <Anchor
-                      href={ process.env.REACT_APP_IS_DEVELOPMENT  === 'true' ?  `${process.env.REACT_APP_BACKEND_URL_ROOT}:${nodeRedPort}`  : `https://${nodeRedPort}-${process.env.REACT_APP_NODERED_URL}`}
+                      href={
+                        process.env.REACT_APP_IS_DEVELOPMENT === 'true'
+                          ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${nodeRedPort}`
+                          : `https://${nodeRedPort}-${process.env.REACT_APP_NODERED_URL}`
+                      }
                       target="_blank"
                     >
-                      <Card
-                        sx={{ maxWidth: 345 }}
-                        style={{
-                          minWidth: "100%",
-                        }}
-                      >
+                      <Card sx={{ maxWidth: 345 }} style={{ minWidth: "100%" }}>
                         <CardActionArea>
                           <CardMedia
-                            style={{
-                              height: "250px",
-                              maxHeight: "250px",
-                            }}
+                            style={{ height: "250px", maxHeight: "250px" }}
                             component="img"
                             width="100%"
                             height="140"
@@ -386,18 +390,15 @@ export default function DashboardPage() {
                               alignItems: "center",
                             }}
                           >
-                            <Typography
-                              gutterBottom
-                              variant="h3"
-                              component="div"
-                            >
+                            <Typography gutterBottom variant="h3" component="div">
                               Node RED
                             </Typography>
                           </CardContent>
                         </CardActionArea>
                       </Card>
                     </Anchor>
-                  </Grid>
+                  </div>
+                </Grid>
                 )}
                 <Grid item lg={6} sm={12} xl={6} xs={12}>
                   <LinkCustom to={`/data-spaces/${group_id}`}>
