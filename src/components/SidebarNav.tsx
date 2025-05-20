@@ -75,26 +75,26 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
   const userInfo = keycloak?.idTokenParsed;
   const location = useLocation();
   const token = keycloak?.token;
-  const currentUrl = location.pathname; 
-   const isOwner = useIsOwner();
+  const currentUrl = location.pathname;
+  const isOwner = useIsOwner();
   const getNodeRedPort = async () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL;
     if (!backend_url) {
       toast.error("Backend URL is missing.");
       return;
     }
-  
+
     const email: string | null =
       localStorage.getItem("selected_others") === "true"
         ? localStorage.getItem("user_email")
         : userInfo?.preferred_username || "";
     const group_id = localStorage.getItem("group_id");
-  
+
     if (!email || !group_id) {
       // toast.error("User email and group ID are required.");
       return;
     }
-  
+
     try {
       const response = await axios.post<ApiResponse>(
         `${backend_url}/node-red`,
@@ -110,7 +110,7 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
           validateStatus: (status) => true,
         }
       );
-  
+
       if (response.status === 200 && response.data.success) {
         setNodeRedPort(response.data.PORT!);
       } else {
@@ -126,7 +126,7 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
       console.error("Error fetching Node-RED port:", error);
     }
   };
-  
+
   const [openDataSpace, setOpenDataSpace] = useState(false);
   const [openTraining, setOpenTraining] = useState(false);
   const [openFrostEntities, setOpenFrostEntities] = useState(false);
@@ -141,6 +141,47 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
   const handleFrostEntities = () => {
     setOpenFrostEntities(!openFrostEntities);
   };
+
+useEffect(() => {
+  const frostEntityPaths = [
+    "/devices",
+    "/sensors",
+    "/observation_properties",
+    "/datastreams",
+    "/locations",
+    "/observations"
+  ];
+
+  const knowledgePaths = [
+    "/database/frost",
+    "/database/node_red",
+    "/database/web_app"
+  ];
+
+  const isFrostEntity = frostEntityPaths.includes(location.pathname);
+  const isKnowledgeSection = knowledgePaths.includes(location.pathname);
+  const isDataSpace = location.pathname.startsWith("/data-spaces");
+
+  if (isFrostEntity) {
+    setOpenDataSpace(true);
+    setOpenFrostEntities(true);
+    setOpenTraining(false);
+  } else if (isKnowledgeSection) {
+    setOpenTraining(true);
+    setOpenDataSpace(false);
+    setOpenFrostEntities(false);
+  } else if (isDataSpace) {
+    setOpenDataSpace(true);
+    setOpenFrostEntities(false);
+    setOpenTraining(false);
+  } else {
+    setOpenDataSpace(false);
+    setOpenFrostEntities(false);
+    setOpenTraining(false);
+  }
+}, [location.pathname]);
+
+
 
   useEffect(() => {
     const group_id = localStorage.getItem("group_id");
@@ -172,13 +213,13 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
                 currentUrl === "/database/frost" ||
                 currentUrl === "/database/node_red" ||
                 currentUrl === "/database/web_app") &&
-              !group_id
+                !group_id
                 ? "/dashboard?message=no_group"
                 : `/dashboard/${group_id}`
             }
           >
             <ListItem key={"Landing Page"} disablePadding>
-              <ListItemButton>
+              <ListItemButton selected={location.pathname === `/dashboard/${group_id}`}>
                 <ListItemIcon>
                   <GridViewIcon
                     style={{
@@ -240,7 +281,7 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
               {group_id && (
                 <LinkCustom to={`/data-spaces/${group_id}`}>
                   <ListItem key={"Quick Entry"} disablePadding>
-                    <ListItemButton>
+                    <ListItemButton selected={location.pathname ===`/data-spaces/${group_id}`}>
                       <ListItemIcon>
                         <DisplaySettingsIcon
                           style={{
@@ -296,11 +337,15 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
           <Collapse in={openFrostEntities} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
               <LinkCustom to="/devices">
-                <ListItemButton sx={{ pl: 4 }}>
+                <ListItemButton
+                  sx={{ pl: 4 }}
+                  selected={location.pathname === "/devices"}
+                >
                   <ListItemIcon>
                     <TabletAndroidIcon
                       style={{
-                        color: "white",
+                        color:
+                          location.pathname === "/devices" ? "#90caf9" : "white",
                         marginLeft: "40px",
                         marginRight: "10px",
                       }}
@@ -308,21 +353,21 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
                   </ListItemIcon>
                   <ListItemText
                     primary="Devices"
-                    style={{
-                      color: "white",
-                    }}
+                    style={{ color: "white" }}
                     primaryTypographyProps={{ fontSize: "18px" }}
                   />
                 </ListItemButton>
               </LinkCustom>
-            </List>{" "}
-            <List component="div" disablePadding>
               <LinkCustom to="/sensors">
-                <ListItemButton sx={{ pl: 4 }}>
+                <ListItemButton
+                  sx={{ pl: 4 }}
+                  selected={location.pathname === "/sensors"}
+                >
                   <ListItemIcon>
                     <DeviceThermostatIcon
                       style={{
-                        color: "white",
+                        color:
+                          location.pathname === "/sensors" ? "#90caf9" : "white",
                         marginLeft: "40px",
                         marginRight: "10px",
                       }}
@@ -330,21 +375,23 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
                   </ListItemIcon>
                   <ListItemText
                     primary="Sensor Types"
-                    style={{
-                      color: "white",
-                    }}
+                    style={{ color: "white" }}
                     primaryTypographyProps={{ fontSize: "18px" }}
                   />
                 </ListItemButton>
               </LinkCustom>
-            </List>{" "}
-            <List component="div" disablePadding>
               <LinkCustom to="/observation_properties">
-                <ListItemButton sx={{ pl: 4 }}>
+                <ListItemButton
+                  sx={{ pl: 4 }}
+                  selected={location.pathname === "/observation_properties"}
+                >
                   <ListItemIcon>
                     <PersonSearchIcon
                       style={{
-                        color: "white",
+                        color:
+                          location.pathname === "/observation_properties"
+                            ? "#90caf9"
+                            : "white",
                         marginLeft: "40px",
                         marginRight: "10px",
                       }}
@@ -352,21 +399,21 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
                   </ListItemIcon>
                   <ListItemText
                     primary="Measurement property"
-                    style={{
-                      color: "white",
-                    }}
+                    style={{ color: "white" }}
                     primaryTypographyProps={{ fontSize: "18px" }}
                   />
                 </ListItemButton>
               </LinkCustom>
-            </List>{" "}
-            <List component="div" disablePadding>
               <LinkCustom to="/datastreams">
-                <ListItemButton sx={{ pl: 4 }}>
+                <ListItemButton
+                  sx={{ pl: 4 }}
+                  selected={location.pathname === "/datastreams"}
+                >
                   <ListItemIcon>
                     <FolderSpecialIcon
                       style={{
-                        color: "white",
+                        color:
+                          location.pathname === "/datastreams" ? "#90caf9" : "white",
                         marginLeft: "40px",
                         marginRight: "10px",
                       }}
@@ -374,21 +421,21 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
                   </ListItemIcon>
                   <ListItemText
                     primary="Datastreams"
-                    style={{
-                      color: "white",
-                    }}
+                    style={{ color: "white" }}
                     primaryTypographyProps={{ fontSize: "18px" }}
                   />
                 </ListItemButton>
               </LinkCustom>
-            </List>{" "}
-            <List component="div" disablePadding>
               <LinkCustom to="/locations">
-                <ListItemButton sx={{ pl: 4 }}>
+                <ListItemButton
+                  sx={{ pl: 4 }}
+                  selected={location.pathname === "/locations"}
+                >
                   <ListItemIcon>
                     <LocationOnIcon
                       style={{
-                        color: "white",
+                        color:
+                          location.pathname === "/locations" ? "#90caf9" : "white",
                         marginLeft: "40px",
                         marginRight: "10px",
                       }}
@@ -396,21 +443,21 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
                   </ListItemIcon>
                   <ListItemText
                     primary="Locations"
-                    style={{
-                      color: "white",
-                    }}
+                    style={{ color: "white" }}
                     primaryTypographyProps={{ fontSize: "18px" }}
                   />
                 </ListItemButton>
               </LinkCustom>
-            </List>{" "}
-            <List component="div" disablePadding>
               <LinkCustom to="/observations">
-                <ListItemButton sx={{ pl: 4 }}>
+                <ListItemButton
+                  sx={{ pl: 4 }}
+                  selected={location.pathname === "/observations"}
+                >
                   <ListItemIcon>
                     <BiotechSharpIcon
                       style={{
-                        color: "white",
+                        color:
+                          location.pathname === "/observations" ? "#90caf9" : "white",
                         marginLeft: "40px",
                         marginRight: "10px",
                       }}
@@ -418,15 +465,14 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
                   </ListItemIcon>
                   <ListItemText
                     primary="Observations"
-                    style={{
-                      color: "white",
-                    }}
+                    style={{ color: "white" }}
                     primaryTypographyProps={{ fontSize: "18px" }}
                   />
                 </ListItemButton>
               </LinkCustom>
             </List>
           </Collapse>
+
           {nodeRedPort && process.env.REACT_APP_NODERED_URL && (
             <a
               href={`https://${nodeRedPort}-${process.env.REACT_APP_NODERED_URL}`}
@@ -434,8 +480,8 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
               rel="noopener noreferrer"
               style={{
                 textDecoration: "none",
-                pointerEvents: currentUrl === "/dashboard" ? "none" : "auto", 
-                cursor: currentUrl === "/dashboard" ? "not-allowed" : "pointer", 
+                pointerEvents: currentUrl === "/dashboard" ? "none" : "auto",
+                cursor: currentUrl === "/dashboard" ? "not-allowed" : "pointer",
               }}
               onClick={(e) => {
                 if (
@@ -445,7 +491,7 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
                   currentUrl === "/database/node_red" ||
                   currentUrl === "/database/web_app"
                 ) {
-                  e.preventDefault(); 
+                  e.preventDefault();
                 }
               }}
             >
@@ -487,12 +533,13 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
                   currentUrl === "/database/web_app") &&
                 !group_id
               ) {
-                event.preventDefault(); 
+                event.preventDefault();
               }
             }}
           >
             <ListItem key={"Reports"} disablePadding>
               <ListItemButton
+               selected={location.pathname === "/reports"}
                 disabled={
                   (currentUrl === "/dashboard" ||
                     currentUrl === "/contact" ||
@@ -521,7 +568,7 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
           </LinkCustom>
           <LinkCustom to="/contact">
             <ListItem key={"Contact"} disablePadding>
-              <ListItemButton>
+              <ListItemButton selected={location.pathname === "/contact"}>
                 <ListItemIcon>
                   <QuestionMarkIcon
                     style={{
@@ -572,7 +619,7 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
             <List component="div" disablePadding>
               <LinkCustom to={`/database/frost`}>
                 <ListItem key={"Sensor Database"} disablePadding>
-                  <ListItemButton>
+                  <ListItemButton selected={location.pathname === "/database/frost"}>
                     <ListItemIcon>
                       <DnsIcon
                         style={{
@@ -593,7 +640,7 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
               </LinkCustom>
               <LinkCustom to={`/database/node_red`}>
                 <ListItem key={"Node Red"} disablePadding>
-                  <ListItemButton>
+                  <ListItemButton selected={location.pathname === "/database/node_red"}>
                     <ListItemIcon>
                       <DnsIcon
                         style={{
@@ -614,7 +661,7 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
               </LinkCustom>{" "}
               <LinkCustom to={`/database/web_app`}>
                 <ListItem key={"Web App"} disablePadding>
-                  <ListItemButton>
+                  <ListItemButton selected={location.pathname === "/database/web_app"}>
                     <ListItemIcon>
                       <PublicIcon
                         style={{
