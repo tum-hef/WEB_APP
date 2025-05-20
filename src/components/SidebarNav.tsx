@@ -142,44 +142,44 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
     setOpenFrostEntities(!openFrostEntities);
   };
 
-useEffect(() => {
-  const frostEntityPaths = [
-    "/devices",
-    "/sensors",
-    "/observation_properties",
-    "/datastreams",
-    "/locations",
-    "/observations"
-  ];
+  useEffect(() => {
+    const frostEntityPaths = [
+      "/devices",
+      "/sensors",
+      "/observation_properties",
+      "/datastreams",
+      "/locations",
+      "/observations"
+    ];
 
-  const knowledgePaths = [
-    "/database/frost",
-    "/database/node_red",
-    "/database/web_app"
-  ];
+    const knowledgePaths = [
+      "/database/frost",
+      "/database/node_red",
+      "/database/web_app"
+    ];
 
-  const isFrostEntity = frostEntityPaths.includes(location.pathname);
-  const isKnowledgeSection = knowledgePaths.includes(location.pathname);
-  const isDataSpace = location.pathname.startsWith("/data-spaces");
+    const isFrostEntity = frostEntityPaths.includes(location.pathname);
+    const isKnowledgeSection = knowledgePaths.includes(location.pathname);
+    const isDataSpace = location.pathname.startsWith("/data-spaces");
 
-  if (isFrostEntity) {
-    setOpenDataSpace(true);
-    setOpenFrostEntities(true);
-    setOpenTraining(false);
-  } else if (isKnowledgeSection) {
-    setOpenTraining(true);
-    setOpenDataSpace(false);
-    setOpenFrostEntities(false);
-  } else if (isDataSpace) {
-    setOpenDataSpace(true);
-    setOpenFrostEntities(false);
-    setOpenTraining(false);
-  } else {
-    setOpenDataSpace(false);
-    setOpenFrostEntities(false);
-    setOpenTraining(false);
-  }
-}, [location.pathname]);
+    if (isFrostEntity) {
+      setOpenDataSpace(true);
+      setOpenFrostEntities(true);
+      setOpenTraining(false);
+    } else if (isKnowledgeSection) {
+      setOpenTraining(true);
+      setOpenDataSpace(false);
+      setOpenFrostEntities(false);
+    } else if (isDataSpace) {
+      setOpenDataSpace(true);
+      setOpenFrostEntities(false);
+      setOpenTraining(false);
+    } else {
+      setOpenDataSpace(false);
+      setOpenFrostEntities(false);
+      setOpenTraining(false);
+    }
+  }, [location.pathname]);
 
 
 
@@ -281,7 +281,7 @@ useEffect(() => {
               {group_id && (
                 <LinkCustom to={`/data-spaces/${group_id}`}>
                   <ListItem key={"Quick Entry"} disablePadding>
-                    <ListItemButton selected={location.pathname ===`/data-spaces/${group_id}`}>
+                    <ListItemButton selected={location.pathname === `/data-spaces/${group_id}`}>
                       <ListItemIcon>
                         <DisplaySettingsIcon
                           style={{
@@ -473,55 +473,91 @@ useEffect(() => {
             </List>
           </Collapse>
 
-          {nodeRedPort && process.env.REACT_APP_NODERED_URL && (
-            <a
-              href={`https://${nodeRedPort}-${process.env.REACT_APP_NODERED_URL}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                textDecoration: "none",
-                pointerEvents: currentUrl === "/dashboard" ? "none" : "auto",
-                cursor: currentUrl === "/dashboard" ? "not-allowed" : "pointer",
-              }}
-              onClick={(e) => {
-                if (
-                  currentUrl === "/dashboard" ||
-                  currentUrl === "/contact" ||
-                  currentUrl === "/database/frost" ||
-                  currentUrl === "/database/node_red" ||
-                  currentUrl === "/database/web_app"
-                ) {
-                  e.preventDefault();
-                }
-              }}
-            >
-              <ListItemButton
-                disabled={
-                  (currentUrl === "/dashboard" ||
-                    currentUrl === "/contact" ||
-                    currentUrl === "/database/frost" ||
-                    currentUrl === "/database/node_red" ||
-                    currentUrl === "/database/web_app") &&
-                  !group_id
-                }
-              >
-                <ListItemIcon>
-                  <WorkspacesIcon
-                    style={{
-                      color: "white",
-                    }}
-                  />
-                </ListItemIcon>
-                <ListItemText
-                  primaryTypographyProps={{ fontSize: "18px" }}
-                  style={{
-                    color: "white",
-                  }}
-                  primary={"Node RED"}
-                />
-              </ListItemButton>
-            </a>
-          )}
+         {nodeRedPort && process.env.REACT_APP_NODERED_URL && (
+  <a
+    href={`https://${nodeRedPort}-${process.env.REACT_APP_NODERED_URL}`}
+    target="_blank"
+    rel="noopener noreferrer"
+    style={{
+      textDecoration: "none",
+      pointerEvents:
+        currentUrl === "/dashboard" ||
+        currentUrl === "/contact" ||
+        currentUrl === "/database/frost" ||
+        currentUrl === "/database/node_red" ||
+        currentUrl === "/database/web_app" ||
+        !isOwner
+          ? "none"
+          : "auto",
+      cursor:
+        currentUrl === "/dashboard" ||
+        currentUrl === "/contact" ||
+        currentUrl === "/database/frost" ||
+        currentUrl === "/database/node_red" ||
+        currentUrl === "/database/web_app" ||
+        !isOwner
+          ? "not-allowed"
+          : "pointer",
+    }}
+    onClick={(e) => {
+      if (
+        currentUrl === "/dashboard" ||
+        currentUrl === "/contact" ||
+        currentUrl === "/database/frost" ||
+        currentUrl === "/database/node_red" ||
+        currentUrl === "/database/web_app" ||
+        !isOwner
+      ) {
+        e.preventDefault();
+      }
+    }}
+  >
+    <ListItemButton
+      disabled={
+        (!isOwner ||
+          currentUrl === "/dashboard" ||
+          currentUrl === "/contact" ||
+          currentUrl === "/database/frost" ||
+          currentUrl === "/database/node_red" ||
+          currentUrl === "/database/web_app") &&
+        !group_id
+      }
+    >
+      <ListItemIcon>
+        <WorkspacesIcon
+          style={{
+            color:
+              !isOwner ||
+              currentUrl === "/dashboard" ||
+              currentUrl === "/contact" ||
+              currentUrl === "/database/frost" ||
+              currentUrl === "/database/node_red" ||
+              currentUrl === "/database/web_app"
+                ? "gray"
+                : "white",
+          }}
+        />
+      </ListItemIcon>
+      <ListItemText
+        primaryTypographyProps={{ fontSize: "18px" }}
+        style={{
+          color:
+            !isOwner ||
+            currentUrl === "/dashboard" ||
+            currentUrl === "/contact" ||
+            currentUrl === "/database/frost" ||
+            currentUrl === "/database/node_red" ||
+            currentUrl === "/database/web_app"
+              ? "gray"
+              : "white",
+        }}
+        primary={"Node RED"}
+      />
+    </ListItemButton>
+  </a>
+)}
+
+
           <LinkCustom
             to="/reports"
             onClick={(event) => {
@@ -539,7 +575,7 @@ useEffect(() => {
           >
             <ListItem key={"Reports"} disablePadding>
               <ListItemButton
-               selected={location.pathname === "/reports"}
+                selected={location.pathname === "/reports"}
                 disabled={
                   (currentUrl === "/dashboard" ||
                     currentUrl === "/contact" ||
