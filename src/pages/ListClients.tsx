@@ -43,6 +43,7 @@ import CloseIcon from "@mui/icons-material/Close"; // Close Popover Ico
 import RemoveCircleIcon from "@mui/icons-material/RemoveCircle"; // Remove Member Icon
 import Tooltip from "@mui/material/Tooltip";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline"
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { setSelectedGroupId } from "../store/rolesSlice";
@@ -217,7 +218,7 @@ export default function ListClients() {
   }, [keycloak, userInfo, message]);
   useEffect(() => {
     getAllGroups();
-  }, [userID]); 
+  }, [userID]);
 
   useEffect(() => {
     console.log("pendingPopover", pendingPopover)
@@ -552,152 +553,154 @@ export default function ListClients() {
                           <TableRow key={index}>
                             <TableCell sx={{ maxWidth: "150px", wordBreak: "break-word" }}>{group?.keycloak_group_id}</TableCell>
                             <TableCell sx={{ maxWidth: "180px", wordBreak: "break-word", fontWeight: "bold" }}>{group?.name}</TableCell>
-                            <TableCell sx={{ maxWidth: "300px", wordBreak: "break-word", whiteSpace: "normal" }}>
+                            <TableCell sx={{ maxWidth: "200px", wordBreak: "break-word", whiteSpace: "normal" }}>
                               {group?.description}
                             </TableCell>
-                            <TableCell sx={{ maxWidth: "200px", wordBreak: "break-word" }}>
+                            <TableCell sx={{ maxWidth: "100px", wordBreak: "break-word" }}>
                               {group?.owner_first_name + " " + group?.owner_last_name}
                             </TableCell>
                             <TableCell sx={{ textAlign: "center" }}>
-                              {/* View Members Popover */}
-                              <IconButton disabled={!group?.is_owner} color="primary" onClick={(e) => handleViewMembers(e, group?.id)}>
-                                <GroupIcon />
-                              </IconButton>
-                              {membersPopover.groupId === group?.id && (
-                                <Popover
-                                  open={Boolean(membersPopover.anchorEl)}
-                                  anchorEl={membersPopover.anchorEl}
-                                  onClose={handleCloseMembersPopover}
-                                  anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-                                  transformOrigin={{ vertical: "top", horizontal: "left" }}
-                                >
-                                  <ClickAwayListener onClickAway={handleCloseMembersPopover}>
-                                    <Box sx={{ padding: 1, minWidth: 250, maxHeight: 300, overflowY: "auto" }}>
-                                      {/* Header with Close Button */}
-                                      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: 1 }}>
-                                        <Typography variant="subtitle1">Members</Typography>
-                                        <IconButton size="small" onClick={handleCloseMembersPopover}>
-                                          <CloseIcon />
-                                        </IconButton>
-                                      </Box>
-                                      <Divider />
-
-                                      {/* Member List */}
-                                      <List>
-                                        {group?.members?.some((x: any) => x?.membership_status === "approved") ? (
-                                          group?.members
-                                            .filter((x: any) => x?.membership_status === "approved")
-                                            .map((member: any, index: any) => (
-                                              <ListItem key={index} sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                                <ListItemText primary={`${member?.first_name} ${member?.last_name}`} secondary={member?.email} />
-                                                {/* Remove Member Button */}
-                                                <IconButton color="error" size="small" onClick={() => handleLeaveGroup(group?.id, member.email, true)}>
-                                                  <RemoveCircleIcon />
-                                                </IconButton>
-                                              </ListItem>
-                                            ))
-                                        ) : (
-                                          <Typography sx={{ padding: 1 }}>No approved members found.</Typography>
-                                        )}
-                                      </List>
-                                    </Box>
-                                  </ClickAwayListener>
-                                </Popover>
-                              )}
-
-                              {/* View Pending Requests */}
-                              <IconButton color="warning" disabled={!group?.is_owner} onClick={(e) => handleOpenPendingPopover(e, group?.id)}>
-                                <HourglassEmptyIcon />
-                              </IconButton>
-                              {openPendingGroupId === group?.id && (
-                                <Popover
-                                  open={Boolean(pendingPopover.anchorEl)}
-                                  anchorEl={pendingPopover.anchorEl}
-                                  onClose={handleClosePendingPopover}
-                                  anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-                                  transformOrigin={{ vertical: "top", horizontal: "left" }}
-                                >
-                                  <ClickAwayListener onClickAway={handleClosePendingPopover}>
-                                    <Box sx={{ padding: 1, minWidth: 250, maxHeight: 300, overflowY: "auto" }}>
-                                      {/* Header with Close Button */}
-                                      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: 1 }}>
-                                        <Typography variant="subtitle1">Pending Requests</Typography>
-                                        <IconButton size="small" onClick={handleClosePendingPopover}>
-                                          <CloseIcon />
-                                        </IconButton>
-                                      </Box>
-                                      <Divider />
-
-                                      {/* Pending Requests List */}
-                                      <List>
-                                        {group?.members?.some((x: any) => x?.membership_status === "pending") ? (
-                                          group?.members
-                                            .filter((x: any) => x?.membership_status === "pending")
-                                            .map((member: any, index: any) => (
-                                              <ListItem key={index} sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                                <ListItemText primary={`${member.first_name} ${member.last_name}`} secondary={member.email} />
-                                                <IconButton color="success" size="small" onClick={() => handleAction("approve", member?.membership_id)}>
-                                                  <CheckCircleIcon />
-                                                </IconButton>
-                                                <IconButton color="error" size="small" onClick={() => handleAction("reject", member?.membership_id)}>
-                                                  <CancelIcon />
-                                                </IconButton>
-                                              </ListItem>
-                                            ))
-                                        ) : (
-                                          <Typography sx={{ padding: 1 }}>No pending requests.</Typography>
-                                        )}
-                                      </List>
-                                    </Box>
-                                  </ClickAwayListener>
-                                </Popover>
-                              )}
-
-                              {/* Leave Group */}
-                              <IconButton color="error" disabled={group?.is_owner} onClick={() => handleLeaveGroup(group?.id, userInfo?.email, false)}>
-                                <ExitToAppIcon />
-                              </IconButton>
-
-                              {/* Select Group Button */}
-                              <Button
-                                variant="contained"
-                                color="primary"
-                                size="small"
-                                sx={{ backgroundColor: "#233044", "&:hover": { backgroundColor: "#233044" } }}
-                                disabled={group?.membership_status === "pending" || group?.membership_status === "rejected" || group?.membership_status === "left" || !group?.is_ready}
-                                onClick={() => {
-                                  if (!(
-                                    group?.membership_status === "pending" ||
-                                    group?.membership_status === "rejected" ||
-                                    group?.membership_status === "left" ||
-                                    !group?.is_ready
-                                  )) {
-                                    if (group?.is_owner) {
-                                      localStorage.setItem("group_id", group.keycloak_group_id);
-                                      localStorage.setItem("selected_others", "false");
-                                      localStorage.removeItem("user_email");
-                                    } else {
-                                      localStorage.setItem("group_id", group?.keycloak_group_id);
-                                      localStorage.setItem("selected_others", "true");
-                                      localStorage.setItem("user_email", group?.owner_email);
-                                    }
-                                  }
-                                }}
-                              >
-                                {!(group?.membership_status === "pending" || group?.membership_status === "rejected" || group?.membership_status === "left" || !group?.is_ready) ? (
-                                  <LinkCustom
-                                  onClick={() => dispatch(setSelectedGroupId(group?.keycloak_group_id))}
-                                    to={group?.is_owner ? `/dashboard/${group?.keycloak_group_id}` : `/dashboard/${group?.keycloak_group_id}?other_group=true`}
-                                    style={{ textDecoration: "none", color: "inherit" }}
+                              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1, flexWrap: "nowrap" }}>
+                                {/* View Members */}
+                                <IconButton disabled={!group?.is_owner} color="primary" onClick={(e) => handleViewMembers(e, group?.id)}>
+                                  <GroupIcon />
+                                </IconButton>
+                                {membersPopover.groupId === group?.id && (
+                                  <Popover
+                                    open={Boolean(membersPopover.anchorEl)}
+                                    anchorEl={membersPopover.anchorEl}
+                                    onClose={handleCloseMembersPopover}
+                                    anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+                                    transformOrigin={{ vertical: "top", horizontal: "left" }}
                                   >
-                                    Select
-                                  </LinkCustom>
-                                ) : (
-                                  "Select"
+                                    <ClickAwayListener onClickAway={handleCloseMembersPopover}>
+                                      <Box sx={{ padding: 1, minWidth: 250, maxHeight: 300, overflowY: "auto" }}>
+                                        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: 1 }}>
+                                          <Typography variant="subtitle1">Members</Typography>
+                                          <IconButton size="small" onClick={handleCloseMembersPopover}>
+                                            <CloseIcon />
+                                          </IconButton>
+                                        </Box>
+                                        <Divider />
+                                        <List>
+                                          {group?.members?.some((x: any) => x?.membership_status === "approved") ? (
+                                            group?.members
+                                              .filter((x: any) => x?.membership_status === "approved")
+                                              .map((member: any, index: any) => (
+                                                <ListItem key={index} sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                                  <ListItemText primary={`${member?.first_name} ${member?.last_name}`} secondary={member?.email} />
+                                                  <IconButton color="error" size="small" onClick={() => handleLeaveGroup(group?.id, member.email, true)}>
+                                                    <RemoveCircleIcon />
+                                                  </IconButton>
+                                                </ListItem>
+                                              ))
+                                          ) : (
+                                            <Typography sx={{ padding: 1 }}>No approved members found.</Typography>
+                                          )}
+                                        </List>
+                                      </Box>
+                                    </ClickAwayListener>
+                                  </Popover>
                                 )}
-                              </Button>
 
+                                {/* View Pending Requests */}
+                                <IconButton color="warning" disabled={!group?.is_owner} onClick={(e) => handleOpenPendingPopover(e, group?.id)}>
+                                  <HourglassEmptyIcon />
+                                </IconButton>
+                                {openPendingGroupId === group?.id && (
+                                  <Popover
+                                    open={Boolean(pendingPopover.anchorEl)}
+                                    anchorEl={pendingPopover.anchorEl}
+                                    onClose={handleClosePendingPopover}
+                                    anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+                                    transformOrigin={{ vertical: "top", horizontal: "left" }}
+                                  >
+                                    <ClickAwayListener onClickAway={handleClosePendingPopover}>
+                                      <Box sx={{ padding: 1, minWidth: 250, maxHeight: 300, overflowY: "auto" }}>
+                                        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: 1 }}>
+                                          <Typography variant="subtitle1">Pending Requests</Typography>
+                                          <IconButton size="small" onClick={handleClosePendingPopover}>
+                                            <CloseIcon />
+                                          </IconButton>
+                                        </Box>
+                                        <Divider />
+                                        <List>
+                                          {group?.members?.some((x: any) => x?.membership_status === "pending") ? (
+                                            group?.members
+                                              .filter((x: any) => x?.membership_status === "pending")
+                                              .map((member: any, index: any) => (
+                                                <ListItem key={index} sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                                  <ListItemText primary={`${member.first_name} ${member.last_name}`} secondary={member.email} />
+                                                  <IconButton color="success" size="small" onClick={() => handleAction("approve", member?.membership_id)}>
+                                                    <CheckCircleIcon />
+                                                  </IconButton>
+                                                  <IconButton color="error" size="small" onClick={() => handleAction("reject", member?.membership_id)}>
+                                                    <CancelIcon />
+                                                  </IconButton>
+                                                </ListItem>
+                                              ))
+                                          ) : (
+                                            <Typography sx={{ padding: 1 }}>No pending requests.</Typography>
+                                          )}
+                                        </List>
+                                      </Box>
+                                    </ClickAwayListener>
+                                  </Popover>
+                                )}
+
+                                {/* Leave Group */}
+                                <IconButton color="error" disabled={group?.is_owner} onClick={() => handleLeaveGroup(group?.id, userInfo?.email, false)}>
+                                  <ExitToAppIcon />
+                                </IconButton>
+
+                                {/* Edit Group */}
+                                <IconButton color="error" disabled={!group?.is_owner} onClick={() => console.log("click")}>
+                                  <Tooltip title="Edit Project">
+                                    <EditOutlinedIcon />
+                                  </Tooltip>
+                                </IconButton>
+
+                                {/* Select Button */}
+                                <Button
+                                  variant="contained"
+                                  color="primary"
+                                  size="small"
+                                  sx={{ backgroundColor: "#233044", whiteSpace: "nowrap", "&:hover": { backgroundColor: "#233044" } }}
+                                  disabled={group?.membership_status === "pending" || group?.membership_status === "rejected" || group?.membership_status === "left" || !group?.is_ready}
+                                  onClick={() => {
+                                    if (!(
+                                      group?.membership_status === "pending" ||
+                                      group?.membership_status === "rejected" ||
+                                      group?.membership_status === "left" ||
+                                      !group?.is_ready
+                                    )) {
+                                      if (group?.is_owner) {
+                                        localStorage.setItem("group_id", group.keycloak_group_id);
+                                        localStorage.setItem("selected_others", "false");
+                                        localStorage.removeItem("user_email");
+                                      } else {
+                                        localStorage.setItem("group_id", group?.keycloak_group_id);
+                                        localStorage.setItem("selected_others", "true");
+                                        localStorage.setItem("user_email", group?.owner_email);
+                                      }
+                                    }
+                                  }}
+                                >
+                                  {!(group?.membership_status === "pending" || group?.membership_status === "rejected" || group?.membership_status === "left" || !group?.is_ready) ? (
+                                    <LinkCustom
+                                      onClick={() => dispatch(setSelectedGroupId(group?.keycloak_group_id))}
+                                      to={group?.is_owner ? `/dashboard/${group?.keycloak_group_id}` : `/dashboard/${group?.keycloak_group_id}?other_group=true`}
+                                      style={{ textDecoration: "none", color: "inherit" }}
+                                    >
+                                      Select
+                                    </LinkCustom>
+                                  ) : (
+                                    "Select"
+                                  )}
+                                </Button>
+                              </Box>
                             </TableCell>
+
                           </TableRow>
                         ))}
                       </TableBody>
