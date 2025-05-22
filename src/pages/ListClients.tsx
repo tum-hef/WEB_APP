@@ -440,6 +440,66 @@ export default function ListClients() {
     });
   };
 
+  // Update Project Function
+
+const handleEditProjectSwal = (group: any) => {
+  Swal.fire({
+    title: "Edit Project",
+    html: `
+     <div class="swal-input-row-with-label">` +
+                `<label for="name">New Name</label>` +
+                `<div class="swal-input-field">` +
+                `<input id="name" class="swal2-input" placeholder="Enter the new device name" value="${
+                  group?.name || ""
+                }">` +
+                `</div>` +
+                `</div>` +
+                `<div class="swal-input-row">` +
+                `<label for="description">New Description</label>` +
+                `<input id="description" class="swal2-input" placeholder="Enter the new device description" value="${
+                  group?.description || ""
+                }">` +
+                `</div>
+    `,
+    showCancelButton: true,
+    confirmButtonText: "Save",
+    showLoaderOnConfirm: true,
+    preConfirm: () => {
+      const name = (document.getElementById("name") as HTMLInputElement).value.trim();
+      const description = (document.getElementById("description") as HTMLInputElement).value.trim();
+
+      if (!name) {
+        Swal.showValidationMessage("Please enter a project name");
+        return false;
+      }
+
+      return { name, description };
+    },
+  }).then(async (result) => {
+    if (result.isConfirmed) {
+      try {
+        const token = keycloak?.token;
+        await axios.patch(`${process.env.REACT_APP_BACKEND_URL}/projects/${group.id}`, {
+          project_name: result.value.name,
+          project_description: result.value.description
+        }, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
+        });
+
+        await Swal.fire("Success", "Project updated successfully!", "success");
+        getAllGroups();
+      } catch (error) {
+        await Swal.fire("Error", "Failed to update project", "error");
+      }
+    }
+  });
+};
+
+
+
   return (
     <Dashboard>
       <ToastContainer
@@ -654,7 +714,7 @@ export default function ListClients() {
                                 </IconButton>
 
                                 {/* Edit Group */}
-                                <IconButton color="error" disabled={!group?.is_owner} onClick={() => console.log("click")}>
+                                <IconButton color="error" disabled={!group?.is_owner} onClick={() => handleEditProjectSwal(group)}>
                                   <Tooltip title="Edit Project">
                                     <EditOutlinedIcon />
                                   </Tooltip>
