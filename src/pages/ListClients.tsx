@@ -737,18 +737,20 @@ const handleEditProjectSwal = (group: any) => {
                                       if (group?.is_owner) {
                                         localStorage.setItem("group_id", group.keycloak_group_id);
                                         localStorage.setItem("selected_others", "false");
-                                        localStorage.removeItem("user_email");
+                                        localStorage.removeItem("user_email"); 
+                                         dispatch(setSelectedGroupId(group?.keycloak_group_id))
                                       } else {
                                         localStorage.setItem("group_id", group?.keycloak_group_id);
                                         localStorage.setItem("selected_others", "true");
                                         localStorage.setItem("user_email", group?.owner_email);
+                                        dispatch(setSelectedGroupId(group?.keycloak_group_id))
                                       }
                                     }
                                   }}
                                 >
                                   {!(group?.membership_status === "pending" || group?.membership_status === "rejected" || group?.membership_status === "left" || !group?.is_ready) ? (
                                     <LinkCustom
-                                      onClick={() => dispatch(setSelectedGroupId(group?.keycloak_group_id))}
+                                    
                                       to={group?.is_owner ? `/dashboard/${group?.keycloak_group_id}` : `/dashboard/${group?.keycloak_group_id}?other_group=true`}
                                       style={{ textDecoration: "none", color: "inherit" }}
                                     >
