@@ -12,37 +12,38 @@ const GroupInitializer = () => {
   const dispatch = useAppDispatch();
   const { keycloak } = useKeycloak();
 
-  useEffect(() => {
-    const fetchGroups = async () => {
-      if (!keycloak.authenticated || !keycloak.tokenParsed?.sub) return;
-      console.log("hello")
+useEffect(() => {
+  const fetchGroups = async () => {
+    if (!keycloak.authenticated || !keycloak.tokenParsed?.sub) return;
 
-      try {
-        const res = await axios.get(
-          `${process.env.REACT_APP_BACKEND_URL}/get_clients?user_id=${keycloak.tokenParsed.sub}`
-        );
-        if (res.status === 200 && res.data.success) {
-          const { groups, clients } = res.data;
-  
+    try {
+      const res = await axios.get(
+        `${process.env.REACT_APP_BACKEND_URL}/get_clients?user_id=${keycloak.tokenParsed.sub}`
+      );
 
-          dispatch(setGroups(groups));
-          dispatch(setClients(clients));
+      if (res.status === 200 && res.data.success) {
+        const { groups, clients } = res.data;
 
-          const savedGroupId = localStorage.getItem("group_id");
-          const validGroup = groups.find((g: any) => g.group_name_id          === savedGroupId);
-          const fallbackGroupId = groups[0]?.id;
+        dispatch(setGroups(groups));
+        dispatch(setClients(clients));
 
-          const finalGroupId = validGroup ? savedGroupId : fallbackGroupId;
-          dispatch(setSelectedGroupId(finalGroupId));
-          localStorage.setItem("group_id", finalGroupId);
-        }
-      } catch (err) {
-        console.error("Error fetching groups:", err);
+        const savedGroupId = localStorage.getItem("group_id");
+        const validGroup = groups.find((g: any) => g.group_name_id === savedGroupId);
+
+        // Prioritize localStorage value if it's valid
+        const finalGroupId = validGroup ? validGroup.group_name_id : groups[0]?.group_name_id;
+
+        dispatch(setSelectedGroupId(finalGroupId));
+        localStorage.setItem("group_id", finalGroupId);
       }
-    };
+    } catch (err) {
+      console.error("Error fetching groups:", err);
+    }
+  };
 
-    fetchGroups();
-  }, [keycloak.authenticated, keycloak.tokenParsed?.sub]);
+  fetchGroups();
+}, [keycloak.authenticated, keycloak.tokenParsed?.sub]);
+
 
   return null;
 };
