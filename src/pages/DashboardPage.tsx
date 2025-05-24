@@ -41,9 +41,10 @@ export default function DashboardPage() {
   const [userID, setUserID] = useState<string | null>(null);
   const group = useAppSelector((state: RootState) => {
     const id = state.roles.selectedGroupId;
-    return state.roles.groups.find((g:any) => g.group_name_id === id);
+    return state.roles.groups.find((g:any) => {return g.group_name_id === id});
   });
-  const groupId = useAppSelector((state:any) => state.roles.selectedGroupId);
+  const groupId = useAppSelector((state:any) => state.roles.selectedGroupId); 
+  const tempState = useAppSelector((state: RootState) => state);
   const [devices, setDevices] = useState<number | null>(0);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<boolean>(false);
@@ -62,46 +63,7 @@ export default function DashboardPage() {
    const isOwner = useIsOwner();
   
  
-  const otherGroup = queryParams.get('other_group');
-  // const fetchGroups = async () => {
-  //   if (keycloak && userInfo && userInfo.sub) {
-  //     setUserID(userInfo.sub);
-
-  //     if (userID) {
-  //       try { 
-          
-  //         const response = await axios.get(
-  //           `${process.env.REACT_APP_BACKEND_URL}/get_clients?user_id=${userID}`
-  //         ); 
-  //         console.log("group_idaa",group_id)
-  //         console.log("responsess",response?.data)
-  //         if (response.status === 200 && response.data.groups) {
-  //           // check if group_id is in groups
-  //           if (group_id) {
-  //             const group = response.data.groups.find(
-  //               (group: any) => group.group_name_id === group_id && group.project_name !== null
-  //             ); 
-  //             console.log("groupconsole",group)
-  //             if (!group) { 
-  //               toast.error("Group is not valid");
-  //               setError(true);
-  //             } else {
-  //               console.log("group111",group)
-  //               setGroup(group);
-  //             }
-  //           }
-  //         } else if (response.status === 404 && response.data.message) {
-  //           toast.error(response.data.message);
-  //         } else {
-  //           toast.error("Error fetching clients");
-  //         }
-  //       } catch (error) {
-  //         toast.error("An error occurred while fetching clients.");
-  //         console.log(error);
-  //       }
-  //     }
-  //   }
-  // };
+ 
 
   const fetchData = async () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL;
@@ -147,9 +109,7 @@ export default function DashboardPage() {
     }
   }; 
 
-  useEffect(()=>{
- console.log("nodeRedPort",group)
-  },[group])
+
   
   useEffect(() => {
     const selectedOthers = localStorage.getItem("selected_others");
@@ -317,7 +277,7 @@ export default function DashboardPage() {
                       >
                         HEF sensorHUB - Dashboard
                       </Typography>
-                      {group && group?.attributes?.group_name && (
+                      {group && group?.attributes && (
                         <Typography
                           variant="body2"
                           gutterBottom
