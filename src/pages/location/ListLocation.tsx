@@ -12,7 +12,8 @@ import ReactGA from "react-ga4";
 import { GAactionsLocations } from "../../utils/GA";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import Swal from "sweetalert2";
-import { useAppSelector, useIsOwner } from "../../hooks/hooks"; 
+import { useAppSelector, useIsOwner } from "../../hooks/hooks";  
+import DeleteForeverOutlinedIcon from "@mui/icons-material/DeleteForeverOutlined";
 
 const ListLocations = () => {
   const { keycloak } = useKeycloak();
@@ -234,6 +235,95 @@ const ListLocations = () => {
   sortable: false,
   width: "10%",
 },
+{
+  name: "Delete",
+  selector: (row: any) => (
+    <DeleteForeverOutlinedIcon
+      style={{
+        cursor: isOwner ? "pointer" : "not-allowed",
+        color: isOwner ? "red" : "gray",
+        opacity: isOwner ? 1 : 0.4,
+        pointerEvents: isOwner ? "auto" : "none",
+      }}
+      onClick={() => {
+        if (!isOwner) return;
+        Swal.fire({
+          title: `Are you sure you want to delete "${row.name}"?`,
+          text: "You will not be able to recover this location! Linked entities might become dysfunctional!",
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonColor: "#3085d6",
+          cancelButtonColor: "#d33",
+          confirmButtonText: "Yes, delete it!",
+        }).then(async (result) => {
+          if (result.isConfirmed) {
+            try {
+              const response = await axios.post(
+                `${process.env.REACT_APP_BACKEND_URL}/delete`,
+                {
+                  url: `Locations(${row["@iot.id"]})`,
+                  FROST_PORT: frostServerPort,
+                  keycloak_id: userInfo?.sub,
+                },
+                {
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `${token}`,
+                  },
+                }
+              );
+
+              if (response.status === 200) {
+                Swal.fire({
+                  icon: "success",
+                  title: "Success",
+                  text: "Location deleted successfully!",
+                });
+                const newLocations = locations.filter(
+                  (loc) => loc["@iot.id"] !== row["@iot.id"]
+                );
+                setLocations(newLocations);
+              } else {
+                Swal.fire({
+                  icon: "error",
+                  title: "Oops...",
+                  text: "Something went wrong! Location not deleted!",
+                });
+              }
+            } catch (error) {
+              // optional: log mutation failure to backend
+              axios.post(
+                `http://localhost:4500/mutation_error_logs`,
+                {
+                  keycloak_id: userInfo?.sub,
+                  method: "DELETE",
+                  attribute: "Locations",
+                  attribute_id: row["@iot.id"],
+                  frost_port: frostServerPort,
+                },
+                {
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${keycloak?.token}`,
+                  },
+                }
+              );
+
+              Swal.fire({
+                icon: "error",
+                title: "Oops...",
+                text: "Something went wrong! Location not deleted!",
+              });
+            }
+          }
+        });
+      }}
+    />
+  ),
+  sortable: false,
+  width: "10%",
+}
+,
     {
       name: "Location on Map",
       selector: (row: any) => (
