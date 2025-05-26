@@ -10,6 +10,9 @@ import { ToastContainer, toast } from "react-toastify";
 import MapIcon from "@mui/icons-material/Map";
 import ReactGA from "react-ga4";
 import { GAactionsLocations } from "../../utils/GA";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import Swal from "sweetalert2";
+import { useAppSelector, useIsOwner } from "../../hooks/hooks"; 
 
 const ListLocations = () => {
   const { keycloak } = useKeycloak();
@@ -18,6 +21,7 @@ const ListLocations = () => {
 
   const [frostServerPort, setFrostServerPort] = useState<number | null>(null);
   const [locations, setLocations] = useState<any[]>([]);
+    const isOwner = useIsOwner();
 
   const fetchLocations = () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
@@ -113,6 +117,123 @@ const ListLocations = () => {
       sortable: true,
       width: "10%",
     },
+{
+  name: "Edit",
+  selector: (row: any) => (
+    <EditOutlinedIcon
+      style={{
+        cursor: isOwner ? "pointer" : "not-allowed",
+        color: isOwner ? "red" : "gray",
+        opacity: isOwner ? 1 : 0.4,
+        pointerEvents: isOwner ? "auto" : "none",
+      }}
+      onClick={() => {
+        if (!isOwner) return;
+
+        const currentLat = row?.location?.coordinates[1];
+        const currentLng = row?.location?.coordinates[0];
+
+        Swal.fire({
+          title: "Edit Location",
+          html:
+            `<div class="swal-input-row-with-label">` +
+            `<label for="name">Name</label>` +
+            `<div class="swal-input-field">` +
+            `<input id="name" class="swal2-input" placeholder="Enter name" value="${row.name || ""}">` +
+            `</div>` +
+            `</div>` +
+
+            `<div class="swal-input-row-with-label">` +
+            `<label for="description">Description</label>` +
+            `<div class="swal-input-field">` +
+            `<input id="description" class="swal2-input" placeholder="Enter description" value="${row.description || ""}">` +
+            `</div>` +
+            `</div>` +
+
+            `<div class="swal-input-row-with-label">` +
+            `<label for="latitude">Latitude</label>` +
+            `<div class="swal-input-field">` +
+            `<input id="latitude" type="number" class="swal2-input" placeholder="Enter latitude" value="${currentLat || ""}">` +
+            `</div>` +
+            `</div>` +
+
+            `<div class="swal-input-row-with-label">` +
+            `<label for="longitude">Longitude</label>` +
+            `<div class="swal-input-field">` +
+            `<input id="longitude" type="number" class="swal2-input" placeholder="Enter longitude" value="${currentLng || ""}">` +
+            `</div>` +
+            `</div>`,
+          showCancelButton: true,
+          confirmButtonText: "Save",
+          showLoaderOnConfirm: true,
+          preConfirm: () => {
+            const name = (document.getElementById("name") as HTMLInputElement)?.value;
+            const description = (document.getElementById("description") as HTMLInputElement)?.value;
+            const lat = parseFloat((document.getElementById("latitude") as HTMLInputElement)?.value);
+            const lng = parseFloat((document.getElementById("longitude") as HTMLInputElement)?.value);
+
+            if (!name || isNaN(lat) || isNaN(lng)) {
+              Swal.showValidationMessage("Please enter valid name, latitude, and longitude.");
+              return false;
+            }
+
+            return { name, description, lat, lng };
+          },
+        }).then((result) => {
+          if (result.isConfirmed) {
+            const { name, description, lat, lng } = result.value;
+
+            axios
+              .post(
+                `${process.env.REACT_APP_BACKEND_URL}/update`,
+                {
+                  url: `Locations(${row["@iot.id"]})`,
+                  FROST_PORT: frostServerPort,
+                  keycloak_id: userInfo?.sub,
+                  body: {
+                    name,
+                    description,
+                    encodingType: "application/vnd.geo+json",
+                    location: {
+                      type: "Point",
+                      coordinates: [lng, lat],
+                    },
+                  },
+                },
+                {
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${keycloak?.token}`,
+                  },
+                }
+              )
+              .then((response) => {
+                if (response.status === 200) {
+                  const updatedLocations = locations.map((loc) => {
+                    if (loc["@iot.id"] === row["@iot.id"]) {
+                      loc.name = name;
+                      loc.description = description;
+                      loc.location.coordinates = [lng, lat];
+                    }
+                    return loc;
+                  });
+                  setLocations(updatedLocations);
+                  Swal.fire("Success", "Location updated!", "success");
+                } else {
+                  Swal.fire("Error", "Failed to update location.", "error");
+                }
+              })
+              .catch(() => {
+                Swal.fire("Error", "Server error occurred.", "error");
+              });
+          }
+        });
+      }}
+    />
+  ),
+  sortable: false,
+  width: "10%",
+},
     {
       name: "Location on Map",
       selector: (row: any) => (

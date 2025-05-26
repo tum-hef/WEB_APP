@@ -14,7 +14,8 @@ import Swal from "sweetalert2";
 import MapIcon from "@mui/icons-material/Map";
 import { GAactionsDevices } from "../../utils/GA";
 import ReactGA from "react-ga4";
-import { useAppSelector, useIsOwner } from "../../hooks/hooks";
+import { useAppSelector, useIsOwner } from "../../hooks/hooks"; 
+
 const Devices = () => {
   const { keycloak } = useKeycloak();
   const userInfo = keycloak?.idTokenParsed;
