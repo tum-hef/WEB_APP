@@ -306,7 +306,7 @@ function StepperStore() {
 
         // Extract the first error message from validationErrors
         const firstErrorField = Object.keys(validationErrors)[0]; // Get the first field with an error
-        const rawError:any = validationErrors[firstErrorField as keyof typeof validationErrors];
+        const rawError: any = validationErrors[firstErrorField as keyof typeof validationErrors];
 
         let firstErrorMessage: any;
 
@@ -321,11 +321,11 @@ function StepperStore() {
         } else {
           firstErrorMessage = "An error occurred";
         }
-        firstErrorMessage= Object.values(firstErrorMessage)
+        firstErrorMessage = Object.values(firstErrorMessage)
         Swal.fire({
           icon: "error",
           title: "Validation Error",
-          text:firstErrorMessage ,
+          text: firstErrorMessage,
         });
         return; // Stop further processing
       }
@@ -499,9 +499,9 @@ function StepperStore() {
   useEffect(() => {
     const formik = formikRef.current;
     if (!formik || activeStep !== 2) return;
-  
+
     const { values, setFieldValue } = formik;
-  
+
     // Delay update to let React finish rendering the new step
     setTimeout(() => {
       const combinedProperties = [
@@ -511,23 +511,25 @@ function StepperStore() {
         }),
         ...values.observeProperties,
       ];
-  
+
       const updatedDatastreams = combinedProperties.map((property: any) => {
         const generatedName = `datastream_${values.device_name}_${property.name}`;
-        
+
         const existingDatastream = values.datastreams.find(
           (d: any) => d.name === generatedName
         );
-        console.log("checking ds", `datastream for ${property?.name} of ${values?.device_name}`)
+        const observedProperty = ObservedProperties.find((item: any) => item.name === property.name);
+        const unit = observedProperty?.properties?.unit || "";
+        const symbol = observedProperty?.properties?.symbol || "";
         return {
           name: generatedName,
           // ✅ Always regenerate the description
           description: existingDatastream?.description || `datastream for ${property?.name} of ${values?.device_name}`,
-          
+
           // ✅ Optionally reuse other fields
           observation_type: existingDatastream?.observation_type || "",
-          unit_of_measurement_name: existingDatastream?.unit_of_measurement_name || "",
-          unit_of_measurement_symbol: existingDatastream?.unit_of_measurement_symbol || "",
+          unit_of_measurement_name: existingDatastream?.unit_of_measurement_name || unit,
+          unit_of_measurement_symbol: existingDatastream?.unit_of_measurement_symbol || symbol,
           unit_of_measurement_definition: existingDatastream?.unit_of_measurement_definition || "",
           showOptional: existingDatastream?.showOptional || false,
         };
@@ -540,7 +542,7 @@ function StepperStore() {
     formikRef.current?.values.observeProperties,
     formikRef.current?.values.observedProperty_existing_id,
   ]);
-  
+
 
   // useEffect(()=>{
   //   console.log("current formkkil values to check", formikRef.current?.values)
@@ -1077,8 +1079,8 @@ function StepperStore() {
                               const observeProperties = form.values.observeProperties as ObserveProperty[];
                               return (
                                 <Grid container spacing={3}>
-                                  {observeProperties.map((datastream:any, index) => (
-                                    
+                                  {observeProperties.map((datastream: any, index) => (
+
                                     <Fragment key={index}>
                                       <Grid item xs={12}>
                                         <Divider sx={{ my: 2 }} />
@@ -1197,8 +1199,8 @@ function StepperStore() {
                       <Grid container spacing={2}>
                         <FieldArray name="datastreams">
                           {({ push, remove, form }) => {
-                            const { values, touched, errors, handleChange, setFieldValue } = form; 
-                      
+                            const { values, touched, errors, handleChange, setFieldValue } = form;
+
                             return (
                               <>
                                 {values.datastreams.map((datastream: any, index: number) => (
@@ -1250,7 +1252,7 @@ function StepperStore() {
                                             fullWidth
                                             label="Datastream Description"
                                             name={`datastreams.${index}.description`}
-                                            value={values.datastreams[index]?.description || ""} 
+                                            value={values.datastreams[index]?.description || ""}
                                             // InputProps={{ value: datastream?.description }}
                                             onChange={handleChange}
                                             variant="outlined"
