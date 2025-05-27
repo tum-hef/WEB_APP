@@ -29,7 +29,8 @@ import ListClients from "../pages/ListClients";
 import StoreDevice from "../pages/devices/StoreDevice";
 import ListSensors from "../pages/sensors/ListSensors";
 import StoreSensor from "../pages/sensors/StoreSensor";
-import ListLocations from "../pages/location/ListLocation";
+import ListLocations from "../pages/location/ListLocation"; 
+import StoreLocation from "../pages/location/StoreLocation";
 import ListDatastream from "../pages/datastreams/ListDatastream";
 import ListObservationProperty from "../pages/observation_property/ListObservationProperty";
 import StoreObservationProerties from "../pages/observation_property/StoreObservationProerties";
@@ -149,6 +150,14 @@ const AppRouter = (props: any) => {
                     path="/locations"
                     component={ListLocations}
                   />
+                  <PrivateRoute
+                    exact
+                    path="/locations/store"
+                    component={StoreLocation}
+                  />
+
+                  
+                  
                   <PrivateRoute
                     exact
                     path="/locations/:id"

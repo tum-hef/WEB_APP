@@ -13,6 +13,13 @@ export const sensor_initial_values =  {
     sensor_metadata: '',
 };
 
+export const location_initial_values =  {
+      location_name: "",
+      location_description: "",
+      latitude: "",
+      longitude: "",
+    }
+
 export const observation_property_initial_values =  {
     name: '',
     description: '',

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import DataTable, { ExpanderComponentProps } from "react-data-table-component";
-import { Breadcrumbs, Typography } from "@mui/material";
+import { Breadcrumbs, Button, Typography } from "@mui/material";
 import LinkCustom from "../../components/LinkCustom";
 
 import Dashboard from "../../components/DashboardComponent";
@@ -498,7 +498,7 @@ const ListLocations = () => {
         <Typography color="text.primary">Locations</Typography>
       </Breadcrumbs>
 
-      {/* <LinkCustom to="/sensors/store">
+       {isOwner  ?   <LinkCustom to="/locations/store">
         <Button
           variant="contained"
           color="primary"
@@ -508,7 +508,16 @@ const ListLocations = () => {
         >
           Create{" "}
         </Button>
-      </LinkCustom> */}
+      </LinkCustom> : <Button
+        variant="contained"
+        color="primary"
+        disabled
+        style={{
+          marginBottom: "10px",
+        }}
+      >
+        Create{" "}
+      </Button> }
       <DataTable
         title="Locations"
         columns={columns}

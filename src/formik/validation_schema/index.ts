@@ -49,6 +49,36 @@ export const sensor_validationSchema = yup.object().shape({
     .max(40, "Sensor metadata must be at most 40 characters"),
 });
 
+export const location_validationSchema = yup.object().shape({
+  location_name: yup
+    .string()
+    .required("Location name is required")
+    .min(3, "Location name must be at least 3 characters")
+    .max(40, "Location name must be at most 40 characters"),
+
+  location_description: yup
+    .string()
+    .required("Location description is required")
+    .min(3, "Location description must be at least 3 characters")
+    .max(100, "Location description must be at most 100 characters"),
+
+  latitude: yup
+    .string()
+    .required("Latitude is required")
+    .matches(
+      /^-?\d+(\.\d+)?$/,
+      "Latitude must be a valid number (decimal allowed)"
+    ),
+
+  longitude: yup
+    .string()
+    .required("Longitude is required")
+    .matches(
+      /^-?\d+(\.\d+)?$/,
+      "Longitude must be a valid number (decimal allowed)"
+    ),
+});
+
 export const observation_property_validationSchema = yup.object().shape({
   name: yup
     .string()
