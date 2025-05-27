@@ -45,6 +45,8 @@ interface ObserveProperty {
   name: string;
   description: string;
   definition: string;
+  unit?: string;
+  symbol?: string;
 }
 interface FormValues {
   // First Step: Device Fields
@@ -62,6 +64,8 @@ interface FormValues {
     name: string;
     description: string;
     definition: string;
+    unit?: string;
+    symbol?: string;
   }>;
 
   // Third Step: Datastreams (Dynamic FieldArray)
@@ -129,6 +133,8 @@ const getValidationSchemaPerStep = (step: number) => {
               name: yup.string().required("Name is required"),
               description: yup.string().required("Description is required"),
               definition: yup.string().required("Definition is required"),
+              unit: yup.string().nullable(),
+              symbol: yup.string().nullable(),
             })
           )
           .test(
@@ -519,8 +525,11 @@ function StepperStore() {
           (d: any) => d.name === generatedName
         );
         const observedProperty = ObservedProperties.find((item: any) => item.name === property.name);
-        const unit = observedProperty?.properties?.unit || "";
-        const symbol = observedProperty?.properties?.symbol || "";
+        const existingProp = ObservedProperties.find((item: any) => item.name === property.name);
+        const fallbackProp = values.observeProperties.find((item: any) => item.name === property.name);
+        const unit = existingProp?.properties?.unit || fallbackProp?.unit || "";
+        const symbol = existingProp?.properties?.symbol || fallbackProp?.symbol || "";
+
         return {
           name: generatedName,
           // ✅ Always regenerate the description
@@ -666,6 +675,10 @@ function StepperStore() {
                         name: observedProperty.name,
                         definition: observedProperty.definition,
                         description: observedProperty.description,
+                        properties: {
+                          unit: observedProperty.unit || "",
+                          symbol: observedProperty.symbol || "",
+                        },
                       },
                       { headers: { "Content-Type": "application/json", Authorization: `Bearer ${keycloak?.token}` } }
                     );
@@ -1160,6 +1173,27 @@ function StepperStore() {
                                           }
                                         />
                                       </Grid>
+                                      <Grid item xs={12} md={4}>
+                                        <TextField
+                                          fullWidth
+                                          label="Unit (e.g. Celsius)"
+                                          name={`observeProperties.${index}.unit`}
+                                          value={form.values.observeProperties[index]?.unit || ""}
+                                          onChange={form.handleChange}
+                                          variant="outlined"
+                                        />
+                                      </Grid>
+                                      {/* Symbol Field */}
+                                      <Grid item xs={12} md={4}>
+                                        <TextField
+                                          fullWidth
+                                          label="Symbol (e.g. °C)"
+                                          name={`observeProperties.${index}.symbol`}
+                                          value={form.values.observeProperties[index]?.symbol || ""}
+                                          onChange={form.handleChange}
+                                          variant="outlined"
+                                        />
+                                      </Grid>
                                       {/* Remove Button */}
                                       <Grid item xs={12}>
                                         <Button
@@ -1178,7 +1212,13 @@ function StepperStore() {
                                       variant="contained"
                                       color="primary"
                                       onClick={() =>
-                                        push({ name: "", definition: "", description: "" })
+                                        push({
+                                          name: "",
+                                          definition: "",
+                                          description: "",
+                                          unit: "",
+                                          symbol: "",
+                                        })
                                       }
                                     >
                                       Add New Measurement Property
