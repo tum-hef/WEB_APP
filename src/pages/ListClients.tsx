@@ -28,7 +28,9 @@ import {
   ListItemText,
   Divider,
   ClickAwayListener,
-  CircularProgress
+  CircularProgress,
+  FormControlLabel,
+  Switch
 } from "@mui/material";
 import axios, { AxiosError } from "axios";
 import { useLocation } from "react-router-dom";
@@ -104,6 +106,7 @@ export default function ListClients() {
     initialValues: {
       projectName: "",
       projectDescription: "",
+      includeNodeRed: false,
     },
     validationSchema: Yup.object({
       projectName: Yup.string()
@@ -137,6 +140,7 @@ export default function ListClients() {
                 user_email: userInfo?.email,
                 project_name: values.projectName,
                 project_description: values.projectDescription,
+                create_node_red: values.includeNodeRed,
               },
               {
                 headers: {
@@ -442,61 +446,59 @@ export default function ListClients() {
 
   // Update Project Function
 
-const handleEditProjectSwal = (group: any) => {
-  Swal.fire({
-    title: "Edit Project",
-    html: `
+  const handleEditProjectSwal = (group: any) => {
+    Swal.fire({
+      title: "Edit Project",
+      html: `
      <div class="swal-input-row-with-label">` +
-                `<label for="name">New Name</label>` +
-                `<div class="swal-input-field">` +
-                `<input id="name" class="swal2-input" placeholder="Enter the new device name" value="${
-                  group?.name || ""
-                }">` +
-                `</div>` +
-                `</div>` +
-                `<div class="swal-input-row">` +
-                `<label for="description">New Description</label>` +
-                `<input id="description" class="swal2-input" placeholder="Enter the new device description" value="${
-                  group?.description || ""
-                }">` +
-                `</div>
+        `<label for="name">New Name</label>` +
+        `<div class="swal-input-field">` +
+        `<input id="name" class="swal2-input" placeholder="Enter the new device name" value="${group?.name || ""
+        }">` +
+        `</div>` +
+        `</div>` +
+        `<div class="swal-input-row">` +
+        `<label for="description">New Description</label>` +
+        `<input id="description" class="swal2-input" placeholder="Enter the new device description" value="${group?.description || ""
+        }">` +
+        `</div>
     `,
-    showCancelButton: true,
-    confirmButtonText: "Save",
-    showLoaderOnConfirm: true,
-    preConfirm: () => {
-      const name = (document.getElementById("name") as HTMLInputElement).value.trim();
-      const description = (document.getElementById("description") as HTMLInputElement).value.trim();
+      showCancelButton: true,
+      confirmButtonText: "Save",
+      showLoaderOnConfirm: true,
+      preConfirm: () => {
+        const name = (document.getElementById("name") as HTMLInputElement).value.trim();
+        const description = (document.getElementById("description") as HTMLInputElement).value.trim();
 
-      if (!name) {
-        Swal.showValidationMessage("Please enter a project name");
-        return false;
+        if (!name) {
+          Swal.showValidationMessage("Please enter a project name");
+          return false;
+        }
+
+        return { name, description };
+      },
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const token = keycloak?.token;
+          await axios.patch(`${process.env.REACT_APP_BACKEND_URL}/projects/${group.id}`, {
+            project_name: result.value.name,
+            project_description: result.value.description
+          }, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json"
+            }
+          });
+
+          await Swal.fire("Success", "Project updated successfully!", "success");
+          getAllGroups();
+        } catch (error) {
+          await Swal.fire("Error", "Failed to update project", "error");
+        }
       }
-
-      return { name, description };
-    },
-  }).then(async (result) => {
-    if (result.isConfirmed) {
-      try {
-        const token = keycloak?.token;
-        await axios.patch(`${process.env.REACT_APP_BACKEND_URL}/projects/${group.id}`, {
-          project_name: result.value.name,
-          project_description: result.value.description
-        }, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json"
-          }
-        });
-
-        await Swal.fire("Success", "Project updated successfully!", "success");
-        getAllGroups();
-      } catch (error) {
-        await Swal.fire("Error", "Failed to update project", "error");
-      }
-    }
-  });
-};
+    });
+  };
 
 
 
@@ -737,8 +739,8 @@ const handleEditProjectSwal = (group: any) => {
                                       if (group?.is_owner) {
                                         localStorage.setItem("group_id", group.keycloak_group_id);
                                         localStorage.setItem("selected_others", "false");
-                                        localStorage.removeItem("user_email"); 
-                                         dispatch(setSelectedGroupId(group?.keycloak_group_id))
+                                        localStorage.removeItem("user_email");
+                                        dispatch(setSelectedGroupId(group?.keycloak_group_id))
                                       } else {
                                         localStorage.setItem("group_id", group?.keycloak_group_id);
                                         localStorage.setItem("selected_others", "true");
@@ -750,7 +752,7 @@ const handleEditProjectSwal = (group: any) => {
                                 >
                                   {!(group?.membership_status === "pending" || group?.membership_status === "rejected" || group?.membership_status === "left" || !group?.is_ready) ? (
                                     <LinkCustom
-                                    
+
                                       to={group?.is_owner ? `/dashboard/${group?.keycloak_group_id}` : `/dashboard/${group?.keycloak_group_id}?other_group=true`}
                                       style={{ textDecoration: "none", color: "inherit" }}
                                     >
@@ -772,7 +774,7 @@ const handleEditProjectSwal = (group: any) => {
                 )}
               </AccordionDetails>
             </Accordion>
-            <Accordion sx={{ marginTop: 2 }} defaultExpanded={true}>
+            <Accordion sx={{ marginTop: 2 }} defaultExpanded>
               <AccordionSummary
                 expandIcon={<ExpandMoreIcon />}
                 aria-controls="panel3-content"
@@ -813,23 +815,53 @@ const handleEditProjectSwal = (group: any) => {
                         helperText={formikCreateProject.touched.projectDescription && formikCreateProject.errors.projectDescription}
                       />
                     </Grid>
+
+                    {/* ✅ Node-RED Toggle */}
+                    <Grid item xs={12}>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            name="includeNodeRed"
+                            color="primary"
+                            checked={formikCreateProject.values.includeNodeRed}
+                            onChange={(e) => {
+                              const checked = e.target.checked;
+                              formikCreateProject.setFieldValue("includeNodeRed", checked);
+
+                              Swal.fire({
+                                icon: "info",
+                                title: "Node-RED Toggle",
+                                text: checked
+                                  ? "Node-RED will be included in this project."
+                                  : "Node-RED will not be included in this project.",
+                                timer: 2500,
+                                showConfirmButton: false, 
+                                position: "bottom-end",
+                                toast: true,
+                        
+                              });
+                            }}
+                          />
+                        }
+                        label="Include Node-RED"
+                      />
+                    </Grid>
                   </Grid>
+
                   <Button
                     type="submit"
-                    style={{
-                      marginTop: "10px",
-                      backgroundColor: "#233044",
-                    }}
+                    style={{ marginTop: "10px", backgroundColor: "#233044" }}
                     fullWidth
                     variant="contained"
                     color="primary"
-                    disabled={isCreatingProject} // ✅ Disable button while loading
+                    disabled={isCreatingProject}
                   >
                     {isCreatingProject ? "Processing..." : "Submit"}
                   </Button>
                 </Box>
               </AccordionDetails>
             </Accordion>
+
             <Accordion defaultExpanded={true}>
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <Typography variant="h5">Join Existing Project</Typography>
