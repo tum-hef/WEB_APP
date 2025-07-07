@@ -27,7 +27,6 @@ export default function DataSpace() {
   const [loading, setLoading] = useState<boolean>(true);
   const userInfo = keycloak?.idTokenParsed;
   const token = keycloak?.token;
-  const [nodeRedPort, setNodeRedPort] = useState<number | null>(null);
   const [frostServerPort, setFrostServerPort] = useState<number | null>(null);
   const [userID, setUserID] = useState<string | null>(null);
   const { group_id } = useParams<{ group_id: string }>();
@@ -67,55 +66,7 @@ export default function DataSpace() {
       });
   };
 
-  const getNodeRedPort = async () => {
-    const backend_url = process.env.REACT_APP_BACKEND_URL;
-    if (!backend_url) {
-      toast.error("Backend URL is missing.");
-      return;
-    }
-
-    const email: string | null =
-      localStorage.getItem("selected_others") === "true"
-        ? localStorage.getItem("user_email")
-        : userInfo?.preferred_username || "";
-    const group_id = localStorage.getItem("group_id");
-
-    if (!email || !group_id) {
-      // toast.error("User email and group ID are required.");
-      return;
-    }
-
-    try {
-      const response = await axios.post<ApiResponse>(
-        `${backend_url}/node-red`,
-        {
-          user_email: email,
-          group_id: group_id
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`, // ✅ Include Keycloak token
-          },
-          validateStatus: (status) => true,
-        }
-      );
-
-      if (response.status === 200 && response.data.success) {
-        setNodeRedPort(response.data.PORT!);
-      } else {
-        toast.error(response?.data?.message || "Failed to fetch Node-RED port.");
-      }
-    } catch (error: any) {
-      if (axios.isAxiosError(error)) {
-        const errorResponse = error.response?.data as ApiResponse;
-        toast.error(errorResponse?.message || "An error occurred.");
-      } else {
-        toast.error("An unexpected error occurred.");
-      }
-      console.error("Error fetching Node-RED port:", error);
-    }
-  };
+  
   const asyncGetDevices = async (retryCount = 3) => {
     const backend_url = process.env.REACT_APP_FROST_URL;
     const isDev = process.env.REACT_APP_IS_DEVELOPMENT === "true";
@@ -222,9 +173,6 @@ export default function DataSpace() {
       action: GAactionsDataSpace.action,
       label: GAactionsDataSpace.label,
     });
-
-
-    getNodeRedPort();
     if (frostServerPort) {
       getClientDetails()
     }

@@ -218,7 +218,7 @@ export default function DashboardPage() {
 
   if (!email || !group_id) {
     toast.error("User email and group ID are required.");
-    return;
+    
   }
 
   try {

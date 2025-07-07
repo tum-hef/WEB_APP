@@ -37,6 +37,7 @@ import DnsIcon from "@mui/icons-material/Dns";
 import PublicIcon from "@mui/icons-material/Public";
 import { toast } from "react-toastify";
 import { useIsOwner } from "../hooks/hooks";
+import InsightsIcon from "@mui/icons-material/Insights";
 const baseScrollbar = css`
   background-color: ${(props) => props.theme.sidebar.background};
   border-right: 1px solid rgba(0, 0, 0, 0.12);
@@ -71,12 +72,23 @@ interface ApiResponse {
 const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
   const { keycloak } = useKeycloak();
   const [nodeRedPort, setNodeRedPort] = useState<number | null>(null);
+  const [grafanaPort, setGrafanaPort] = useState<number | null>(null);
   const [group_id, setGroup_id] = useState<string | null>(null);
   const userInfo = keycloak?.idTokenParsed;
   const location = useLocation();
   const token = keycloak?.token;
   const currentUrl = location.pathname;
   const isOwner = useIsOwner();
+   const [openDataSpace, setOpenDataSpace] = useState(false);
+  const [openTraining, setOpenTraining] = useState(false);
+  const [openFrostEntities, setOpenFrostEntities] = useState(false);
+  const handleDataSpace = () => {
+    setOpenDataSpace(!openDataSpace);
+    setOpenFrostEntities(false);
+  };
+  const handleTraining = () => {
+    setOpenTraining(!openTraining);
+  };
   const getNodeRedPort = async () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL;
     if (!backend_url) {
@@ -127,16 +139,60 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
     }
   };
 
-  const [openDataSpace, setOpenDataSpace] = useState(false);
-  const [openTraining, setOpenTraining] = useState(false);
-  const [openFrostEntities, setOpenFrostEntities] = useState(false);
-  const handleDataSpace = () => {
-    setOpenDataSpace(!openDataSpace);
-    setOpenFrostEntities(false);
+  const getGrafanaPort = async () => {
+    const backend_url = process.env.REACT_APP_BACKEND_URL;
+    if (!backend_url) {
+      toast.error("Backend URL is missing.");
+      return;
+    }
+  
+    const email: string | null =
+      localStorage.getItem("selected_others") === "true"
+        ? localStorage.getItem("user_email")
+        : userInfo?.preferred_username || "";
+    const group_id = localStorage.getItem("group_id");
+  
+    if (!email || !group_id) {
+      // toast.error("User email and group ID are required.");
+      return;
+    }
+  
+    try {
+      const response = await axios.get<ApiResponse>(
+    `${backend_url}/grafana`,
+    {
+      params: {
+        user_email: email,
+        group_id: group_id,
+      },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`, // ✅ Include Keycloak token
+      },
+      validateStatus: (status) => true,
+    }
+  );
+  
+      console.log("Grafana response:", response);
+  
+      if (response.status === 200 && response.data.success) {
+        console.log("Grafana PORT:", response.data.PORT!);
+        setGrafanaPort(response.data.PORT!); // Assuming setGrafanaPort exists
+      } else {
+        toast.error(response.data.message || "Failed to fetch Grafana port.");
+      }
+    } catch (error: any) {
+      if (axios.isAxiosError(error)) {
+        const errorResponse = error.response?.data as ApiResponse;
+        toast.error(errorResponse.message || "An error occurred.");
+      } else {
+        toast.error("An unexpected error occurred.");
+      }
+      console.error("Error fetching Grafana port:", error);
+    }
   };
-  const handleTraining = () => {
-    setOpenTraining(!openTraining);
-  };
+
+ 
 
   const handleFrostEntities = () => {
     setOpenFrostEntities(!openFrostEntities);
@@ -184,9 +240,17 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
 
 
   useEffect(() => {
-    const group_id = localStorage.getItem("group_id");
+    const fetchDataAndServices = async () => {
+        const group_id = localStorage.getItem("group_id");
     setGroup_id(group_id);
-    getNodeRedPort();
+   await getNodeRedPort();
+   await  getGrafanaPort()
+
+    }
+
+     fetchDataAndServices()
+    
+  
   }, [nodeRedPort]);
 
   const handleLogout = () => {
@@ -556,6 +620,91 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
     </ListItemButton>
   </a>
 )}
+
+{grafanaPort && process.env.REACT_APP_GRAFANA_URL && (
+  <a
+    href={`https://${grafanaPort}-${process.env.REACT_APP_GRAFANA_URL}`}
+    target="_blank"
+    rel="noopener noreferrer"
+    style={{
+      textDecoration: "none",
+      pointerEvents:
+        currentUrl === "/dashboard" ||
+        currentUrl === "/contact" ||
+        currentUrl === "/database/frost" ||
+        currentUrl === "/database/node_red" ||
+        currentUrl === "/database/web_app" ||
+        !isOwner
+          ? "none"
+          : "auto",
+      cursor:
+        currentUrl === "/dashboard" ||
+        currentUrl === "/contact" ||
+        currentUrl === "/database/frost" ||
+        currentUrl === "/database/node_red" ||
+        currentUrl === "/database/web_app" ||
+        !isOwner
+          ? "not-allowed"
+          : "pointer",
+    }}
+    onClick={(e) => {
+      if (
+        currentUrl === "/dashboard" ||
+        currentUrl === "/contact" ||
+        currentUrl === "/database/frost" ||
+        currentUrl === "/database/node_red" ||
+        currentUrl === "/database/web_app" ||
+        !isOwner
+      ) {
+        e.preventDefault();
+      }
+    }}
+  >
+    <ListItemButton
+      disabled={
+        (!isOwner ||
+          currentUrl === "/dashboard" ||
+          currentUrl === "/contact" ||
+          currentUrl === "/database/frost" ||
+          currentUrl === "/database/node_red" ||
+          currentUrl === "/database/web_app") &&
+        !group_id
+      }
+    >
+      <ListItemIcon>
+        <InsightsIcon
+          style={{
+            color:
+              !isOwner ||
+              currentUrl === "/dashboard" ||
+              currentUrl === "/contact" ||
+              currentUrl === "/database/frost" ||
+              currentUrl === "/database/node_red" ||
+              currentUrl === "/database/web_app"
+                ? "gray"
+                : "white",
+          }}
+        />
+      </ListItemIcon>
+      <ListItemText
+        primaryTypographyProps={{ fontSize: "18px" }}
+        style={{
+          color:
+            !isOwner ||
+            currentUrl === "/dashboard" ||
+            currentUrl === "/contact" ||
+            currentUrl === "/database/frost" ||
+            currentUrl === "/database/node_red" ||
+            currentUrl === "/database/web_app"
+              ? "gray"
+              : "white",
+        }}
+        primary={"Grafana"}
+      />
+    </ListItemButton>
+  </a>
+)}
+
 
 
           <LinkCustom
