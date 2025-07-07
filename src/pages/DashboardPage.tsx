@@ -10,7 +10,7 @@ import {
   Paper,
   Typography,
 } from "@mui/material";
-import axios, { AxiosError } from "axios"; 
+import axios, { AxiosError } from "axios";
 import LinkCustom from "../components/LinkCustom";
 import { ToastContainer, toast } from "react-toastify";
 import DnsIcon from "@mui/icons-material/Dns";
@@ -41,14 +41,15 @@ export default function DashboardPage() {
   const [userID, setUserID] = useState<string | null>(null);
   const group = useAppSelector((state: RootState) => {
     const id = state.roles.selectedGroupId;
-    return state.roles.groups.find((g:any) => {return g.group_name_id === id});
+    return state.roles.groups.find((g: any) => { return g.group_name_id === id });
   });
-  const groupId = useAppSelector((state:any) => state.roles.selectedGroupId); 
+  const groupId = useAppSelector((state: any) => state.roles.selectedGroupId);
   const tempState = useAppSelector((state: RootState) => state);
   const [devices, setDevices] = useState<number | null>(0);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<boolean>(false);
   const [nodeRedPort, setNodeRedPort] = useState<number | null>(null);
+  const [grafanaPort, setGrafanaPort] = useState<number | null>(null);
   const [hasFetched, setHasFetched] = useState(false);
 
   const { keycloak } = useKeycloak();
@@ -57,13 +58,13 @@ export default function DashboardPage() {
   const { group_id } = useParams<{ group_id: string }>();
   const location = useLocation();
   const [frostServerPort, setFrostServerPort] = useState<number | null>(null);
-  const queryParams = new URLSearchParams(location.search);  
-  const selectedGroupId = useAppSelector(state => state.roles.selectedGroupId); 
+  const queryParams = new URLSearchParams(location.search);
+  const selectedGroupId = useAppSelector(state => state.roles.selectedGroupId);
   const dispatch = useAppDispatch();
-   const isOwner = useIsOwner();
-  
- 
- 
+  const isOwner = useIsOwner();
+
+
+
 
   const fetchData = async () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL;
@@ -71,12 +72,12 @@ export default function DashboardPage() {
       ? localStorage.getItem("user_email")
       : userInfo?.preferred_username;
 
-  
+
     if (!email || !selectedGroupId) {
       toast.error("User email and group ID are required.");
       return;
     }
-  
+
     try {
       const response = await axios.post<ApiResponse>(
         `${backend_url}/frost-server`,
@@ -92,7 +93,7 @@ export default function DashboardPage() {
           validateStatus: (status) => true,
         }
       );
-  
+
       if (response.status === 200 && response.data.success) {
         setFrostServerPort(response.data.PORT!);
       } else {
@@ -107,28 +108,29 @@ export default function DashboardPage() {
       }
       console.error("Error fetching Frost Server port:", error);
     }
-  }; 
+  };
 
 
-  
+
   useEffect(() => {
     const selectedOthers = localStorage.getItem("selected_others");
-  
+
     const fetchDataAndServices = async () => {
-      try { 
-        console.log("selectedGroupId",selectedGroupId)
+      try {
+        console.log("selectedGroupId", selectedGroupId)
         if (!hasFetched && selectedGroupId) {
           setLoading(true);
-  
+
           // Fetch Node-RED port and Frost Server port
           await getNodeRedPort();
+          await getGrafanaPort()
           await fetchData();
-  
+
           // Fetch devices if Frost Server is available
           if (frostServerPort) {
             await asyncGetDevices();
           }
-  
+
           setHasFetched(true);
         }
       } catch (error) {
@@ -138,16 +140,16 @@ export default function DashboardPage() {
         setLoading(false);
       }
     };
-  
+
     fetchDataAndServices();
-  
+
     // Optional: re-fetch if user switches to another shared group
     if (selectedGroupId && selectedOthers === "true") {
       fetchDataAndServices(); // optionally re-call or just reset hasFetched
     }
   }, [frostServerPort, hasFetched, selectedGroupId]);
-  
-  
+
+
 
   const getNodeRedPort = async () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL;
@@ -155,19 +157,19 @@ export default function DashboardPage() {
       toast.error("Backend URL is missing.");
       return;
     }
-  
+
     const email: string | null =
       localStorage.getItem("selected_others") === "true"
         ? localStorage.getItem("user_email")
         : userInfo?.preferred_username || "";
     const group_id = localStorage.getItem("group_id");
 
-  
+
     if (!email || !group_id) {
       toast.error("User email and group ID are required.");
       return;
     }
-  
+
     try {
       const response = await axios.post<ApiResponse>(
         `${backend_url}/node-red`,
@@ -183,9 +185,9 @@ export default function DashboardPage() {
           validateStatus: (status) => true,
         }
       );
-      console.log("response checking",response)
-      if (response.status === 200 && response.data.success) { 
-        console.log("aaaaa",response.data.PORT!)
+      console.log("response checking", response)
+      if (response.status === 200 && response.data.success) {
+        console.log("aaaaa", response.data.PORT!)
         setNodeRedPort(response.data.PORT!);
       } else {
         toast.error(response.data.message || "Failed to fetch Node-RED port.");
@@ -200,34 +202,88 @@ export default function DashboardPage() {
       console.error("Error fetching Node-RED port:", error);
     }
   };
-  
+
+  const getGrafanaPort = async () => {
+  const backend_url = process.env.REACT_APP_BACKEND_URL;
+  if (!backend_url) {
+    toast.error("Backend URL is missing.");
+    return;
+  }
+
+  const email: string | null =
+    localStorage.getItem("selected_others") === "true"
+      ? localStorage.getItem("user_email")
+      : userInfo?.preferred_username || "";
+  const group_id = localStorage.getItem("group_id");
+
+  if (!email || !group_id) {
+    toast.error("User email and group ID are required.");
+    return;
+  }
+
+  try {
+    const response = await axios.get<ApiResponse>(
+  `${backend_url}/grafana`,
+  {
+    params: {
+      user_email: email,
+      group_id: group_id,
+    },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`, // ✅ Include Keycloak token
+    },
+    validateStatus: (status) => true,
+  }
+);
+
+    console.log("Grafana response:", response);
+
+    if (response.status === 200 && response.data.success) {
+      console.log("Grafana PORT:", response.data.PORT!);
+      setGrafanaPort(response.data.PORT!); // Assuming setGrafanaPort exists
+    } else {
+      toast.error(response.data.message || "Failed to fetch Grafana port.");
+    }
+  } catch (error: any) {
+    if (axios.isAxiosError(error)) {
+      const errorResponse = error.response?.data as ApiResponse;
+      toast.error(errorResponse.message || "An error occurred.");
+    } else {
+      toast.error("An unexpected error occurred.");
+    }
+    console.error("Error fetching Grafana port:", error);
+  }
+};
+
+
   const asyncGetDevices = async () => {
     try {
-      const backend_url = process.env.REACT_APP_FROST_URL;  
-      const isDev = process.env.REACT_APP_IS_DEVELOPMENT === 'true';  
-      console.log("isDev",isDev)
-      const url = isDev  ?  `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Things` : `https://${frostServerPort}-${backend_url}/FROST-Server/v1.0/Things` 
-      console.log("url",url)
-      if(frostServerPort){
+      const backend_url = process.env.REACT_APP_FROST_URL;
+      const isDev = process.env.REACT_APP_IS_DEVELOPMENT === 'true';
+      console.log("isDev", isDev)
+      const url = isDev ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Things` : `https://${frostServerPort}-${backend_url}/FROST-Server/v1.0/Things`
+      console.log("url", url)
+      if (frostServerPort) {
         axios
-        .get(url, {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        })
-        .then((res) => {
-          if (res.status === 200 && res.data.value) {
-            setDevices(res.data.value.length);
-          }
-        });
+          .get(url, {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          })
+          .then((res) => {
+            if (res.status === 200 && res.data.value) {
+              setDevices(res.data.value.length);
+            }
+          });
       }
     } catch (err) {
       console.log(err);
       toast.error("Error Getting Devices");
     }
   };
- 
+
 
 
   // useEffect(()=>{
@@ -285,7 +341,7 @@ export default function DashboardPage() {
                             fontSize: "1.0rem",
                           }}
                         >
-                          Project selected: <b>{selectedGroupId && (group?.project_name ? group?.project_name  :  group?.attributes?.group_name)} </b>,
+                          Project selected: <b>{selectedGroupId && (group?.project_name ? group?.project_name : group?.attributes?.group_name)} </b>,
                           click
                           <LinkCustom
                             style={{
@@ -317,83 +373,94 @@ export default function DashboardPage() {
                   justifyContent: "center",
                 }}
               >
-                {nodeRedPort && (
-                  <Grid item lg={6} sm={12} xl={6} xs={12}>
+                <Grid item lg={4} sm={6} xs={12}>
                   <div
                     style={{
-                      opacity: (nodeRedPort && isOwner) ? 1 : 0.5,               // Grayed out look if disabled
-                      pointerEvents: (nodeRedPort && isOwner) ? "auto" : "none", // Prevent interaction if disabled
+                      opacity: (nodeRedPort && isOwner) ? 1 : 0.5,
+                      pointerEvents: (nodeRedPort && isOwner) ? "auto" : "none",
                     }}
                   >
                     <Anchor
                       href={
-                        process.env.REACT_APP_IS_DEVELOPMENT === 'true'
-                          ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${nodeRedPort}`
-                          : `https://${nodeRedPort}-${process.env.REACT_APP_NODERED_URL}`
+                        nodeRedPort
+                          ? process.env.REACT_APP_IS_DEVELOPMENT === 'true'
+                            ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${nodeRedPort}`
+                            : `https://${nodeRedPort}-${process.env.REACT_APP_NODERED_URL}`
+                          : "#"
                       }
                       target="_blank"
+                      rel="noopener noreferrer"
                     >
                       <Card sx={{ maxWidth: 345 }} style={{ minWidth: "100%" }}>
                         <CardActionArea>
                           <CardMedia
-                            style={{ height: "250px", maxHeight: "250px" }}
+                            style={{ height: "250px" }}
                             component="img"
-                            width="100%"
-                            height="140"
                             image="../images/node-red-icon.png"
-                            alt="Devices"
+                            alt="Node-RED"
                           />
-                          <CardContent
-                            style={{
-                              display: "flex",
-                              justifyContent: "center",
-                              alignItems: "center",
-                            }}
-                          >
-                            <Typography gutterBottom variant="h3" component="div">
-                              Node RED
-                            </Typography>
+                          <CardContent style={{ textAlign: "center" }}>
+                            <Typography variant="h5">Node RED</Typography>
                           </CardContent>
                         </CardActionArea>
                       </Card>
                     </Anchor>
                   </div>
                 </Grid>
-                )}
-                <Grid item lg={6} sm={12} xl={6} xs={12}>
-                  <LinkCustom to={`/data-spaces/${group_id}`}>
-                    <Card
-                      sx={{ maxWidth: 345 }}
-                      style={{
-                        minWidth: "100%",
-                      }}
+
+                <Grid item lg={4} sm={6} xs={12}>
+                  <div
+                    style={{
+                      opacity: (grafanaPort && isOwner) ? 1 : 0.5,
+                      pointerEvents: (grafanaPort && isOwner) ? "auto" : "none",
+                    }}
+                  >
+                    <Anchor
+                      href={
+                        grafanaPort
+                          ? process.env.REACT_APP_IS_DEVELOPMENT === 'true'
+                            ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${grafanaPort}`
+                            : `https://${grafanaPort}-${process.env.REACT_APP_GRAFANA_URL}`
+                          : "#"
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
                     >
+                      <Card sx={{ maxWidth: 345 }} style={{ minWidth: "100%" }}>
+                        <CardActionArea>
+                          <CardMedia
+                            style={{ height: "250px" }}
+                            component="img"
+                            image="../images/grafana-icon.png"
+                            alt="Grafana"
+                          />
+                          <CardContent style={{ textAlign: "center" }}>
+                            <Typography variant="h5">Grafana</Typography>
+                          </CardContent>
+                        </CardActionArea>
+                      </Card>
+                    </Anchor>
+                  </div>
+                </Grid>
+                {/* Data Space */}
+                <Grid item lg={4} sm={6} xs={12}>
+                  <LinkCustom to={`/data-spaces/${group_id}`}>
+                    <Card sx={{ maxWidth: 345 }} style={{ minWidth: "100%" }}>
                       <CardActionArea>
                         <CardMedia
-                          style={{
-                            height: "250px",
-                            maxHeight: "250px",
-                          }}
+                          style={{ height: "250px" }}
                           component="img"
-                          height="140"
                           image="../images/iot_devices.jpeg"
                           alt="Devices"
                         />
-                        <CardContent
-                          style={{
-                            display: "flex",
-                            justifyContent: "center",
-                            alignItems: "center",
-                          }}
-                        >
-                          <Typography gutterBottom variant="h3" component="div">
-                            Data Space
-                          </Typography>
+                        <CardContent style={{ textAlign: "center" }}>
+                          <Typography variant="h5">Data Space</Typography>
                         </CardContent>
                       </CardActionArea>
                     </Card>
                   </LinkCustom>
-                </Grid>{" "}
+                </Grid>
+
               </Grid>
 
               <Paper elevation={3} style={{ marginTop: "20px" }}>

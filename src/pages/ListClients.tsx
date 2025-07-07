@@ -241,12 +241,6 @@ export default function ListClients() {
       }
     }
   };
-  useEffect(() => {
-    console.log("isPopoverOpen", isPopoverOpen)
-  }, [isPopoverOpen])
-  useEffect(() => {
-    console.log("anchorEl", anchorEl)
-  }, [anchorEl])
   const SearchGroupById = async (group_id: string) => {
     if (!group_id) {
       toast.error("Group ID is required.");
