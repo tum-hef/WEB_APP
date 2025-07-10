@@ -411,8 +411,8 @@ export default function DashboardPage() {
                 <Grid item lg={4} sm={6} xs={12}>
                   <div
                     style={{
-                      opacity: (grafanaPort && isOwner) ? 1 : 0.5,
-                      pointerEvents: (grafanaPort && isOwner) ? "auto" : "none",
+                      opacity: (grafanaPort) ? 1 : 0.5,
+                      pointerEvents: (grafanaPort) ? "auto" : "none",
                     }}
                   >
                     <Anchor

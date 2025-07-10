@@ -633,8 +633,7 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
         currentUrl === "/contact" ||
         currentUrl === "/database/frost" ||
         currentUrl === "/database/node_red" ||
-        currentUrl === "/database/web_app" ||
-        !isOwner
+        currentUrl === "/database/web_app"
           ? "none"
           : "auto",
       cursor:
@@ -642,8 +641,7 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
         currentUrl === "/contact" ||
         currentUrl === "/database/frost" ||
         currentUrl === "/database/node_red" ||
-        currentUrl === "/database/web_app" ||
-        !isOwner
+        currentUrl === "/database/web_app"
           ? "not-allowed"
           : "pointer",
     }}
@@ -653,8 +651,7 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
         currentUrl === "/contact" ||
         currentUrl === "/database/frost" ||
         currentUrl === "/database/node_red" ||
-        currentUrl === "/database/web_app" ||
-        !isOwner
+        currentUrl === "/database/web_app"
       ) {
         e.preventDefault();
       }
@@ -662,8 +659,7 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
   >
     <ListItemButton
       disabled={
-        (!isOwner ||
-          currentUrl === "/dashboard" ||
+        (currentUrl === "/dashboard" ||
           currentUrl === "/contact" ||
           currentUrl === "/database/frost" ||
           currentUrl === "/database/node_red" ||
@@ -675,7 +671,6 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
         <InsightsIcon
           style={{
             color:
-              !isOwner ||
               currentUrl === "/dashboard" ||
               currentUrl === "/contact" ||
               currentUrl === "/database/frost" ||
@@ -690,7 +685,6 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
         primaryTypographyProps={{ fontSize: "18px" }}
         style={{
           color:
-            !isOwner ||
             currentUrl === "/dashboard" ||
             currentUrl === "/contact" ||
             currentUrl === "/database/frost" ||
@@ -704,6 +698,7 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
     </ListItemButton>
   </a>
 )}
+
 
 
 
