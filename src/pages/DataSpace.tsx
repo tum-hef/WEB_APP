@@ -33,6 +33,7 @@ export default function DataSpace() {
   const [error, setError] = useState<boolean>(false);
   const [clientDetatils, setClientDetails] = useState<any>({});
   const [showSecret, setShowSecret] = useState<boolean>(false);
+  const [storage, setStorage] = useState<{ used: number; max: number } | null>(null);
   const selectedGroupId = useAppSelector(state => state.roles.selectedGroupId);
   const group = useAppSelector(state =>
     state.roles.groups.find(g => g.group_name_id === selectedGroupId)
@@ -66,7 +67,7 @@ export default function DataSpace() {
       });
   };
 
-  
+
   const asyncGetDevices = async (retryCount = 3) => {
     const backend_url = process.env.REACT_APP_FROST_URL;
     const isDev = process.env.REACT_APP_IS_DEVELOPMENT === "true";
@@ -101,6 +102,38 @@ export default function DataSpace() {
       await new Promise((resolve) => setTimeout(resolve, 1000 * Math.pow(2, attempt)));
     }
   };
+
+  const fetchStorageUsage = async () => {
+    const backend_url = process.env.REACT_APP_BACKEND_URL;
+    const group_id = localStorage.getItem("group_id");
+
+    if (!frostServerPort || !group_id) return;
+
+    try {
+      const res = await axios.get(`${backend_url}/frost_storage`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        params: {
+          frost_port: frostServerPort,
+          keycloak_group_id: group_id,
+        },
+      });
+
+      if (res.status === 200 && res.data.success !== false) {
+        setStorage({
+          used: res.data.used_gb,
+          max: res.data.max_gb,
+        });
+      } else {
+        toast.error("Failed to fetch storage usage.");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Error fetching storage usage.");
+    }
+  };
+
 
 
   const fetchData = async () => {
@@ -175,6 +208,7 @@ export default function DataSpace() {
     });
     if (frostServerPort) {
       getClientDetails()
+      fetchStorageUsage()
     }
 
     if (frostServerPort !== null) {
@@ -225,7 +259,7 @@ export default function DataSpace() {
             <Grid item xs={12} sm={6} md={6} lg={6}>
               <CardDataSpace
                 redirection_path="stepper"
-                card_name="Stepper" 
+                card_name="Stepper"
                 isOwner={isOwner}
                 Icon={
                   <DriveFileRenameOutlineIcon
@@ -432,6 +466,28 @@ export default function DataSpace() {
                     </span>{" "}
                     PostgreSQL
                   </Typography>{" "}
+                  {storage && (
+                    <>
+                      <div style={{
+                        backgroundColor: "#eee",
+                        height: "10px",
+                        borderRadius: "5px",
+                        marginTop: "4px",
+                        overflow: "hidden"
+                      }}>
+                        <div style={{
+                          width: `${(storage?.used / storage?.max) * 100}%`,
+                          backgroundColor: "#1976d2",
+                          height: "100%",
+                          transition: "width 0.5s ease-in-out"
+                        }} />
+                      </div>
+                      <Typography variant="body2" style={{ marginTop: "5px", color: "#555" }}>
+                        {storage?.used?.toFixed(2)} GB of {storage?.max?.toFixed(2)} GB used
+                      </Typography>
+                    </>
+                  )}
+
                 </Grid>
               </Grid>
             </Grid>
