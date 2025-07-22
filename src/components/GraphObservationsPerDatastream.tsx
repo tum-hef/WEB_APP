@@ -70,7 +70,12 @@ function GraphObservationsPerDatastream({
       },
     },
   };
+ 
+  useEffect(()=>{
+   console.log("observations",observations)
+   console.log("observations length",observations?.length)
 
+  },[observations])
   const fetchObservations = () => {
     const backend_url = process.env.REACT_APP_FROST_URL;
     axios
@@ -110,45 +115,67 @@ function GraphObservationsPerDatastream({
   };
 
 
-
-  const filterObservations = async () => {
-    try {
-      const backend_url = process.env.REACT_APP_FROST_URL;
-    
+  async function fetchAllObservations(
+    baseUrl: string,
+    token: string
+  ): Promise<any[]> {
+    let all: any[] = [];
+    let url: string | null = baseUrl;
   
-      const startDate = new Date(start_date).toISOString(); 
-      const endDate = new Date(end_date).toISOString();     
-  
-      // make query to filter data from frost api 
-      const filterQuery = `phenomenonTime ge ${encodeURIComponent(startDate)} and phenomenonTime le ${encodeURIComponent(endDate)}`;
-      const url = `https://${frostServerPort}-${backend_url}/FROST-Server/v1.0/Datastreams(${id})/Observations?$filter=${filterQuery}&$orderby=phenomenonTime`;
-  
-      const obs_fetched = await axios.get(url, {
+    while (url) {
+      const res :any= await axios.get(url, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
       });
   
-      const fetched_observation = obs_fetched.data.value;
-      console.log("fetched_observation", fetched_observation);
+      all = all.concat(res.data.value);
+      url = res.data["@iot.nextLink"] || null;
   
-      // Set observations and formatted times directly from fetched data
-      setObservations(fetched_observation);
+      // Fix relative URLs
+      if (url && url.startsWith("/")) {
+        const urlObj = new URL(baseUrl);
+        url = `${urlObj.origin}${url}`;
+      }
+    }
+  
+    return all;
+  }
+
+  const filterObservations = async () => {
+    try {
+      const backend_url = process.env.REACT_APP_FROST_URL;
+  
+      const startDate = new Date(start_date).toISOString();
+      const endDate = new Date(end_date).toISOString();
+  
+      const filterQuery = `phenomenonTime ge ${startDate} and phenomenonTime le ${endDate}`;
+      const baseUrl = `https://${frostServerPort}-${backend_url}/FROST-Server/v1.0/Datastreams(${id})/Observations?$filter=${encodeURIComponent(
+        filterQuery
+      )}&$orderby=phenomenonTime&$top=100`;
+  
+      const observations = await fetchAllObservations(baseUrl, token);
+  
+      console.log("Fetched observations:", observations);
+  
+      // Optional: sort by time in case FROST doesn't guarantee it
+      const sorted = observations.sort(
+        (a, b) =>
+          new Date(a.phenomenonTime).getTime() -
+          new Date(b.phenomenonTime).getTime()
+      );
+  
+      // Set to chart
+      setObservations(sorted);
       setPhenomenonTimes(
-        fetched_observation
-          .map((item: any) =>
-            format(new Date(item.phenomenonTime), "dd.MM.yyyy HH:mm", {
-              timeZone: "Europe/Rome",
-            })
-          )
-          .slice(0, 50)
+        sorted.map((item: any) =>
+          format(new Date(item.phenomenonTime), "dd.MM.yyyy HH:mm", {
+            timeZone: "Europe/Rome",
+          })
+        )
       );
-  
-      setResultTimes(
-        fetched_observation.map((item: any) => item.result).slice(0, 50)
-      );
-  
+      setResultTimes(sorted.map((item: any) => item.result));
     } catch (error) {
       console.error("Error fetching observations:", error);
     }
@@ -167,7 +194,7 @@ function GraphObservationsPerDatastream({
   const getCsvData = () => {
     const csvData = [["ID", "Result", "Phenomenom Time"]];
     let i;
-
+    
     if (observations.length > 0) {
       for (let i = 0; i < observations.length; i++) {
         const romeTime = format(
