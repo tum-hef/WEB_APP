@@ -35,6 +35,14 @@ interface TableObservationPerDatastreamProps {
   setIsGraphButtonSelected: any;
 }
 
+// Add the Observation interface for type safety
+interface Observation {
+  "@iot.id": number;
+  result: any;
+  phenomenonTime: string;
+  // Add other fields as needed
+}
+
 function TableObservationPerDatastream({
   datastream,
   setDataStream,
@@ -77,58 +85,77 @@ function TableObservationPerDatastream({
     setOpenModal(false);
   };
 
-  const getCsvData = () => {
-    const csvData = [["ID", "Result", "Phenomenon Time"]];
-
-    if (observations.length > 0 && start_date && end_date) {
-      const filteredObservations = observations.filter(
-        (item) =>
-          format(new Date(item.phenomenonTime), "dd.MM.yyyy HH:mm", {
-            timeZone: "Europe/Rome",
-          }) >=
-            format(start_date, "dd.MM.yyyy HH:mm", {
-              timeZone: "Europe/Rome",
-            }) &&
-          format(new Date(item.phenomenonTime), "dd.MM.yyyy HH:mm", {
-            timeZone: "Europe/Rome",
-          }) <=
-            format(end_date, "dd.MM.yyyy HH:mm", { timeZone: "Europe/Rome" })
-      );
-
-      for (let i = 0; i < filteredObservations.length; i++) {
-        const romeTime = format(
-          new Date(filteredObservations[i].phenomenonTime),
-          "dd.MM.yyyy HH:mm",
-          { timeZone: "Europe/Rome" }
-        );
-
-        csvData.push([
-          `${filteredObservations[i]["@iot.id"]}`,
-          `${filteredObservations[i].result}`,
-          romeTime,
-        ]);
-      }
-    } else if (observations.length > 0 && !start_date && !end_date) {
-      for (let i = 0; i < observations.length; i++) {
-        const romeTime = format(
-          new Date(observations[i].phenomenonTime),
-          "dd.MM.yyyy HH:mm",
-          { timeZone: "Europe/Rome" }
-        );
-
-        csvData.push([
-          `${observations[i]["@iot.id"]}`,
-          `${observations[i].result}`,
-          romeTime,
-        ]);
-      }
-    } else {
-      csvData.push(["No Data"]);
+  // Add the fetchAllObservations function
+async function fetchAllObservations(
+  baseUrl: string,
+  token: string
+): Promise<Observation[]> {
+  let allObservations: Observation[] = [];
+  let url: string | null = baseUrl;
+  while (url) {
+    const res: any = await axios.get(url, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    allObservations = allObservations.concat(res.data.value as Observation[]);
+    url = res.data["@iot.nextLink"] ? res.data["@iot.nextLink"] : null;
+    // If nextLink is relative, prepend the base URL's origin
+    if (url && url.startsWith("/")) {
+      const urlObj = new URL(baseUrl);
+      url = `${urlObj.origin}${url}`;
     }
+  }
+  return allObservations;
+}
 
+  const getCsvData =async() => {
+    const csvData: string[][] = [["ID", "Result", "Phenomenon Time"]];
+    const backend_url = process.env.REACT_APP_FROST_URL;
+  
+    // ✅ Base URL (navigation-based, not filter-based)
+    let baseUrl = `https://${frostServerPort}-${backend_url}/FROST-Server/v1.0/Datastreams(${id})/Observations`;
+  
+    const filters: string[] = [];
+  
+    if (start_date && end_date) {
+      filters.push(
+        `phenomenonTime ge ${start_date.toISOString()}`,
+        `phenomenonTime le ${end_date.toISOString()}`
+      );
+    }
+  
+    if (filters.length > 0) {
+      baseUrl += `?$filter=${encodeURIComponent(filters.join(" and "))}&$top=100`;
+    } else {
+      baseUrl += `?$top=100`;
+    }
+  
+    // ✅ Fetch all pages
+    const observations = await fetchAllObservations(baseUrl, token);
+  
+    // ✅ Optional frontend filter (fallback safety)
+    const filteredObservations = observations.filter((item) => {
+      if (start_date && end_date) {
+        const itemTime = new Date(item.phenomenonTime);
+        return itemTime >= start_date && itemTime <= end_date;
+      }
+      return true;
+    });
+  
+    // ✅ Build CSV rows
+    if (filteredObservations.length === 0) {
+      csvData.push(["No Data"]);
+    } else {
+      for (const obs of filteredObservations) {
+        const romeTime = format(new Date(obs.phenomenonTime), "dd.MM.yyyy HH:mm", {
+          timeZone: "Europe/Rome",
+        });
+  
+        csvData.push([`${obs["@iot.id"]}`, `${obs.result}`, romeTime]);
+      }
+    }
+  
     return csvData;
   };
-
   const resetFilter = () => {
     const orderedObservations = observations.sort((a, b) => {
       return (
@@ -186,6 +213,18 @@ function TableObservationPerDatastream({
       sortable: true,
     },
   ];
+
+  const [csvData, setCsvData] = useState<string[][]>([["ID", "Result", "Phenomenon Time"]]);
+  const [csvReady, setCsvReady] = useState(false);
+  const [csvLoading, setCsvLoading] = useState(false);
+
+  const prepareCsvData = async () => {
+    setCsvLoading(true);
+    const data = await getCsvData();
+    setCsvData(data);
+    setCsvReady(true);
+    setCsvLoading(false);
+  };
 
   return (
     <>
@@ -370,32 +409,34 @@ function TableObservationPerDatastream({
           </Typography>
           {/* Download CSV Button */}
           <Grid item xs={12} md={12} mb={2}>
-            <Box sx={{ display: "flex", justifyContent: "center" }}>
-              <Button
-                disabled={
-                  !start_date || !end_date || start_date > end_date
-                    ? true
-                    : false
-                }
-                variant="contained"
-                style={{
-                  backgroundColor: !start_date || !end_date ? "#cccccc" : "",
-                  color: !start_date || !end_date ? "#000000" : "",
-                }}
-              >
-                <CSVLink
-                  filename="observation.csv"
-                  data={getCsvData()}
-                  style={{
-                    color: "#ffffff",
-                    textDecoration: "none",
-                  }}
-                >
-                  Download CSV
-                </CSVLink>
-              </Button>
-            </Box>
-          </Grid>{" "}
+  <Box sx={{ display: "flex", justifyContent: "center" }}>
+    <Button
+      disabled={csvLoading || !start_date || !end_date || start_date > end_date}
+      variant="contained"
+      style={{
+        backgroundColor: !start_date || !end_date ? "#cccccc" : "",
+        color: !start_date || !end_date ? "#000000" : "",
+      }}
+      onClick={async () => {
+        setCsvLoading(true);
+        const data = await getCsvData();
+        setCsvData(data);
+        setCsvLoading(false);
+
+        // Auto-trigger download after data is set
+        const blob = new Blob([data.map(row => row.join(",")).join("\n")], { type: "text/csv;charset=utf-8" });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "observation.csv";
+        a.click();
+        window.URL.revokeObjectURL(url);
+      }}
+    >
+      {csvLoading ? "Preparing..." : "Download CSV"}
+    </Button>
+  </Box>
+</Grid>
           {/* Filter Data Button*/}
           <Grid item xs={12} md={12} mb={2}>
             <Box sx={{ display: "flex", justifyContent: "center" }}>
