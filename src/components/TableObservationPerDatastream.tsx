@@ -170,7 +170,6 @@ async function fetchAllObservations(
   };
 
   const filterData = () => {
-    console.log(start_date, end_date);
 
     if (start_date && end_date) {
       const filteredObservations = observations.filter(

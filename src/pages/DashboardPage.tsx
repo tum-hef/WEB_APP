@@ -117,7 +117,6 @@ export default function DashboardPage() {
 
     const fetchDataAndServices = async () => {
       try {
-        console.log("selectedGroupId", selectedGroupId)
         if (!hasFetched && selectedGroupId) {
           setLoading(true);
 
@@ -185,9 +184,7 @@ export default function DashboardPage() {
           validateStatus: (status) => true,
         }
       );
-      console.log("response checking", response)
       if (response.status === 200 && response.data.success) {
-        console.log("aaaaa", response.data.PORT!)
         setNodeRedPort(response.data.PORT!);
       } else {
         toast.error(response.data.message || "Failed to fetch Node-RED port.");
@@ -237,10 +234,8 @@ export default function DashboardPage() {
   }
 );
 
-    console.log("Grafana response:", response);
 
     if (response.status === 200 && response.data.success) {
-      console.log("Grafana PORT:", response.data.PORT!);
       setGrafanaPort(response.data.PORT!); // Assuming setGrafanaPort exists
     } else {
       toast.error(response.data.message || "Failed to fetch Grafana port.");
@@ -261,9 +256,7 @@ export default function DashboardPage() {
     try {
       const backend_url = process.env.REACT_APP_FROST_URL;
       const isDev = process.env.REACT_APP_IS_DEVELOPMENT === 'true';
-      console.log("isDev", isDev)
       const url = isDev ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Things` : `https://${frostServerPort}-${backend_url}/FROST-Server/v1.0/Things`
-      console.log("url", url)
       if (frostServerPort) {
         axios
           .get(url, {

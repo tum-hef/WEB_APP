@@ -71,11 +71,6 @@ function GraphObservationsPerDatastream({
     },
   };
  
-  useEffect(()=>{
-   console.log("observations",observations)
-   console.log("observations length",observations?.length)
-
-  },[observations])
   const fetchObservations = () => {
     const backend_url = process.env.REACT_APP_FROST_URL;
     axios
@@ -91,7 +86,6 @@ function GraphObservationsPerDatastream({
       .then((res) => {
         if (res.status === 200 && res.data.value) {
           setObservations(res.data.value); 
-          console.log("res.data.value",res.data.value)
           setPhenomenonTimes(
             res?.data.value
               .map(
@@ -156,8 +150,7 @@ function GraphObservationsPerDatastream({
       )}&$orderby=phenomenonTime&$top=100`;
   
       const observations = await fetchAllObservations(baseUrl, token);
-  
-      console.log("Fetched observations:", observations);
+
   
       // Optional: sort by time in case FROST doesn't guarantee it
       const sorted = observations.sort(

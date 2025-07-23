@@ -176,7 +176,6 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
       console.log("Grafana response:", response);
   
       if (response.status === 200 && response.data.success) {
-        console.log("Grafana PORT:", response.data.PORT!);
         setGrafanaPort(response.data.PORT!); // Assuming setGrafanaPort exists
       } else {
         toast.error(response.data.message || "Failed to fetch Grafana port.");
@@ -254,10 +253,8 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
   }, [nodeRedPort]);
 
   const handleLogout = () => {
-    console.log("Logging out...");
     localStorage.clear();
     keycloak.logout({ redirectUri: window.location.origin }).then(() => {
-      console.log("Logout successful");
     }).catch(err => console.error("Logout failed", err));
   };
   const theme = useTheme();
