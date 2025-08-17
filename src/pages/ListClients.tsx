@@ -30,7 +30,9 @@ import {
   ClickAwayListener,
   CircularProgress,
   FormControlLabel,
-  Switch
+  Switch,
+  Menu,
+  MenuItem
 } from "@mui/material";
 import axios, { AxiosError } from "axios";
 import { useLocation } from "react-router-dom";
@@ -50,6 +52,7 @@ import { useFormik } from "formik";
 import * as Yup from "yup";
 import { setSelectedGroupId } from "../store/rolesSlice";
 import { useAppDispatch } from "../hooks/hooks";
+import { Settings } from "@mui/icons-material";
 
 
 interface Group {
@@ -79,6 +82,9 @@ export default function ListClients() {
   const [openPendingGroupId, setOpenPendingGroupId] = useState<number | null>(null);
   const [pendingPopover, setPendingPopover] = useState<{ anchorEl: HTMLElement | null, groupId: number | null }>({ anchorEl: null, groupId: null });
   const [membersPopover, setMembersPopover] = useState<{ anchorEl: HTMLElement | null, groupId: number | null }>({ anchorEl: null, groupId: null });
+  const [nodeRedMenuAnchor, setNodeRedMenuAnchor] = useState<null | HTMLElement>(null);
+  const [nodeRedTargetGroup, setNodeRedTargetGroup] = useState<any>(null);
+
   const [isCreatingProject, setIsCreatingProject] = useState(false);
   const dispatch = useAppDispatch();
 
@@ -372,6 +378,57 @@ export default function ListClients() {
     setOpenPendingGroupId(null); // Also reset open group tracking
   };
 
+  const handleNodeRedMenuOpen = (
+    event: React.MouseEvent<HTMLElement>,
+    group: any
+  ) => {
+    setNodeRedMenuAnchor(event.currentTarget);
+    setNodeRedTargetGroup(group);
+  };
+
+  const handleNodeRedMenuClose = () => {
+    setNodeRedMenuAnchor(null);
+    setNodeRedTargetGroup(null);
+  };
+
+const handleApplyNodeRed = async (groupId: string) => {
+  const result = await Swal.fire({
+    title: 'Create Node-RED?',
+    text: 'This will provision Node-RED for this project. Continue?',
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonColor: '#3085d6',
+    cancelButtonColor: '#d33',
+    confirmButtonText: 'Yes, create it!'
+  });
+
+  if (result.isConfirmed) {
+    try {
+      setLoading(true); 
+
+      const token = keycloak?.token;
+      const response = await axios.post(
+        `${process.env.REACT_APP_BACKEND_URL}/create_node_red`,
+        { keycloak_group_id: groupId },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      Swal.fire('Success', 'Node-RED has been provisioned!', 'success');
+      // Optionally refresh list or update UI here
+    } catch (error) {
+      Swal.fire('Error', 'Something went wrong while applying Node-RED.', 'error');
+      console.error(error);
+    } finally {
+      setLoading(false);  
+    }
+  }
+};
+
 
   const joinGroup = async (group_id: any) => {
     if (!group_id) {
@@ -595,28 +652,39 @@ export default function ListClients() {
                     <Table stickyHeader>
                       <TableHead>
                         <TableRow>
-                          <TableCell sx={{ width: "15%", fontWeight: "bold" }}>Group ID</TableCell>
+                          <TableCell sx={{ width: "20%", fontWeight: "bold" }}>Group ID</TableCell>
                           <TableCell sx={{ width: "20%", fontWeight: "bold" }}>Project Name</TableCell>
-                          <TableCell sx={{ width: "30%", fontWeight: "bold", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                            Project Description
-                          </TableCell>
-                          <TableCell sx={{ width: "20%", fontWeight: "bold" }}>Project Owner</TableCell>
-                          <TableCell sx={{ width: "15%", textAlign: "center", fontWeight: "bold" }}>Actions</TableCell>
+                          <TableCell sx={{ width: "30%", fontWeight: "bold" }}>Project Description</TableCell>
+                          <TableCell sx={{ width: "15%", fontWeight: "bold" }}>Project Owner</TableCell>
+                          <TableCell sx={{ textAlign: "center", fontWeight: "bold" }}>Actions</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
                         {myGroups?.map((group: any, index) => (
                           <TableRow key={index}>
-                            <TableCell sx={{ maxWidth: "150px", wordBreak: "break-word" }}>{group?.keycloak_group_id}</TableCell>
-                            <TableCell sx={{ maxWidth: "180px", wordBreak: "break-word", fontWeight: "bold" }}>{group?.name}</TableCell>
-                            <TableCell sx={{ maxWidth: "200px", wordBreak: "break-word", whiteSpace: "normal" }}>
+                            <TableCell sx={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                              {group?.keycloak_group_id}
+                            </TableCell>
+                            <TableCell sx={{ fontWeight: "bold", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                              {group?.name}
+                            </TableCell>
+                            <TableCell sx={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                               {group?.description}
                             </TableCell>
-                            <TableCell sx={{ maxWidth: "100px", wordBreak: "break-word" }}>
+                            <TableCell>
                               {group?.owner_first_name + " " + group?.owner_last_name}
                             </TableCell>
-                            <TableCell sx={{ textAlign: "center" }}>
-                              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1, flexWrap: "nowrap" }}>
+
+                            <TableCell sx={{ textAlign: "center", fontWeight: "bold" }}>
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  flexWrap: "nowrap",
+                                  gap: 1,
+                                }}
+                              >
                                 {/* View Members */}
                                 <IconButton disabled={!group?.is_owner} color="primary" onClick={(e) => handleViewMembers(e, group?.id)}>
                                   <GroupIcon />
@@ -717,45 +785,83 @@ export default function ListClients() {
                                 </IconButton>
 
                                 {/* Select Button */}
-                                <Button
-                                  variant="contained"
-                                  color="primary"
-                                  size="small"
-                                  sx={{ backgroundColor: "#233044", whiteSpace: "nowrap", "&:hover": { backgroundColor: "#233044" } }}
-                                  disabled={group?.membership_status === "pending" || group?.membership_status === "rejected" || group?.membership_status === "left" || !group?.is_ready}
-                                  onClick={() => {
-                                    if (!(
-                                      group?.membership_status === "pending" ||
-                                      group?.membership_status === "rejected" ||
-                                      group?.membership_status === "left" ||
-                                      !group?.is_ready
-                                    )) {
-                                      if (group?.is_owner) {
-                                        localStorage.setItem("group_id", group.keycloak_group_id);
-                                        localStorage.setItem("selected_others", "false");
-                                        localStorage.removeItem("user_email");
-                                        dispatch(setSelectedGroupId(group?.keycloak_group_id))
-                                      } else {
-                                        localStorage.setItem("group_id", group?.keycloak_group_id);
-                                        localStorage.setItem("selected_others", "true");
-                                        localStorage.setItem("user_email", group?.owner_email);
-                                        dispatch(setSelectedGroupId(group?.keycloak_group_id))
-                                      }
-                                    }
-                                  }}
-                                >
-                                  {!(group?.membership_status === "pending" || group?.membership_status === "rejected" || group?.membership_status === "left" || !group?.is_ready) ? (
-                                    <LinkCustom
-
-                                      to={group?.is_owner ? `/dashboard/${group?.keycloak_group_id}` : `/dashboard/${group?.keycloak_group_id}?other_group=true`}
-                                      style={{ textDecoration: "none", color: "inherit" }}
-                                    >
-                                      Select
-                                    </LinkCustom>
-                                  ) : (
-                                    "Select"
+                                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1, flexWrap: "nowrap", flexDirection: "row" }}>
+                                        {/* ✅ Apply Node-RED Toggle Button (Only show if not yet applied) */}
+                                  { (
+                                    <Tooltip title="Project Settings">
+                                      <IconButton
+                                        disabled={group?.is_owner && group?.has_node_red }
+                                        size="small"
+                                        onClick={(e) => handleNodeRedMenuOpen(e, group)}
+                                      >
+                                        <Settings fontSize="small" />
+                                      </IconButton>
+                                    </Tooltip>
                                   )}
-                                </Button>
+
+                                  <Menu
+                                    anchorEl={nodeRedMenuAnchor}
+                                    open={Boolean(nodeRedMenuAnchor)}
+                                    onClose={handleNodeRedMenuClose} 
+                                    anchorOrigin={{
+                                      vertical: 'bottom',
+                                      horizontal: 'right',
+                                    }}
+                                    transformOrigin={{
+                                      vertical: 'top',
+                                      horizontal: 'right',
+                                    }}
+                                  >
+                                    <MenuItem
+                                      onClick={() => handleApplyNodeRed(nodeRedTargetGroup?.keycloak_group_id)}
+                                    >
+                                      Apply Node-RED
+                                    </MenuItem>
+                                  </Menu>
+                                  {/* Select Button */}
+                                  <Button
+                                    variant="contained"
+                                    color="primary"
+                                    size="small"
+                                    sx={{ backgroundColor: "#233044", whiteSpace: "nowrap", "&:hover": { backgroundColor: "#233044" } }}
+                                    disabled={group?.membership_status === "pending" || group?.membership_status === "rejected" || group?.membership_status === "left" || !group?.is_ready}
+                                    onClick={() => {
+                                      if (!(
+                                        group?.membership_status === "pending" ||
+                                        group?.membership_status === "rejected" ||
+                                        group?.membership_status === "left" ||
+                                        !group?.is_ready
+                                      )) {
+                                        if (group?.is_owner) {
+                                          localStorage.setItem("group_id", group.keycloak_group_id);
+                                          localStorage.setItem("selected_others", "false");
+                                          localStorage.removeItem("user_email");
+                                          dispatch(setSelectedGroupId(group?.keycloak_group_id));
+                                        } else {
+                                          localStorage.setItem("group_id", group?.keycloak_group_id);
+                                          localStorage.setItem("selected_others", "true");
+                                          localStorage.setItem("user_email", group?.owner_email);
+                                          dispatch(setSelectedGroupId(group?.keycloak_group_id));
+                                        }
+                                      }
+                                    }}
+                                  >
+                                    {!(group?.membership_status === "pending" || group?.membership_status === "rejected" || group?.membership_status === "left" || !group?.is_ready) ? (
+                                      <LinkCustom
+                                        to={group?.is_owner ? `/dashboard/${group?.keycloak_group_id}` : `/dashboard/${group?.keycloak_group_id}?other_group=true`}
+                                        style={{ textDecoration: "none", color: "inherit" }}
+                                      >
+                                        Select
+                                      </LinkCustom>
+                                    ) : (
+                                      "Select"
+                                    )}
+                                  </Button>
+
+                            
+
+                                </Box>
+
                               </Box>
                             </TableCell>
 
@@ -829,10 +935,10 @@ export default function ListClients() {
                                   ? "Node-RED will be included in this project."
                                   : "Node-RED will not be included in this project.",
                                 timer: 2500,
-                                showConfirmButton: false, 
+                                showConfirmButton: false,
                                 position: "bottom-end",
                                 toast: true,
-                        
+
                               });
                             }}
                           />
@@ -954,7 +1060,7 @@ export default function ListClients() {
           </Box>
         </>
       )}
-      {isCreatingProject && (
+      {isCreatingProject || loading && (
         <Box
           sx={{
             position: 'absolute',  // Position loader on top of form
