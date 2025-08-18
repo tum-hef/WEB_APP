@@ -417,13 +417,14 @@ const handleApplyNodeRed = async (groupId: string) => {
           },
         }
       );
-
+      
       Swal.fire('Success', 'Node-RED has been provisioned!', 'success');
       // Optionally refresh list or update UI here
     } catch (error) {
       Swal.fire('Error', 'Something went wrong while applying Node-RED.', 'error');
       console.error(error);
     } finally {
+      getAllGroups()
       setLoading(false);  
     }
   }

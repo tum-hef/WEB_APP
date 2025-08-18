@@ -6,6 +6,16 @@ import keycloak from "./keycloak";
 import { Provider } from 'react-redux';
 import { store } from './store/store';
 import GroupInitializer from "./components/GroupIntializer";
+import { ModuleRegistry } from 'ag-grid-community';
+import { AllCommunityModule } from 'ag-grid-community';
+import './App.css'
+
+// 👇 register once before any grid mounts
+ModuleRegistry.registerModules([AllCommunityModule]);
+
+// 👇 import grid CSS
+import 'ag-grid-community/styles/ag-grid.css';
+import 'ag-grid-community/styles/ag-theme-alpine.css';
 
 const eventLogger = (event: unknown, error: unknown) => {
   console.log("onKeycloakEvent", event, error);

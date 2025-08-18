@@ -1,0 +1,87 @@
+/* ================================
+   AG Grid Custom Overrides
+   Matches old react-data-table look
+   ================================ */
+
+.custom-ag-grid {
+  font-size: 14px;
+  background: #fff;
+}
+
+/* --- Row height and style --- */
+.custom-ag-grid .ag-row {
+  height: 42px !important;      /* consistent row height */
+  max-height: 65px !important;
+  min-height: 65px !important;
+  font-size: 14px;
+  border-bottom: 1px solid #e0e0e0;
+  box-sizing: border-box;
+}
+
+/* --- Cells --- */
+.custom-ag-grid .ag-cell {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;  /* text left-aligned */
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  padding: 0 8px;
+  box-sizing: border-box;
+}
+
+/* Utility class: center content (for icons columns) */
+.ag-center-cell {
+  justify-content: flex-start !important;
+  text-align: center;
+}
+
+/* --- Header --- */
+.custom-ag-grid .ag-header {
+  background-color: #fff;
+  border-bottom: 1px solid #ddd;
+  font-weight: 500;
+  font-size: 14px;
+    font-weight: normal;
+}
+
+.custom-ag-grid .ag-header-cell {
+  padding: 0 8px !important;
+  font-size: 14px;
+  font-weight: 600;
+  font-weight: normal !important;  /* ✅ force normal, not bold */
+  border-right: 1px solid #f5f5f5;
+  box-sizing: border-box;
+}
+
+/* --- Floating filter row (compact) --- */
+.custom-ag-grid .ag-floating-filter-body {
+  padding: 0 !important;
+  height: 28px !important;
+  display: flex;
+  align-items: center;
+}
+
+.custom-ag-grid .ag-floating-filter-input {
+  height: 24px !important;
+  line-height: 24px !important;
+  font-size: 13px !important;
+  padding: 2px 6px !important;
+  box-sizing: border-box;
+}
+
+/* --- Remove heavy grid borders --- */
+.custom-ag-grid .ag-root-wrapper {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* --- Pagination panel --- */
+.custom-ag-grid .ag-paging-panel {
+  justify-content: flex-end;
+  font-size: 13px;
+  color: #444;
+  border-top: 1px solid #eee;
+  padding: 6px 12px;
+  background: #fff;
+}
