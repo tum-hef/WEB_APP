@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import DataTable, { ExpanderComponentProps } from "react-data-table-component";
-import { Breadcrumbs, Button, Typography } from "@mui/material";
+import { Breadcrumbs, Typography } from "@mui/material";
 import LinkCustom from "../../components/LinkCustom";
 import BiotechSharpIcon from "@mui/icons-material/BiotechSharp";
 import Dashboard from "../../components/DashboardComponent";
 import { useKeycloak } from "@react-keycloak/web";
 import { ToastContainer, toast } from "react-toastify";
 import { useParams } from "react-router-dom";
+import DataTableCard from "../../components/DataGrid";
 
 const ListDatastreamPerDevice = () => {
   const { keycloak } = useKeycloak();
@@ -20,11 +20,13 @@ const ListDatastreamPerDevice = () => {
   const { id } = useParams<{ id: string }>();
 
   const fetchThings = () => {
-    const backend_url = process.env.REACT_APP_BACKEND_URL; 
-    const isDev = process.env.REACT_APP_IS_DEVELOPMENT === 'true';  
+    const backend_url = process.env.REACT_APP_BACKEND_URL;
+    const isDev = process.env.REACT_APP_IS_DEVELOPMENT === "true";
     axios
       .get(
-        isDev ? `${backend_url}:${frostServerPort}/FROST-Server/v1.0/Things(${id})/Datastreams`   : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Things(${id})/Datastreams`,
+        isDev
+          ? `${backend_url}:${frostServerPort}/FROST-Server/v1.0/Things(${id})/Datastreams`
+          : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Things(${id})/Datastreams`,
         {
           headers: {
             "Content-Type": "application/json",
@@ -41,22 +43,21 @@ const ListDatastreamPerDevice = () => {
 
   const fetchFrostPort = async () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL;
-
-    // Determine email based on the "selected_others" logic
-    const email = localStorage.getItem("selected_others") === "true"
-    ? localStorage.getItem("user_email")
-  
-    : userInfo?.preferred_username;
+    const email =
+      localStorage.getItem("selected_others") === "true"
+        ? localStorage.getItem("user_email")
+        : userInfo?.preferred_username;
     const group_id = localStorage.getItem("group_id");
+
     if (email) {
       try {
         const response = await axios.post(
           `${backend_url}/frost-server`,
-          { user_email: email, group_id: group_id }, // ✅ Adding group_id to the request body
+          { user_email: email, group_id: group_id },
           {
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`, // ✅ Added Authorization header
+              Authorization: `Bearer ${token}`,
             },
           }
         );
@@ -78,79 +79,64 @@ const ListDatastreamPerDevice = () => {
     }
   }, [frostServerPort]);
 
-  const columns = [
+  const columnDefs = [
+     {
+    headerName: "ID",
+    field: "@iot.id",
+    sortable: true,
+    flex: 1,
+    valueGetter: (params: any) => params.data["@iot.id"]
+  },
+  {
+    headerName: "Name",
+    field: "name",
+    sortable: true,
+    flex: 2,
+  },
     {
-      name: "ID",
-      selector: (row: any) => `${row["@iot.id"]}`,
+      headerName: "Description",
+      field: "description",
       sortable: true,
-      width: "5%",
+      filter: true,
+      wrapText: true,
+      autoHeight: true,
     },
     {
-      name: "Name",
-      selector: (row: any) => row.name,
-      sortable: true,
-      width: "25%",
-    },
-    {
-      name: "Description",
-      selector: (row: any) => row.description,
-      sortable: true,
-      width: "40%",
-    },
-    {
-      name: "Observations",
-      selector: (row: any) => (
+      headerName: "Observations",
+      field: "observations",
+      cellRenderer: (params: any) => (
         <LinkCustom
-          style={{
-            color: "#233044",
-            textDecoration: "none",
-          }}
-          to={`/devices/${id}/datastreams/${row["@iot.id"]}/observations`}
+          style={{ color: "#233044", textDecoration: "none" }}
+          to={`/devices/${id}/datastreams/${params.data["@iot.id"]}/observations`}
         >
           <BiotechSharpIcon />
         </LinkCustom>
       ),
-      sortable: true,
-      width: "20%",
+      sortable: false,
+      filter: false,
     },
   ];
 
   return (
     <Dashboard>
-      <ToastContainer
-        position="bottom-right"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="dark"
-      />
+      <ToastContainer position="bottom-right" autoClose={5000} theme="dark" />
+
       <Breadcrumbs
         aria-label="breadcrumb"
-        style={{
-          marginBottom: "10px",
-        }}
+        style={{ marginBottom: "10px" }}
       >
         <LinkCustom to="/">Data Space</LinkCustom>
         <LinkCustom to="/frost_entities">Data Items</LinkCustom>
         <LinkCustom to="/devices">Devices</LinkCustom>
         <Typography color="text.primary">
-          Datastream of Device #{id}{" "}
-          {datastream[0]?.name && `(${datastream[0]?.name})`}
+          Datastream of Device #{id} {datastream[0]?.name && `(${datastream[0]?.name})`}
         </Typography>
       </Breadcrumbs>
 
-      <DataTable
-        title={`Datastreams for Device #${id} ${datastream[0]?.name}`}
-        columns={columns}
-        data={datastream}
-        pagination={true}
-        paginationPerPage={5}
-        paginationRowsPerPageOptions={[5, 10, 15]}
+      <DataTableCard
+        title={`Datastreams for Device #${id} ${datastream[0]?.name || ""}`}
+        columnDefs={columnDefs}
+        rowData={datastream}
       />
     </Dashboard>
   );

@@ -12,6 +12,8 @@ import DeleteForeverOutlinedIcon from "@mui/icons-material/DeleteForeverOutlined
 import Swal from "sweetalert2";
 import ReactGA from "react-ga4";
 import { GAactionsObservations } from "../../utils/GA";
+import DataTableCard from "../../components/DataGrid";
+import moment from "moment";
 const ListObservations = () => {
   const { keycloak } = useKeycloak();
   const userInfo = keycloak?.idTokenParsed;
@@ -82,27 +84,52 @@ const ListObservations = () => {
     }
   }, [frostServerPort]);
 
-  const columns = [
-    {
-      name: "ID",
-      selector: (row: any) => `${row["@iot.id"]}`,
-      sortable: true,
-      width: "10%",
-    },
-    {
-      name: "Result",
-      selector: (row: any) => row.result,
-      sortable: true,
-      width: "20%",
-    },
+ const columnDefs = [
+  {
+    headerName: "ID",
+    field: "@iot.id",
+    sortable: true,
+    flex: 1,  
+     valueGetter: (params: any) => params.data["@iot.id"]
 
+  },
+  {
+    headerName: "Result",
+    field: "result",
+    sortable: true,
+    flex: 2,
+  },
     {
-      name: "Pheonomenon Time",
-      selector: (row: any) => row.phenomenonTime,
-      sortable: true,
-      width: "20%",
+    headerName: "Phenomenon Time",
+    field: "phenomenonTime",
+    sortable: true,
+    filter: "agDateColumnFilter",
+    width: 280,
+    valueFormatter: (params: any) => {
+      if (!params.value) return "";
+      return moment(params.value).format("YYYY-MM-DD HH:mm:ss"); // ✅ show full datetime
     },
-  ];
+    filterParams: {
+      comparator: (filterLocalDateAtMidnight: Date, cellValue: string) => {
+        if (!cellValue) return -1;
+
+        // convert both filter date and cell value to full datetime
+        const cellDate = moment(cellValue).toDate();
+        const filterDate = moment(filterLocalDateAtMidnight).toDate();
+
+        if (cellDate.getTime() === filterDate.getTime()) {
+          return 0;
+        }
+        return cellDate < filterDate ? -1 : 1;
+      },
+      browserDatePicker: true,
+      suppressAndOrCondition: false, // ✅ enables "in range"
+    },
+    wrapText: true,
+    autoHeight: true,
+    cellStyle: { whiteSpace: "normal" },
+  },
+];
 
   const ExpandedComponent: React.FC<ExpanderComponentProps<any>> = ({
     data,
@@ -130,41 +157,20 @@ const ListObservations = () => {
   };
 
   return (
-    <Dashboard>
-      <ToastContainer
-        position="bottom-right"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="dark"
-      />
-      <Breadcrumbs
-        aria-label="breadcrumb"
-        style={{
-          marginBottom: "10px",
-        }}
-      >
-        <LinkCustom to="/">Data Space</LinkCustom>
-        <LinkCustom to="/frost_entities">Data Items</LinkCustom>
-        <Typography color="text.primary">Observations</Typography>
-      </Breadcrumbs>
-
-      <DataTable
-        title="Observations"
-        columns={columns}
-        data={observations}
-        expandableRows
-        expandableRowsComponent={ExpandedComponent}
-        pagination={true}
-        paginationPerPage={5}
-        paginationRowsPerPageOptions={[5, 10, 15]}
-      />
-    </Dashboard>
+      <Dashboard>
+           <ToastContainer position="bottom-right" autoClose={5000} theme="dark" />
+     
+           {/* Breadcrumbs */}
+           <Breadcrumbs aria-label="breadcrumb" style={{ marginBottom: "10px" }}>
+             <LinkCustom to="/">Data Space</LinkCustom>
+             <LinkCustom to="/frost_entities">Data Items</LinkCustom>
+             <Typography color="text.primary">Observations</Typography>
+           </Breadcrumbs>
+     
+           {/* Create Button */}
+          
+           <DataTableCard title="Observations" columnDefs={columnDefs} rowData={observations} />
+         </Dashboard>
   );
 };
 
