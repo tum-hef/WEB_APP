@@ -14,6 +14,7 @@ import DeleteForeverOutlinedIcon from "@mui/icons-material/DeleteForeverOutlined
 import FolderSpecialIcon from "@mui/icons-material/FolderSpecial";
 import MapIcon from "@mui/icons-material/Map";
 import { useAppSelector, useIsOwner } from "../../hooks/hooks";
+import DataTableCard from "../../components/DataGrid";
 
 const Devices = () => {
   const { keycloak } = useKeycloak();
@@ -113,38 +114,224 @@ const Devices = () => {
         </LinkCustom>
       ),
     },
-    {
-      headerName: "Edit",
-      filter: false,
-      minWidth: 100,
-      cellClass: "ag-center-cell",
-      cellRenderer: (params: any) => (
-        <EditOutlinedIcon
-          style={{
-            cursor: isOwner ? "pointer" : "not-allowed",
-            color: isOwner ? "red" : "gray",
-            opacity: isOwner ? 1 : 0.4,
-          }}
-          onClick={() => Swal.fire("Edit Device", `Editing ${params.data.name}`)}
-        />
-      ),
-    },
-    {
-      headerName: "Delete",
-      filter: false,
-      minWidth: 100,
-      cellClass: "ag-center-cell",
-      cellRenderer: (params: any) => (
-        <DeleteForeverOutlinedIcon
-          style={{
-            cursor: isOwner ? "pointer" : "not-allowed",
-            color: isOwner ? "red" : "gray",
-            opacity: isOwner ? 1 : 0.4,
-          }}
-          onClick={() => Swal.fire("Delete Device", `Deleting ${params.data.name}`)}
-        />
-      ),
-    },
+  {
+  headerName: "Edit",
+  filter: false,
+  minWidth: 100,
+  cellClass: "ag-center-cell",
+  cellRenderer: (params: any) => {
+    const row = params.data;
+    return (
+      <EditOutlinedIcon
+        style={{
+          cursor: isOwner ? "pointer" : "not-allowed",
+          color: isOwner ? "red" : "gray",
+          opacity: isOwner ? 1 : 0.4,
+          pointerEvents: isOwner ? "auto" : "none",
+        }}
+        onClick={() => {
+          if (!isOwner) return;
+
+          Swal.fire({
+            title: "Edit Device",
+            html:
+              `<div class="swal-input-row-with-label">` +
+              `<label for="name">New Name</label>` +
+              `<div class="swal-input-field">` +
+              `<input id="name" class="swal2-input" placeholder="Enter the new device name" value="${
+                row.name || ""
+              }">` +
+              `</div>` +
+              `</div>` +
+              `<div class="swal-input-row">` +
+              `<label for="description">New Description</label>` +
+              `<input id="description" class="swal2-input" placeholder="Enter the new device description" value="${
+                row.description || ""
+              }">` +
+              `</div>`,
+            showCancelButton: true,
+            confirmButtonText: "Save",
+            showLoaderOnConfirm: true,
+            preConfirm: () => {
+              const name = (document.getElementById("name") as HTMLInputElement).value;
+              const description = (document.getElementById("description") as HTMLInputElement).value;
+              if (!name) {
+                Swal.showValidationMessage("Please enter a device name");
+              } else {
+                return { name, description };
+              }
+            },
+          }).then((result) => {
+            if (result.isConfirmed) {
+              const { name, description } = result.value as {
+                name: string;
+                description: string;
+              };
+
+              axios
+                .post(
+                  `${process.env.REACT_APP_BACKEND_URL}/update`,
+                  {
+                    url: `Things(${row["@iot.id"]})`,
+                    FROST_PORT: frostServerPort,
+                    body: { name, description },
+                    keycloak_id: userInfo?.sub,
+                  },
+                  {
+                    headers: {
+                      "Content-Type": "application/json",
+                      Authorization: `Bearer ${keycloak?.token}`,
+                    },
+                  }
+                )
+                .then((response) => {
+                  if (response.status === 200) {
+                    const newDevices = devices.map((device) => {
+                      if (device["@iot.id"] === row["@iot.id"]) {
+                        device.name = name;
+                        device.description = description;
+                      }
+                      return device;
+                    });
+                    setDevices(newDevices);
+
+                    Swal.fire({
+                      icon: "success",
+                      title: "Success",
+                      text: "Device edited successfully!",
+                    });
+                  } else {
+                    Swal.fire({
+                      icon: "error",
+                      title: "Oops...",
+                      text: "Something went wrong! Device not edited!",
+                    });
+                  }
+                })
+                .catch((error) => {
+                  axios.post(
+                    `http://localhost:4500/mutation_error_logs`,
+                    {
+                      keycloak_id: userInfo?.sub,
+                      method: "UPDATE",
+                      attribute: "Devices",
+                      attribute_id: row["@iot.id"],
+                      frost_port: frostServerPort,
+                    },
+                    {
+                      headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${keycloak?.token}`,
+                      },
+                    }
+                  );
+                  Swal.fire({
+                    icon: "error",
+                    title: "Oops...",
+                    text: "Something went wrong! Device not edited!",
+                  });
+                });
+            }
+          });
+        }}
+      />
+    );
+  },
+}
+,
+  {
+  headerName: "Delete",
+  filter: false,
+  minWidth: 100,
+  cellClass: "ag-center-cell",
+  cellRenderer: (params: any) => {
+    const row = params.data;
+    return (
+      <DeleteForeverOutlinedIcon
+        style={{
+          cursor: isOwner ? "pointer" : "not-allowed",
+          color: isOwner ? "red" : "gray",
+          opacity: isOwner ? 1 : 0.4,
+          pointerEvents: isOwner ? "auto" : "none",
+        }}
+        onClick={() => {
+          if (!isOwner) return;
+
+          Swal.fire({
+            title: `Are you sure you want to delete ${row.name}?`,
+            text: "You will not be able to recover this device! Linked datastream might become dysfunctional!",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Yes, delete it!",
+          }).then(async (result) => {
+            if (result.isConfirmed) {
+              try {
+                const response = await axios.post(
+                  `${process.env.REACT_APP_BACKEND_URL}/delete`,
+                  {
+                    url: `Things(${row["@iot.id"]})`,
+                    FROST_PORT: frostServerPort,
+                    keycloak_id: userInfo?.sub,
+                  },
+                  {
+                    headers: {
+                      "Content-Type": "application/json",
+                      Authorization: `${token}`,
+                    },
+                  }
+                );
+
+                if (response.status === 200) {
+                  Swal.fire({
+                    icon: "success",
+                    title: "Success",
+                    text: "Device deleted successfully!",
+                  });
+
+                  const newDevices = devices.filter(
+                    (device) => device["@iot.id"] !== row["@iot.id"]
+                  );
+                  setDevices(newDevices);
+                } else {
+                  Swal.fire({
+                    icon: "error",
+                    title: "Oops...",
+                    text: "Something went wrong! Device not deleted!",
+                  });
+                }
+              } catch (error) {
+                axios.post(
+                  `http://localhost:4500/mutation_error_logs`,
+                  {
+                    keycloak_id: userInfo?.sub,
+                    method: "DELETE",
+                    attribute: "Devices",
+                    attribute_id: row["@iot.id"],
+                    frost_port: frostServerPort,
+                  },
+                  {
+                    headers: {
+                      "Content-Type": "application/json",
+                      Authorization: `Bearer ${token}`,
+                    },
+                  }
+                );
+
+                Swal.fire({
+                  icon: "error",
+                  title: "Oops...",
+                  text: "Something went wrong! Device not deleted!",
+                });
+              }
+            }
+          });
+        }}
+      />
+    );
+  },
+},
     {
       headerName: "Location",
       filter: false,
@@ -191,42 +378,13 @@ const Devices = () => {
     </Button>
   )}
 
-  {/* Card Wrapper */}
-  <Card elevation={1} style={{ borderRadius: "8px" }}>
-   <CardHeader
-  title={
-    <Typography variant="h3" style={{ fontWeight: 400 }}>
-      Devices
-    </Typography>
-  }
-/>
+  
 
-    <CardContent style={{ padding: 0 }}>
-      <div
-        className="ag-theme-material custom-ag-grid"
-        style={{ height: 500, width: "100%" }}
-      >
-        <AgGridReact
-          rowData={devices}
-          columnDefs={columnDefs}
-          pagination
-          paginationPageSize={5}
-          rowHeight={65}
-          headerHeight={42}
-          suppressRowTransform={true}
-          defaultColDef={{
-            filter: true,
-            floatingFilter: true,
-            sortable: true,
-            resizable: true,
-            autoHeight: false,
-            wrapText: false,
-            cellStyle: { textAlign: "left" },
-          }}
-        />
-      </div>
-    </CardContent>
-  </Card>
+     <DataTableCard
+        title="Devices"
+        columnDefs={columnDefs}
+        rowData={devices}
+      />
 </Dashboard>
 
   );
