@@ -294,8 +294,6 @@ const ListSensors = () => {
           Create
         </Button>
       )}
-
-      {/* ✅ Use HOC */}
       <DataTableCard title="Sensor Types" columnDefs={columnDefs} rowData={sensors} />
     </Dashboard>
   );

@@ -14,6 +14,7 @@ import ReactGA from "react-ga4";
 
 import { GAactionsObservationProperties } from "../../utils/GA";
 import { useAppSelector, useIsOwner } from "../../hooks/hooks";
+import DataTableCard from "../../components/DataGrid";
 const ListObservationProperty = () => {
   const { keycloak } = useKeycloak();
   const userInfo = keycloak?.idTokenParsed;
@@ -94,33 +95,46 @@ const ListObservationProperty = () => {
   }, [frostServerPort]);
 
   const columns = [
-    {
-      name: "ID",
-      selector: (row: any) => `${row["@iot.id"]}`,
-      sortable: true,
-      width: "10%",
+   {
+      headerName: "ID",
+      field: "@iot.id",
+      flex: 1,
+      valueGetter: (params: any) => params.data["@iot.id"]
     },
+   {
+    headerName: "Name",
+    field: "name",
+    width: 200,
+    sortable: true,
+    filter: "agTextColumnFilter",
+  },
     {
-      name: "Name",
-      selector: (row: any) => row.name,
-      sortable: true,
-      width: "20%",
-    },
+    headerName: "Description",
+    field: "description",
+    width: 250,
+    sortable: true,
+    filter: "agTextColumnFilter",
+    wrapText: true,
+    autoHeight: true,
+    cellStyle: { whiteSpace: "normal" },
+  },
+
+  {
+    headerName: "Definition",
+    field: "definition",
+    width: 250,
+    sortable: true,
+    filter: "agTextColumnFilter",
+    wrapText: true,
+    autoHeight: true,
+    cellStyle: { whiteSpace: "normal" },
+  },
     {
-      name: "Description",
-      selector: (row: any) => row.description,
-      sortable: true,
-      width: "20%",
-    },
-    {
-      name: "Definition",
-      selector: (row: any) => row.definition,
-      sortable: true,
-      width: "20%",
-    },
-    {
+       headerName: "Edit",
       name: "Edit",
-      selector: (row: any) => (
+      flex: 1,
+      filter: false,
+      cellRenderer: (params: any) => (
         <EditOutlinedIcon
         style={{
           cursor: isOwner ? "pointer" : "not-allowed",
@@ -129,6 +143,7 @@ const ListObservationProperty = () => {
           pointerEvents: isOwner ? "auto" : "none",
         }}
           onClick={() => { 
+            const row = params?.data;
             if (!isOwner) return;
             Swal.fire({
               title: "Edit Measurement Property",
@@ -256,12 +271,12 @@ const ListObservationProperty = () => {
           }}
         />
       ),
-      sortable: true,
-      width: "20%",
     },
     {
+      
+       headerName: "Edit",
       name: "Delete",
-      selector: (row: any) => (
+      cellRenderer: (params: any) => (
         <DeleteForeverOutlinedIcon
         style={{
           cursor: isOwner ? "pointer" : "not-allowed",
@@ -270,6 +285,7 @@ const ListObservationProperty = () => {
           pointerEvents: isOwner ? "auto" : "none",
         }}
           onClick={() => { 
+            const row = params?.data;
             if (!isOwner) return;
             Swal.fire({
               title: `Are you sure you want to delete ${row.name}?`,
@@ -343,8 +359,8 @@ const ListObservationProperty = () => {
           }}
         />
       ),
-      sortable: true,
-      width: "20%",
+            flex: 1,
+      filter: false,
     },
   ];
 
@@ -370,61 +386,30 @@ const ListObservationProperty = () => {
   };
 
   return (
-    <Dashboard>
-      <ToastContainer
-        position="bottom-right"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="dark"
-      />
-      <Breadcrumbs
-        aria-label="breadcrumb"
-        style={{
-          marginBottom: "10px",
-        }}
-      >
-        <LinkCustom to="/">Data Space</LinkCustom>
-        <LinkCustom to="/frost_entities">Data Items</LinkCustom>
-        <Typography color="text.primary">Measurement Property</Typography>
-      </Breadcrumbs>
-
-   {isOwner  ?    <LinkCustom to="/observation_properties/store">
-        <Button
-          variant="contained"
-          color="primary"
-          style={{
-            marginBottom: "10px",
-          }}
-        >
-          Create{" "}
-        </Button>
-      </LinkCustom> : <Button
-          variant="contained"
-          color="primary"
-          disabled
-          style={{
-            marginBottom: "10px",
-          }}
-        >
-          Create{" "}
-        </Button> }
-      <DataTable
-        title="Measurement Property"
-        columns={columns}
-        data={observationProperty}
-        expandableRows
-        expandableRowsComponent={ExpandedComponent}
-        pagination={true}
-        paginationPerPage={5}
-        paginationRowsPerPageOptions={[5, 10, 15]}
-      />
-    </Dashboard>
+     <Dashboard>
+         <ToastContainer position="bottom-right" autoClose={5000} theme="dark" />
+   
+         {/* Breadcrumbs */}
+         <Breadcrumbs aria-label="breadcrumb" style={{ marginBottom: "10px" }}>
+           <LinkCustom to="/">Data Space</LinkCustom>
+           <LinkCustom to="/frost_entities">Data Items</LinkCustom>
+           <Typography color="text.primary">Measurement Property</Typography>
+         </Breadcrumbs>
+   
+         {/* Create Button */}
+         {isOwner ? (
+           <LinkCustom to="/observation_properties/store">
+             <Button variant="contained" color="primary" style={{ marginBottom: "10px" }}>
+               Create
+             </Button>
+           </LinkCustom>
+         ) : (
+           <Button variant="contained" color="primary" disabled style={{ marginBottom: "10px" }}>
+             Create
+           </Button>
+         )}
+         <DataTableCard title="Measurement Property" columnDefs={columns} rowData={observationProperty} />
+       </Dashboard>
   );
 };
 
