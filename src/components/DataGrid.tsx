@@ -38,11 +38,12 @@ const DataTableCard: React.FC<DataTableCardProps> = ({ title, columnDefs, rowDat
               floatingFilter: true,
               sortable: true,
               resizable: true,
-              autoHeight: false,
-              wrapText: false,
-              cellStyle: { textAlign: "left" },
+              wrapText: false,   // 👈 default OFF
+              autoHeight: false, // 👈 default OFF
+              cellStyle: { textAlign: "left", whiteSpace: "nowrap" },
             }}
           />
+
         </div>
       </CardContent>
     </Card>

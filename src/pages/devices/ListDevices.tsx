@@ -1,7 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { AgGridReact } from "ag-grid-react";
-import "ag-grid-community/styles/ag-grid.css";
-import "ag-grid-community/styles/ag-theme-material.css"; // Material base
 import axios from "axios";
 import { Breadcrumbs, Button, Card, CardContent, CardHeader, Typography } from "@mui/material";
 import LinkCustom from "../../components/LinkCustom";
