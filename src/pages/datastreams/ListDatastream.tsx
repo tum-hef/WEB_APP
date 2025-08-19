@@ -14,6 +14,7 @@ import Swal from "sweetalert2";
 import ReactGA from "react-ga4";
 import { GAactionsDataStreams } from "../../utils/GA";
 import { useAppSelector, useIsOwner } from "../../hooks/hooks";
+import DataTableCard from "../../components/DataGrid";
 const ListDatastream = () => {
   const { keycloak } = useKeycloak();
   const userInfo = keycloak?.idTokenParsed;
@@ -135,27 +136,35 @@ const ListDatastream = () => {
   }, [frostServerPort]);
 
   const columns = [
-    {
-      name: "ID",
-      selector: (row: any) => `${row["@iot.id"]}`,
-      sortable: true,
-      grow: 1
-    },
-    {
-      name: "Name",
-      selector: (row: any) => row.name,
-      sortable: true,
-      grow: 2
-    },
-    {
-      name: "Description",
-      selector: (row: any) => row.description,
-      sortable: true,
-      width: "25%", // Allocate 25% for the Description column
-    },
+     {
+    headerName: "ID",
+    field: "@iot.id",
+    sortable: true,
+    flex: 1,
+    valueGetter: (params: any) => params.data["@iot.id"]
+  },
+  {
+    headerName: "Name",
+    field: "name",
+    sortable: true,
+    flex: 2,
+  },
+  {
+    headerName: "Description",
+    field: "description",
+    sortable: true,
+    flex: 3,
+    wrapText: true,
+    autoHeight: true,
+    cellStyle: { whiteSpace: "normal" },
+  },
     {
       name: "Edit",
-      selector: (row: any) => (
+      headerName: "Edit",
+       width: 100,
+        flex: 1,
+      filter: false,
+      cellRenderer: (params: any) => (
         <EditOutlinedIcon
         style={{
           cursor: isOwner ? "pointer" : "not-allowed",
@@ -163,7 +172,8 @@ const ListDatastream = () => {
           opacity: isOwner ? 1 : 0.4,
           pointerEvents: isOwner ? "auto" : "none",
         }}
-          onClick={() => {
+          onClick={() => { 
+            const row = params?.data;
             if (!isOwner) return;
             Swal.fire({
               title: "Edit Datastream",
@@ -281,12 +291,14 @@ const ListDatastream = () => {
           }}
         />
       ),
-      sortable: false,
-      width: "10%",
     },    
     {
       name: "Delete",
-      selector: (row: any) => (
+      headerName: "Delete",
+      width: 100,
+       flex: 1,
+      filter: false,
+    cellRenderer: (params: any) => (
         <DeleteForeverOutlinedIcon
         style={{
           cursor: isOwner ? "pointer" : "not-allowed",
@@ -296,6 +308,7 @@ const ListDatastream = () => {
         }}
           onClick={() => { 
             if (!isOwner) return;
+            const row = params?.data
             Swal.fire({
               title: `Delete "${row.name}"?`,
               text: "This will permanently delete the datastream and its related data!",
@@ -371,18 +384,21 @@ const ListDatastream = () => {
           }}
         />
       ),
-      sortable: false,
-      width: "10%",
+
     },    
     {
       name: "Export Data",
-      selector: (row: any) => (
+      headerName: "Export Data",
+       flex: 1,
+      filter: false,
+      cellRenderer: (params: any) => (
         <FileDownloadIcon
           style={{
             cursor: "pointer",
             color: "black",
           }}
-          onClick={() => {
+          onClick={() => { 
+            const row = params?.data;
             const blob = new Blob([JSON.stringify(row, null, 2)], {
               type: "application/json",
             });
@@ -395,8 +411,6 @@ const ListDatastream = () => {
           }}
         />
       ),
-      sortable: true,
-      width: "10%", // Allocate 10% for the Export Data column
     },
   ];
 
@@ -422,62 +436,30 @@ const ListDatastream = () => {
   };
 
   return (
-    <Dashboard>
-      <ToastContainer
-        position="bottom-right"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="dark"
-      />
-      <Breadcrumbs
-        aria-label="breadcrumb"
-        style={{
-          marginBottom: "10px",
-        }}
-      >
-        <LinkCustom to="/">Data Space</LinkCustom>
-        <LinkCustom to="/frost_entities">Data Items</LinkCustom>
-        <Typography color="text.primary">Datastream</Typography>
-      </Breadcrumbs>
-
-    {isOwner  ?   <LinkCustom to="/datastreams/store">
-        <Button
-          variant="contained"
-          color="primary"
-          style={{
-            marginBottom: "10px",
-          }}
-        >
-          Create{" "}
-        </Button>
-      </LinkCustom> : <Button
-        variant="contained"
-        color="primary"
-        disabled
-        style={{
-          marginBottom: "10px",
-        }}
-      >
-        Create{" "}
-      </Button> }
-      <DataTable
-        title="Datastreams"
-        columns={columns}
-        data={datastreams}
-        expandableRows
-        expandableRowsComponent={ExpandedComponent}
-        pagination={true}
-        paginationPerPage={5}
-        paginationRowsPerPageOptions={[5, 10, 15]} 
-        responsive={true}
-      />
-    </Dashboard>
+   <Dashboard>
+         <ToastContainer position="bottom-right" autoClose={5000} theme="dark" />
+   
+         {/* Breadcrumbs */}
+         <Breadcrumbs aria-label="breadcrumb" style={{ marginBottom: "10px" }}>
+           <LinkCustom to="/">Data Space</LinkCustom>
+           <LinkCustom to="/frost_entities">Data Items</LinkCustom>
+           <Typography color="text.primary">Datastreams</Typography>
+         </Breadcrumbs>
+   
+         {/* Create Button */}
+         {isOwner ? (
+           <LinkCustom to="/datastreams/store">
+             <Button variant="contained" color="primary" style={{ marginBottom: "10px" }}>
+               Create
+             </Button>
+           </LinkCustom>
+         ) : (
+           <Button variant="contained" color="primary" disabled style={{ marginBottom: "10px" }}>
+             Create
+           </Button>
+         )}
+         <DataTableCard title="Datastreams" columnDefs={columns} rowData={datastreams} />
+       </Dashboard>
   );
 };
 
