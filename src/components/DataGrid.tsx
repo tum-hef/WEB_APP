@@ -25,7 +25,7 @@ const DataTableCard: React.FC<DataTableCardProps> = ({ title, description,column
 
     <Tooltip title={description || ""} placement="top" arrow>
       <InfoOutlinedIcon
-        sx={{ ml: 1, fontSize: 22, color: "gray", cursor: "pointer", mt: 1 }}
+        sx={{ ml: 1, fontSize: 22, color: "gray", cursor: "pointer", mt: 2 }}
       />
     </Tooltip>
   </Box>
