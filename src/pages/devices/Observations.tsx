@@ -12,6 +12,7 @@ import { ToastContainer } from "react-toastify";
 import { useParams } from "react-router-dom";
 import TableObservationPerDatastream from "../../components/TableObservationPerDatastream";
 import GraphObservationsPerDatastream from "../../components/GraphObservationsPerDatastream";
+import DataTableCard from "../../components/DataGrid";
 
 const Observations = () => {
   const { keycloak } = useKeycloak();
@@ -26,6 +27,41 @@ const Observations = () => {
 
   const [observations, setObservations] = useState<any[]>([]);
   const [isGraphButtonSelected, setIsGraphButtonSelected] = useState(false);
+
+const columnDefs = [
+  {
+    headerName: "ID",
+    field: "id",
+    sortable: true,
+    filter: true,
+    flex: 1,
+    minWidth: 100,
+  },
+  {
+    headerName: "Phenomenon Time",
+    field: "phenomenonTime",
+    sortable: true,
+    filter: true,
+    flex: 2, // give more space since it's usually long
+    minWidth: 180,
+  },
+  {
+    headerName: "Result",
+    field: "result",
+    sortable: true,
+    filter: true,
+    flex: 1,
+    minWidth: 120,
+  },
+  {
+    headerName: "Result Time",
+    field: "resultTime",
+    sortable: true,
+    filter: true,
+    flex: 2, // also tends to be long
+    minWidth: 180,
+  },
+];
 
   const fetchObservations = () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
@@ -120,6 +156,7 @@ const Observations = () => {
           setIsGraphButtonSelected={setIsGraphButtonSelected}
         />
       ) : (
+        
         <TableObservationPerDatastream
           datastream={datastream}
           setDataStream={setDataStream}

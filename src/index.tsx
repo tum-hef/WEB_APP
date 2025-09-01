@@ -9,13 +9,9 @@ import GroupInitializer from "./components/GroupIntializer";
 import { ModuleRegistry } from 'ag-grid-community';
 import { AllCommunityModule } from 'ag-grid-community';
 import './App.css'
-
-// 👇 register once before any grid mounts
-ModuleRegistry.registerModules([AllCommunityModule]);
-
-// 👇 import grid CSS
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
+ModuleRegistry.registerModules([AllCommunityModule]);
 
 const eventLogger = (event: unknown, error: unknown) => {
   console.log("onKeycloakEvent", event, error);

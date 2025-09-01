@@ -7,6 +7,7 @@ import DataTable from "react-data-table-component";
 import { format } from "date-fns-tz";
 import axios from "axios";
 import SaveAltIcon from "@mui/icons-material/SaveAlt";
+import DataTableCard from "./DataGrid";
 
 const style = {
   position: "absolute",
@@ -169,49 +170,65 @@ async function fetchAllObservations(
     setEndDate(null);
   };
 
-  const filterData = () => {
+  const filterData = async () => {
+  if (!start_date || !end_date) return;
 
-    if (start_date && end_date) {
-      const filteredObservations = observations.filter(
-        (item) =>
-          format(new Date(item.phenomenonTime), "dd.MM.yyyy HH:mm", {
-            timeZone: "Europe/Rome",
-          }) >=
-            format(start_date, "dd.MM.yyyy HH:mm", {
-              timeZone: "Europe/Rome",
-            }) &&
-          format(new Date(item.phenomenonTime), "dd.MM.yyyy HH:mm", {
-            timeZone: "Europe/Rome",
-          }) <=
-            format(end_date, "dd.MM.yyyy HH:mm", { timeZone: "Europe/Rome" })
-      );
+  const backend_url = process.env.REACT_APP_FROST_URL;
 
+  // Format ISO timestamps for OData
+  const startISO = start_date.toISOString();
+  const endISO = end_date.toISOString();
+
+  const url = `https://${frostServerPort}-${backend_url}/FROST-Server/v1.0/Datastreams(${id})/Observations?$filter=phenomenonTime ge ${startISO} and phenomenonTime le ${endISO}&$orderby=phenomenonTime desc`;
+
+  try {
+    const res = await axios.get(url, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (res.status === 200 && res.data.value) {
+      setDataStream(res.data.value);
       setIsDataFiltered(true);
-      setDataStream(filteredObservations);
     }
-  };
+  } catch (err) {
+    console.error("Error fetching filtered observations:", err);
+  }
+};
 
-  const columns = [
-    {
-      name: "ID",
-      selector: (row: any) => `${row["@iot.id"]}`,
 
-      sortable: true,
-    },
-    {
-      name: "Phenomenon Time",
-      selector: (row: any) =>
-        format(new Date(row.phenomenonTime), "dd.MM.yyyy HH:mm", {
-          timeZone: "Europe/Rome",
-        }),
-      sortable: true,
-    },
-    {
-      name: "Result",
-      selector: (row: any) => row.result,
-      sortable: true,
-    },
-  ];
+  const columnDefs = [
+  {
+    headerName: "ID",
+    field: "@iot.id",
+    sortable: true,
+    filter: true,
+      flex: 1,
+    valueGetter: (params: any) => params.data["@iot.id"]
+  },
+  {
+    headerName: "Phenomenon Time",
+    field: "phenomenonTime",
+    sortable: true,
+    filter: true,
+    flex: 2,
+    minWidth: 180,
+    valueFormatter: (params: any) =>
+      format(new Date(params.value), "dd.MM.yyyy HH:mm", {
+        timeZone: "Europe/Rome",
+      }),
+  },
+  {
+    headerName: "Result",
+    field: "result",
+    sortable: true,
+    filter: true,
+    flex: 1,
+    minWidth: 120,
+  },
+];
 
   const [csvData, setCsvData] = useState<string[][]>([["ID", "Result", "Phenomenon Time"]]);
   const [csvReady, setCsvReady] = useState(false);
@@ -476,14 +493,11 @@ async function fetchAllObservations(
           })}
         </Typography>
       )}
-      <DataTable
-        title={`Observations for Datastream ${id}`}
-        columns={columns}
-        data={datastream}
-        pagination={true}
-        paginationPerPage={5}
-        paginationRowsPerPageOptions={[5, 10, 15]}
-      />
+      <DataTableCard
+              title={`Observations for Datastream ${id}`}
+              columnDefs={columnDefs}
+              rowData={datastream}
+            />
     </>
   );
 }
