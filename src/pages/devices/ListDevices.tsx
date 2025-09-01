@@ -379,6 +379,8 @@ const Devices = () => {
 
      <DataTableCard
         title="Devices"
+        description="This page lists all registered devices in your project. 
+Each device can have one or more datastreams (e.g., temperature, humidity) that provide sensor observations."
         columnDefs={columnDefs}
         rowData={devices}
       />

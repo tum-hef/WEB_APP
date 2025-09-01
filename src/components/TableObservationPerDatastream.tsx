@@ -57,7 +57,7 @@ function TableObservationPerDatastream({
 }: TableObservationPerDatastreamProps) {
   const [start_date, setStartDate] = useState<Date | null>(null);
   const [end_date, setEndDate] = useState<Date | null>(null);
-  const [isDataFiltered, setIsDataFiltered] = useState(false);  
+  const [isDataFiltered, setIsDataFiltered] = useState(false);
 
   useEffect(() => {
     if (start_date && end_date && start_date < end_date) {
@@ -87,52 +87,52 @@ function TableObservationPerDatastream({
   };
 
   // Add the fetchAllObservations function
-async function fetchAllObservations(
-  baseUrl: string,
-  token: string
-): Promise<Observation[]> {
-  let allObservations: Observation[] = [];
-  let url: string | null = baseUrl;
-  while (url) {
-    const res: any = await axios.get(url, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    allObservations = allObservations.concat(res.data.value as Observation[]);
-    url = res.data["@iot.nextLink"] ? res.data["@iot.nextLink"] : null;
-    // If nextLink is relative, prepend the base URL's origin
-    if (url && url.startsWith("/")) {
-      const urlObj = new URL(baseUrl);
-      url = `${urlObj.origin}${url}`;
+  async function fetchAllObservations(
+    baseUrl: string,
+    token: string
+  ): Promise<Observation[]> {
+    let allObservations: Observation[] = [];
+    let url: string | null = baseUrl;
+    while (url) {
+      const res: any = await axios.get(url, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      allObservations = allObservations.concat(res.data.value as Observation[]);
+      url = res.data["@iot.nextLink"] ? res.data["@iot.nextLink"] : null;
+      // If nextLink is relative, prepend the base URL's origin
+      if (url && url.startsWith("/")) {
+        const urlObj = new URL(baseUrl);
+        url = `${urlObj.origin}${url}`;
+      }
     }
+    return allObservations;
   }
-  return allObservations;
-}
 
-  const getCsvData =async() => {
+  const getCsvData = async () => {
     const csvData: string[][] = [["ID", "Result", "Phenomenon Time"]];
     const backend_url = process.env.REACT_APP_FROST_URL;
-  
+
     // ✅ Base URL (navigation-based, not filter-based)
     let baseUrl = `https://${frostServerPort}-${backend_url}/FROST-Server/v1.0/Datastreams(${id})/Observations`;
-  
+
     const filters: string[] = [];
-  
+
     if (start_date && end_date) {
       filters.push(
         `phenomenonTime ge ${start_date.toISOString()}`,
         `phenomenonTime le ${end_date.toISOString()}`
       );
     }
-  
+
     if (filters.length > 0) {
       baseUrl += `?$filter=${encodeURIComponent(filters.join(" and "))}&$top=100`;
     } else {
       baseUrl += `?$top=100`;
     }
-  
+
     // ✅ Fetch all pages
     const observations = await fetchAllObservations(baseUrl, token);
-  
+
     // ✅ Optional frontend filter (fallback safety)
     const filteredObservations = observations.filter((item) => {
       if (start_date && end_date) {
@@ -141,7 +141,7 @@ async function fetchAllObservations(
       }
       return true;
     });
-  
+
     // ✅ Build CSV rows
     if (filteredObservations.length === 0) {
       csvData.push(["No Data"]);
@@ -150,11 +150,11 @@ async function fetchAllObservations(
         const romeTime = format(new Date(obs.phenomenonTime), "dd.MM.yyyy HH:mm", {
           timeZone: "Europe/Rome",
         });
-  
+
         csvData.push([`${obs["@iot.id"]}`, `${obs.result}`, romeTime]);
       }
     }
-  
+
     return csvData;
   };
   const resetFilter = () => {
@@ -171,64 +171,64 @@ async function fetchAllObservations(
   };
 
   const filterData = async () => {
-  if (!start_date || !end_date) return;
+    if (!start_date || !end_date) return;
 
-  const backend_url = process.env.REACT_APP_FROST_URL;
+    const backend_url = process.env.REACT_APP_FROST_URL;
 
-  // Format ISO timestamps for OData
-  const startISO = start_date.toISOString();
-  const endISO = end_date.toISOString();
+    // Format ISO timestamps for OData
+    const startISO = start_date.toISOString();
+    const endISO = end_date.toISOString();
 
-  const url = `https://${frostServerPort}-${backend_url}/FROST-Server/v1.0/Datastreams(${id})/Observations?$filter=phenomenonTime ge ${startISO} and phenomenonTime le ${endISO}&$orderby=phenomenonTime desc`;
+    const url = `https://${frostServerPort}-${backend_url}/FROST-Server/v1.0/Datastreams(${id})/Observations?$filter=phenomenonTime ge ${startISO} and phenomenonTime le ${endISO}&$orderby=phenomenonTime desc`;
 
-  try {
-    const res = await axios.get(url, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    try {
+      const res = await axios.get(url, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-    if (res.status === 200 && res.data.value) {
-      setDataStream(res.data.value);
-      setIsDataFiltered(true);
+      if (res.status === 200 && res.data.value) {
+        setDataStream(res.data.value);
+        setIsDataFiltered(true);
+      }
+    } catch (err) {
+      console.error("Error fetching filtered observations:", err);
     }
-  } catch (err) {
-    console.error("Error fetching filtered observations:", err);
-  }
-};
+  };
 
 
   const columnDefs = [
-  {
-    headerName: "ID",
-    field: "@iot.id",
-    sortable: true,
-    filter: true,
+    {
+      headerName: "ID",
+      field: "@iot.id",
+      sortable: true,
+      filter: true,
       flex: 1,
-    valueGetter: (params: any) => params.data["@iot.id"]
-  },
-  {
-    headerName: "Phenomenon Time",
-    field: "phenomenonTime",
-    sortable: true,
-    filter: true,
-    flex: 2,
-    minWidth: 180,
-    valueFormatter: (params: any) =>
-      format(new Date(params.value), "dd.MM.yyyy HH:mm", {
-        timeZone: "Europe/Rome",
-      }),
-  },
-  {
-    headerName: "Result",
-    field: "result",
-    sortable: true,
-    filter: true,
-    flex: 1,
-    minWidth: 120,
-  },
-];
+      valueGetter: (params: any) => params.data["@iot.id"]
+    },
+    {
+      headerName: "Phenomenon Time",
+      field: "phenomenonTime",
+      sortable: true,
+      filter: true,
+      flex: 2,
+      minWidth: 180,
+      valueFormatter: (params: any) =>
+        format(new Date(params.value), "dd.MM.yyyy HH:mm", {
+          timeZone: "Europe/Rome",
+        }),
+    },
+    {
+      headerName: "Result",
+      field: "result",
+      sortable: true,
+      filter: true,
+      flex: 1,
+      minWidth: 120,
+    },
+  ];
 
   const [csvData, setCsvData] = useState<string[][]>([["ID", "Result", "Phenomenon Time"]]);
   const [csvReady, setCsvReady] = useState(false);
@@ -425,34 +425,34 @@ async function fetchAllObservations(
           </Typography>
           {/* Download CSV Button */}
           <Grid item xs={12} md={12} mb={2}>
-  <Box sx={{ display: "flex", justifyContent: "center" }}>
-    <Button
-      disabled={csvLoading || !start_date || !end_date || start_date > end_date}
-      variant="contained"
-      style={{
-        backgroundColor: !start_date || !end_date ? "#cccccc" : "",
-        color: !start_date || !end_date ? "#000000" : "",
-      }}
-      onClick={async () => {
-        setCsvLoading(true);
-        const data = await getCsvData();
-        setCsvData(data);
-        setCsvLoading(false);
+            <Box sx={{ display: "flex", justifyContent: "center" }}>
+              <Button
+                disabled={csvLoading || !start_date || !end_date || start_date > end_date}
+                variant="contained"
+                style={{
+                  backgroundColor: !start_date || !end_date ? "#cccccc" : "",
+                  color: !start_date || !end_date ? "#000000" : "",
+                }}
+                onClick={async () => {
+                  setCsvLoading(true);
+                  const data = await getCsvData();
+                  setCsvData(data);
+                  setCsvLoading(false);
 
-        // Auto-trigger download after data is set
-        const blob = new Blob([data.map(row => row.join(",")).join("\n")], { type: "text/csv;charset=utf-8" });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "observation.csv";
-        a.click();
-        window.URL.revokeObjectURL(url);
-      }}
-    >
-      {csvLoading ? "Preparing..." : "Download CSV"}
-    </Button>
-  </Box>
-</Grid>
+                  // Auto-trigger download after data is set
+                  const blob = new Blob([data.map(row => row.join(",")).join("\n")], { type: "text/csv;charset=utf-8" });
+                  const url = window.URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = "observation.csv";
+                  a.click();
+                  window.URL.revokeObjectURL(url);
+                }}
+              >
+                {csvLoading ? "Preparing..." : "Download CSV"}
+              </Button>
+            </Box>
+          </Grid>
           {/* Filter Data Button*/}
           <Grid item xs={12} md={12} mb={2}>
             <Box sx={{ display: "flex", justifyContent: "center" }}>
@@ -494,10 +494,12 @@ async function fetchAllObservations(
         </Typography>
       )}
       <DataTableCard
-              title={`Observations for Datastream ${id}`}
-              columnDefs={columnDefs}
-              rowData={datastream}
-            />
+        title={`Observations for Datastream ${id}`}
+        description="This page shows the individual observations recorded for the selected datastream. 
+Each observation represents a single measurement value captured at a specific time."
+        columnDefs={columnDefs}
+        rowData={datastream}
+      />
     </>
   );
 }

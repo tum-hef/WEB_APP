@@ -23,10 +23,10 @@ const ListObservations = () => {
   const [observations, setObservations] = useState<any[]>([]);
 
   const fetchObservations = () => {
-    const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT; 
-    const isDev = process.env.REACT_APP_IS_DEVELOPMENT === 'true';  
+    const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
+    const isDev = process.env.REACT_APP_IS_DEVELOPMENT === 'true';
     axios
-      .get(isDev ?  `${backend_url}:${frostServerPort}/FROST-Server/v1.0/Observations`  :  `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Observations`, {
+      .get(isDev ? `${backend_url}:${frostServerPort}/FROST-Server/v1.0/Observations` : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Observations`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -47,11 +47,11 @@ const ListObservations = () => {
   const fetchFrostPort = async () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL;
     const email =
-    localStorage.getItem("selected_others") === "true"
-      ? localStorage.getItem("user_email")
-      : userInfo?.preferred_username;
+      localStorage.getItem("selected_others") === "true"
+        ? localStorage.getItem("user_email")
+        : userInfo?.preferred_username;
 
-      const group_id = localStorage.getItem("group_id");  
+    const group_id = localStorage.getItem("group_id");
 
     await axios.post(
       `${backend_url}/frost-server`,
@@ -59,7 +59,7 @@ const ListObservations = () => {
       {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`, 
+          Authorization: `Bearer ${token}`,
         },
       }
     )
@@ -84,52 +84,52 @@ const ListObservations = () => {
     }
   }, [frostServerPort]);
 
- const columnDefs = [
-  {
-    headerName: "ID",
-    field: "@iot.id",
-    sortable: true,
-    flex: 1,  
-     valueGetter: (params: any) => params.data["@iot.id"]
-
-  },
-  {
-    headerName: "Result",
-    field: "result",
-    sortable: true,
-    flex: 2,
-  },
+  const columnDefs = [
     {
-    headerName: "Phenomenon Time",
-    field: "phenomenonTime",
-    sortable: true,
-    filter: "agDateColumnFilter",
-    width: 280,
-    valueFormatter: (params: any) => {
-      if (!params.value) return "";
-      return moment(params.value).format("YYYY-MM-DD HH:mm:ss"); // ✅ show full datetime
+      headerName: "ID",
+      field: "@iot.id",
+      sortable: true,
+      flex: 1,
+      valueGetter: (params: any) => params.data["@iot.id"]
+
     },
-    filterParams: {
-      comparator: (filterLocalDateAtMidnight: Date, cellValue: string) => {
-        if (!cellValue) return -1;
-
-        // convert both filter date and cell value to full datetime
-        const cellDate = moment(cellValue).toDate();
-        const filterDate = moment(filterLocalDateAtMidnight).toDate();
-
-        if (cellDate.getTime() === filterDate.getTime()) {
-          return 0;
-        }
-        return cellDate < filterDate ? -1 : 1;
+    {
+      headerName: "Result",
+      field: "result",
+      sortable: true,
+      flex: 2,
+    },
+    {
+      headerName: "Phenomenon Time",
+      field: "phenomenonTime",
+      sortable: true,
+      filter: "agDateColumnFilter",
+      width: 280,
+      valueFormatter: (params: any) => {
+        if (!params.value) return "";
+        return moment(params.value).format("YYYY-MM-DD HH:mm:ss"); // ✅ show full datetime
       },
-      browserDatePicker: true,
-      suppressAndOrCondition: false, // ✅ enables "in range"
+      filterParams: {
+        comparator: (filterLocalDateAtMidnight: Date, cellValue: string) => {
+          if (!cellValue) return -1;
+
+          // convert both filter date and cell value to full datetime
+          const cellDate = moment(cellValue).toDate();
+          const filterDate = moment(filterLocalDateAtMidnight).toDate();
+
+          if (cellDate.getTime() === filterDate.getTime()) {
+            return 0;
+          }
+          return cellDate < filterDate ? -1 : 1;
+        },
+        browserDatePicker: true,
+        suppressAndOrCondition: false, // ✅ enables "in range"
+      },
+      wrapText: true,
+      autoHeight: true,
+      cellStyle: { whiteSpace: "normal" },
     },
-    wrapText: true,
-    autoHeight: true,
-    cellStyle: { whiteSpace: "normal" },
-  },
-];
+  ];
 
   const ExpandedComponent: React.FC<ExpanderComponentProps<any>> = ({
     data,
@@ -157,20 +157,21 @@ const ListObservations = () => {
   };
 
   return (
-      <Dashboard>
-           <ToastContainer position="bottom-right" autoClose={5000} theme="dark" />
-     
-           {/* Breadcrumbs */}
-           <Breadcrumbs aria-label="breadcrumb" style={{ marginBottom: "10px" }}>
-             <LinkCustom to="/">Data Space</LinkCustom>
-             <LinkCustom to="/frost_entities">Data Items</LinkCustom>
-             <Typography color="text.primary">Observations</Typography>
-           </Breadcrumbs>
-     
-           {/* Create Button */}
-          
-           <DataTableCard title="Observations" columnDefs={columnDefs} rowData={observations} />
-         </Dashboard>
+    <Dashboard>
+      <ToastContainer position="bottom-right" autoClose={5000} theme="dark" />
+
+      {/* Breadcrumbs */}
+      <Breadcrumbs aria-label="breadcrumb" style={{ marginBottom: "10px" }}>
+        <LinkCustom to="/">Data Space</LinkCustom>
+        <LinkCustom to="/frost_entities">Data Items</LinkCustom>
+        <Typography color="text.primary">Observations</Typography>
+      </Breadcrumbs>
+
+      {/* Create Button */}
+
+      <DataTableCard title="Observations" description="This page lists all recorded observations in the system. 
+Each observation contains a measurement result and the time it was collected." columnDefs={columnDefs} rowData={observations} />
+    </Dashboard>
   );
 };
 

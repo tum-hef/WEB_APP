@@ -99,24 +99,24 @@ const ListSensors = () => {
       headerName: "Name",
       field: "name",
       flex: 1,
-      wrapText: true,   
-      autoHeight: true, 
+      wrapText: true,
+      autoHeight: true,
       cellStyle: { whiteSpace: "normal" }
     },
     {
       headerName: "Metadata",
       field: "metadata",
       flex: 1,
-    wrapText: true,   
-      autoHeight: true, 
+      wrapText: true,
+      autoHeight: true,
       cellStyle: { whiteSpace: "normal" }
     },
     {
       headerName: "Description",
       field: "description",
       flex: 2,
-      wrapText: true,   
-      autoHeight: true, 
+      wrapText: true,
+      autoHeight: true,
       cellStyle: { whiteSpace: "normal" }
     },
     {
@@ -294,7 +294,8 @@ const ListSensors = () => {
           Create
         </Button>
       )}
-      <DataTableCard title="Sensor Types" columnDefs={columnDefs} rowData={sensors} />
+      <DataTableCard title="Sensor Types" description="This page lists all sensor types available in the system. 
+Each sensor defines how a measurement is made, including its metadata and description." columnDefs={columnDefs} rowData={sensors} />
     </Dashboard>
   );
 };

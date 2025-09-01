@@ -22,21 +22,21 @@ const ListObservationProperty = () => {
   console.log(token);
 
   const [frostServerPort, setFrostServerPort] = useState<number | null>(null);
-  const [observationProperty, setObservationProperty] = useState<any[]>([]); 
-   const selectedGroupId = useAppSelector(state => state.roles.selectedGroupId);
+  const [observationProperty, setObservationProperty] = useState<any[]>([]);
+  const selectedGroupId = useAppSelector(state => state.roles.selectedGroupId);
   const group = useAppSelector(state =>
-      state.roles.groups.find(g => g?.group_name_id === selectedGroupId)
-    );
-      const isOwner = useIsOwner();
-  
+    state.roles.groups.find(g => g?.group_name_id === selectedGroupId)
+  );
+  const isOwner = useIsOwner();
+
 
   const fetchObservationProperty = () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
-    console.log(backend_url); 
-    const isDev = process.env.REACT_APP_IS_DEVELOPMENT === 'true';  
+    console.log(backend_url);
+    const isDev = process.env.REACT_APP_IS_DEVELOPMENT === 'true';
     axios
       .get(
-       isDev ? `${backend_url}:${frostServerPort}/FROST-Server/v1.0/ObservedProperties` :   `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/ObservedProperties`,
+        isDev ? `${backend_url}:${frostServerPort}/FROST-Server/v1.0/ObservedProperties` : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/ObservedProperties`,
         {
           headers: {
             "Content-Type": "application/json",
@@ -59,10 +59,10 @@ const ListObservationProperty = () => {
   const fetchFrostPort = async () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL;
     const email =
-    localStorage.getItem("selected_others") === "true"
-      ? localStorage.getItem("user_email")
-      : userInfo?.preferred_username;
-      const group_id = localStorage.getItem("group_id");
+      localStorage.getItem("selected_others") === "true"
+        ? localStorage.getItem("user_email")
+        : userInfo?.preferred_username;
+    const group_id = localStorage.getItem("group_id");
     await axios.post(
       `${backend_url}/frost-server`,
       { user_email: email, group_id: group_id }, // ✅ Adding group_id to the request body
@@ -95,54 +95,54 @@ const ListObservationProperty = () => {
   }, [frostServerPort]);
 
   const columns = [
-   {
+    {
       headerName: "ID",
       field: "@iot.id",
       flex: 1,
       valueGetter: (params: any) => params.data["@iot.id"]
     },
-   {
-    headerName: "Name",
-    field: "name",
-    width: 200,
-    sortable: true,
-    filter: "agTextColumnFilter",
-  },
     {
-    headerName: "Description",
-    field: "description",
-    width: 250,
-    sortable: true,
-    filter: "agTextColumnFilter",
-    wrapText: true,
-    autoHeight: true,
-    cellStyle: { whiteSpace: "normal" },
-  },
+      headerName: "Name",
+      field: "name",
+      width: 200,
+      sortable: true,
+      filter: "agTextColumnFilter",
+    },
+    {
+      headerName: "Description",
+      field: "description",
+      width: 250,
+      sortable: true,
+      filter: "agTextColumnFilter",
+      wrapText: true,
+      autoHeight: true,
+      cellStyle: { whiteSpace: "normal" },
+    },
 
-  {
-    headerName: "Definition",
-    field: "definition",
-    width: 250,
-    sortable: true,
-    filter: "agTextColumnFilter",
-    wrapText: true,
-    autoHeight: true,
-    cellStyle: { whiteSpace: "normal" },
-  },
     {
-       headerName: "Edit",
+      headerName: "Definition",
+      field: "definition",
+      width: 250,
+      sortable: true,
+      filter: "agTextColumnFilter",
+      wrapText: true,
+      autoHeight: true,
+      cellStyle: { whiteSpace: "normal" },
+    },
+    {
+      headerName: "Edit",
       name: "Edit",
       flex: 1,
       filter: false,
       cellRenderer: (params: any) => (
         <EditOutlinedIcon
-        style={{
-          cursor: isOwner ? "pointer" : "not-allowed",
-          color: isOwner ? "red" : "gray",
-          opacity: isOwner ? 1 : 0.4,
-          pointerEvents: isOwner ? "auto" : "none",
-        }}
-          onClick={() => { 
+          style={{
+            cursor: isOwner ? "pointer" : "not-allowed",
+            color: isOwner ? "red" : "gray",
+            opacity: isOwner ? 1 : 0.4,
+            pointerEvents: isOwner ? "auto" : "none",
+          }}
+          onClick={() => {
             const row = params?.data;
             if (!isOwner) return;
             Swal.fire({
@@ -151,22 +151,19 @@ const ListObservationProperty = () => {
                 `<div class="swal-input-row-with-label">` +
                 `<label for="name">New Name</label>` +
                 `<div class="swal-input-field">` +
-                `<input id="name" class="swal2-input" placeholder="Enter the new Measurement Property name" value="${
-                  row.name || ""
+                `<input id="name" class="swal2-input" placeholder="Enter the new Measurement Property name" value="${row.name || ""
                 }">` +
                 `</div>` +
                 `</div>` +
                 `<div class="swal-input-row">` +
                 `<label for="description">New Description</label>` +
-                `<input id="description" class="swal2-input" placeholder="Enter the new Measurement Property description" value="${
-                  row.description || ""
+                `<input id="description" class="swal2-input" placeholder="Enter the new Measurement Property description" value="${row.description || ""
                 }">` +
                 `</div>` +
                 `</div>` +
                 `<div class="swal-input-row">` +
                 `<label for="definition">New definition</label>` +
-                `<input id="definition" class="swal2-input" placeholder="Enter the new Measurement Property definition" value="${
-                  row.definition || ""
+                `<input id="definition" class="swal2-input" placeholder="Enter the new Measurement Property definition" value="${row.definition || ""
                 }">` +
                 `</div>`,
               showCancelButton: true,
@@ -273,18 +270,18 @@ const ListObservationProperty = () => {
       ),
     },
     {
-      
-       headerName: "Edit",
+
+      headerName: "Edit",
       name: "Delete",
       cellRenderer: (params: any) => (
         <DeleteForeverOutlinedIcon
-        style={{
-          cursor: isOwner ? "pointer" : "not-allowed",
-          color: isOwner ? "red" : "gray",
-          opacity: isOwner ? 1 : 0.4,
-          pointerEvents: isOwner ? "auto" : "none",
-        }}
-          onClick={() => { 
+          style={{
+            cursor: isOwner ? "pointer" : "not-allowed",
+            color: isOwner ? "red" : "gray",
+            opacity: isOwner ? 1 : 0.4,
+            pointerEvents: isOwner ? "auto" : "none",
+          }}
+          onClick={() => {
             const row = params?.data;
             if (!isOwner) return;
             Swal.fire({
@@ -359,7 +356,7 @@ const ListObservationProperty = () => {
           }}
         />
       ),
-            flex: 1,
+      flex: 1,
       filter: false,
     },
   ];
@@ -386,30 +383,32 @@ const ListObservationProperty = () => {
   };
 
   return (
-     <Dashboard>
-         <ToastContainer position="bottom-right" autoClose={5000} theme="dark" />
-   
-         {/* Breadcrumbs */}
-         <Breadcrumbs aria-label="breadcrumb" style={{ marginBottom: "10px" }}>
-           <LinkCustom to="/">Data Space</LinkCustom>
-           <LinkCustom to="/frost_entities">Data Items</LinkCustom>
-           <Typography color="text.primary">Measurement Property</Typography>
-         </Breadcrumbs>
-   
-         {/* Create Button */}
-         {isOwner ? (
-           <LinkCustom to="/observation_properties/store">
-             <Button variant="contained" color="primary" style={{ marginBottom: "10px" }}>
-               Create
-             </Button>
-           </LinkCustom>
-         ) : (
-           <Button variant="contained" color="primary" disabled style={{ marginBottom: "10px" }}>
-             Create
-           </Button>
-         )}
-         <DataTableCard title="Measurement Property" columnDefs={columns} rowData={observationProperty} />
-       </Dashboard>
+    <Dashboard>
+      <ToastContainer position="bottom-right" autoClose={5000} theme="dark" />
+
+      {/* Breadcrumbs */}
+      <Breadcrumbs aria-label="breadcrumb" style={{ marginBottom: "10px" }}>
+        <LinkCustom to="/">Data Space</LinkCustom>
+        <LinkCustom to="/frost_entities">Data Items</LinkCustom>
+        <Typography color="text.primary">Measurement Property</Typography>
+      </Breadcrumbs>
+
+      {/* Create Button */}
+      {isOwner ? (
+        <LinkCustom to="/observation_properties/store">
+          <Button variant="contained" color="primary" style={{ marginBottom: "10px" }}>
+            Create
+          </Button>
+        </LinkCustom>
+      ) : (
+        <Button variant="contained" color="primary" disabled style={{ marginBottom: "10px" }}>
+          Create
+        </Button>
+      )}
+      <DataTableCard title="Measurement Property" description="This page lists all measurement properties (observed properties) used by datastreams. 
+A measurement property describes what is being measured, such as temperature, humidity, or pressure, 
+and may include a definition or reference for clarity and standardization." columnDefs={columns} rowData={observationProperty} />
+    </Dashboard>
   );
 };
 

@@ -80,19 +80,19 @@ const ListDatastreamPerDevice = () => {
   }, [frostServerPort]);
 
   const columnDefs = [
-     {
-    headerName: "ID",
-    field: "@iot.id",
-    sortable: true,
-    flex: 1,
-    valueGetter: (params: any) => params.data["@iot.id"]
-  },
-  {
-    headerName: "Name",
-    field: "name",
-    sortable: true,
-    flex: 2,
-  },
+    {
+      headerName: "ID",
+      field: "@iot.id",
+      sortable: true,
+      flex: 1,
+      valueGetter: (params: any) => params.data["@iot.id"]
+    },
+    {
+      headerName: "Name",
+      field: "name",
+      sortable: true,
+      flex: 2,
+    },
     {
       headerName: "Description",
       field: "description",
@@ -135,6 +135,9 @@ const ListDatastreamPerDevice = () => {
 
       <DataTableCard
         title={`Datastreams for Device #${id} ${datastream[0]?.name || ""}`}
+        description="This page shows the datastreams linked to the selected device. 
+Each datastream represents a single type of sensor measurement (e.g., temperature, humidity, pressure) 
+and contains its description and the related observations."
         columnDefs={columnDefs}
         rowData={datastream}
       />

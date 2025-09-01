@@ -351,7 +351,8 @@ const columnDefs = [
                Create
              </Button>
            )}
-           <DataTableCard title="Locations" columnDefs={columnDefs} rowData={locations} />
+           <DataTableCard title="Locations" description="This page lists all device locations. 
+Each location includes a name, description, and geographic coordinates, and can be viewed on the map." columnDefs={columnDefs} rowData={locations} />
          </Dashboard>
   );
 };

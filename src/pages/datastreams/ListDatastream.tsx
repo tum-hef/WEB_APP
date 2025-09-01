@@ -458,7 +458,8 @@ const ListDatastream = () => {
              Create
            </Button>
          )}
-         <DataTableCard title="Datastreams" columnDefs={columns} rowData={datastreams} />
+         <DataTableCard title="Datastreams"  description="This page lists all datastreams in the system. 
+Each datastream represents a type of sensor measurement and its related observations." columnDefs={columns} rowData={datastreams} />
        </Dashboard>
   );
 };
