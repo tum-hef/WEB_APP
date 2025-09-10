@@ -760,6 +760,16 @@ function StepperStore() {
                     }
 
                     // Create the Datastream
+                    const customProps = datastream.customAttributes?.reduce(
+                      (acc: Record<string, string>, attr: { key: string; value: string }) => {
+                        if (attr.key) {
+                          acc[attr.key] = attr.value || "";
+                        }
+                        return acc;
+                      },
+                      {}
+                    );
+
                     const response_post_datastream = await axios.post(
                       `${frostServerUrl}/Datastreams`,
                       {
@@ -775,11 +785,14 @@ function StepperStore() {
                         ObservedProperty: { "@iot.id": observed_property_id },
                         observationType: datastream.observation_type,
                         phenomenonTime: phenphenomenonTimeFormated,
+
+      
+                        properties: customProps,
                       },
                       { headers: { "Content-Type": "application/json", Authorization: `Bearer ${keycloak?.token}` } }
                     );
 
-                    console.log("✅ Datastream Created:", response_post_datastream.data);
+                    console.log(" Datastream Created:", response_post_datastream.data);
                   }
 
                   Swal.fire({
