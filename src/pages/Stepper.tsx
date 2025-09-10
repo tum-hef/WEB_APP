@@ -540,15 +540,14 @@ function StepperStore() {
 
         return {
           name: generatedName,
-          // ✅ Always regenerate the description
           description: existingDatastream?.description || `datastream for ${property?.name} of ${values?.device_name}`,
 
-          // ✅ Optionally reuse other fields
           observation_type: existingDatastream?.observation_type || "",
           unit_of_measurement_name: existingDatastream?.unit_of_measurement_name || unit,
           unit_of_measurement_symbol: existingDatastream?.unit_of_measurement_symbol || symbol,
           unit_of_measurement_definition: existingDatastream?.unit_of_measurement_definition || "",
           showOptional: existingDatastream?.showOptional || false,
+          customAttributes: existingDatastream?.customAttributes || [],
         };
       });
       setFieldValue("datastreams", updatedDatastreams, false);
@@ -1394,9 +1393,10 @@ function StepperStore() {
                                                   </Grid>
                                                   <Grid item xs={2}>
                                                     <Button
-                                                      variant="outlined"
+                                                      variant="contained"
                                                       color="error"
                                                       onClick={() => remove(attrIndex)}
+                                                      sx={{ mt: 1 }}
                                                     >
                                                       Remove
                                                     </Button>
@@ -1620,6 +1620,31 @@ function StepperStore() {
                                     {datastream.unit_of_measurement_definition || <em>Not defined</em>}
                                   </Typography>
                                 </Grid>
+                                {datastream.customAttributes && datastream.customAttributes.length > 0 && (
+                                  <Grid item xs={12}>
+                                    <Typography>
+                                      <strong style={{ fontWeight: "bold", color: "#233044" }}>Custom Attributes:</strong>
+                                    </Typography>
+                                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 1 }}>
+                                      {datastream.customAttributes.map((attr: any, attrIndex: number) => (
+                                        <Chip
+                                          key={attrIndex}
+                                          label={`${attr.key}: ${attr.value || "Not defined"}`}
+                                          sx={{
+                                            borderRadius: "16px",
+                                            backgroundColor: "#e3f2fd", // light blue background
+                                            color: "#1565c0",           // strong blue text
+                                            fontWeight: 500,
+                                            "& .MuiChip-label": {
+                                              px: 1.5,
+                                            },
+                                          }}
+                                        />
+                                      ))}
+                                    </Box>
+                                  </Grid>
+                                )}
+
                               </Grid>
                             </Grid>
                             <Grid item xs={12}>
