@@ -77,6 +77,7 @@ interface FormValues {
     unit_of_measurement_symbol: string; // Optional
     unit_of_measurement_definition: string; // Optional
     showOptional?: boolean; // Optional property to preserve showOptional state
+    customAttributes?: Array<{ key: string; value: string }>;
   }>;
 }
 const getValidationSchemaPerStep = (step: number) => {
@@ -161,9 +162,21 @@ const getValidationSchemaPerStep = (step: number) => {
               unit_of_measurement_name: yup.string().nullable(),
               unit_of_measurement_symbol: yup.string().nullable(),
               unit_of_measurement_definition: yup.string().nullable(),
+              customAttributes: yup
+                .array()
+                .of(
+                  yup.object({
+                    key: yup.string().required("Key is required"),
+                    value: yup.string().required("Value is required"),
+                  })
+                )
+                .test("unique-keys", "Custom attribute keys must be unique", (attrs) => {
+                  if (!attrs) return true;
+                  const keys = attrs.map((a) => a.key);
+                  return keys.length === new Set(keys).size;
+                }),
             })
-          )
-          .min(1, "At least one Datastream is required")
+          ).min(1, "At least one Datastream is required")
           .required("Datastreams are required"),
       });
   }
@@ -310,31 +323,26 @@ function StepperStore() {
       if (Object.keys(validationErrors).length > 0) {
         console.error("Validation errors:", validationErrors);
 
-        // Extract the first error message from validationErrors
-        const firstErrorField = Object.keys(validationErrors)[0]; // Get the first field with an error
-        const rawError: any = validationErrors[firstErrorField as keyof typeof validationErrors];
+        // 🔹 helper to extract messages from nested objects/arrays
+        const extractErrors = (err: any): string[] => {
+          if (!err) return [];
+          if (typeof err === "string") return [err];
+          if (Array.isArray(err)) return err.flatMap(extractErrors);
+          if (typeof err === "object") return Object.values(err).flatMap(extractErrors);
+          return [];
+        };
 
-        let firstErrorMessage: any;
+        const allMessages = extractErrors(validationErrors);
 
-        if (typeof rawError === "string") {
-          firstErrorMessage = rawError;
-        } else if (Array.isArray(rawError)) {
-          firstErrorMessage = rawError[0];
-        } else if (typeof rawError === "object" && rawError !== null) {
-          // Extract the first value from the object
-          const firstValue = Object.values(rawError)[0];
-          firstErrorMessage = typeof firstValue === "string" ? firstValue : "An error occurred";
-        } else {
-          firstErrorMessage = "An error occurred";
-        }
-        firstErrorMessage = Object.values(firstErrorMessage)
         Swal.fire({
           icon: "error",
           title: "Validation Error",
-          text: firstErrorMessage,
+          html: allMessages.join("<br/>"), // ✅ show all messages nicely
         });
+
         return; // Stop further processing
       }
+
 
       // Step 2: Custom Validation Logic
       let shouldProceed = true; // Control if step should proceed or not
@@ -600,6 +608,7 @@ function StepperStore() {
                 unit_of_measurement_name: string;
                 unit_of_measurement_symbol: string;
                 unit_of_measurement_definition: string;
+                customAttributes: Array<{ key: string; value: string }>;
               }>,
             }}
             // enableReinitialize
@@ -1341,14 +1350,73 @@ function StepperStore() {
                                       </>
                                     )}
 
-                                    {/* Remove Button */}
-                                    {/* <Grid item xs={12}>
-                                      <Button variant="contained" color="error" onClick={() => remove(index)}>
-                                        Remove Datastream
-                                      </Button>
-                                    </Grid> */}
-
-                                    {/* Divider */}
+                                    {/* ✅ Custom Attributes FieldArray */}
+                                    <Grid item xs={12}>
+                                      <Typography variant="subtitle1">Custom Attributes</Typography>
+                                      <FieldArray name={`datastreams.${index}.customAttributes`}>
+                                        {({ push, remove, form }) => {
+                                          const attrs = form.values.datastreams[index].customAttributes || [];
+                                          return (
+                                            <Grid container spacing={2}>
+                                              {attrs.map((attr: any, attrIndex: number) => (
+                                                <Fragment key={attrIndex}>
+                                                  <Grid item xs={5}>
+                                                    <TextField
+                                                      fullWidth
+                                                      label="Key"
+                                                      name={`datastreams.${index}.customAttributes.${attrIndex}.key`}
+                                                      value={attr.key}
+                                                      onChange={form.handleChange}
+                                                      variant="outlined"
+                                                      error={Boolean(
+                                                        (form.errors.datastreams as any)?.[index]?.customAttributes?.[attrIndex]?.key
+                                                      )}
+                                                      helperText={
+                                                        (form.errors.datastreams as any)?.[index]?.customAttributes?.[attrIndex]?.key as string
+                                                      }
+                                                    />
+                                                  </Grid>
+                                                  <Grid item xs={5}>
+                                                    <TextField
+                                                      fullWidth
+                                                      label="Value"
+                                                      name={`datastreams.${index}.customAttributes.${attrIndex}.value`}
+                                                      value={attr.value}
+                                                      onChange={form.handleChange}
+                                                      variant="outlined"
+                                                      error={Boolean(
+                                                        (form.errors.datastreams as any)?.[index]?.customAttributes?.[attrIndex]?.value
+                                                      )}
+                                                      helperText={
+                                                        (form.errors.datastreams as any)?.[index]?.customAttributes?.[attrIndex]?.value as string
+                                                      }
+                                                    />
+                                                  </Grid>
+                                                  <Grid item xs={2}>
+                                                    <Button
+                                                      variant="outlined"
+                                                      color="error"
+                                                      onClick={() => remove(attrIndex)}
+                                                    >
+                                                      Remove
+                                                    </Button>
+                                                  </Grid>
+                                                </Fragment>
+                                              ))}
+                                              <Grid item xs={12}>
+                                                <Button
+                                                  variant="contained"
+                                                  color="primary"
+                                                  onClick={() => push({ key: "", value: "" })}
+                                                >
+                                                  Add Attribute
+                                                </Button>
+                                              </Grid>
+                                            </Grid>
+                                          );
+                                        }}
+                                      </FieldArray>
+                                    </Grid>
                                     <Grid item xs={12}>
                                       <Divider sx={{ my: 2 }} />
                                     </Grid>
