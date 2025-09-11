@@ -791,7 +791,7 @@ const handleApplyNodeRed = async (groupId: string) => {
                                   { (
                                     <Tooltip title="Project Settings">
                                       <IconButton
-                                        disabled={group?.is_owner && group?.has_node_red }
+                                        disabled={!group?.is_owner || group?.has_node_red }
                                         size="small"
                                         onClick={(e) => handleNodeRedMenuOpen(e, group)}
                                       >
