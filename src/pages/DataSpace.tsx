@@ -57,8 +57,8 @@ export default function DataSpace() {
         },
       })
       .then((res) => {
-        if (res.status === 200 && res.data.value.length) {
-          setDatastreamSize(res.data.value.length);
+        if (res.status === 200 && res.data.value.length) { 
+          setDatastreamSize(res?.data?.["@iot.count"]);
         }
       })
       .catch((err) => {
@@ -369,22 +369,6 @@ export default function DataSpace() {
                       }}
                     >
                       Datastreams :
-                    </span>{" "}
-                    {datasteamSize}
-                  </Typography>{" "}
-                  <Typography
-                    variant="h6"
-                    gutterBottom
-                    style={{
-                      marginBottom: "20px",
-                    }}
-                  >
-                    <span
-                      style={{
-                        color: "#233044",
-                      }}
-                    >
-                      Client ID:
                     </span>{" "}
                     {datasteamSize}
                   </Typography>{" "}
