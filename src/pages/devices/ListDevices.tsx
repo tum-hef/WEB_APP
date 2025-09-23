@@ -11,7 +11,7 @@ import DeleteForeverOutlinedIcon from "@mui/icons-material/DeleteForeverOutlined
 import FolderSpecialIcon from "@mui/icons-material/FolderSpecial";
 import MapIcon from "@mui/icons-material/Map";
 import { useAppSelector, useIsOwner } from "../../hooks/hooks";
-import DataTableCard from "../../components/DataGrid";
+ import DataTableCardV2 from "../../components/DataGridServerSide";
 
 const Devices = () => {
   const { keycloak } = useKeycloak();
@@ -19,27 +19,65 @@ const Devices = () => {
   const token = keycloak?.token;
 
   const [frostServerPort, setFrostServerPort] = useState<number | null>(null);
-  const [devices, setDevices] = useState<any[]>([]);
+ const [devices, setDevices] = useState<any[]>([]);
+ const [page, setPage] = useState(0);
+ const [pageSize, setPageSize] = useState(10);
+ const [totalRows, setTotalRows] = useState(0);
+ const [filterQuery, setFilterQuery] = useState("");
+ const [sortQuery, setSortQuery] = useState("");
+ const [loading, setLoading] = useState(false);
+ const [pageLinks, setPageLinks] = useState<{ [key: number]: string }>({});
   const isOwner = useIsOwner();
 
-  const fetchThings = async () => {
-    const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
-    const isDev = process.env.REACT_APP_IS_DEVELOPMENT === "true";
-    const res = await axios.get(
-      isDev
-        ? `${backend_url}:${frostServerPort}/FROST-Server/v1.0/Things`
-        : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Things`,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-    if (res.status === 200 && res.data.value) {
-      setDevices(res.data.value);
+ const fetchThings = async (
+  newPage = 0,
+  newPageSize = pageSize,
+  filter = filterQuery,
+  sort = sortQuery
+) => {
+  if (frostServerPort === null) return;
+  setLoading(true);
+
+  const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
+  const isDev = process.env.REACT_APP_IS_DEVELOPMENT === "true";
+
+  let url = isDev
+    ? `${backend_url}:${frostServerPort}/FROST-Server/v1.0/Things`
+    : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Things`;
+
+  if (pageLinks[newPage]) {
+    url = pageLinks[newPage];
+  }
+
+  try {
+    const res = await axios.get(url, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      params: !pageLinks[newPage] && {
+        $top: newPageSize,
+        $skip: newPage * newPageSize,
+        $count: true,
+        ...(filter && { $filter: filter }),
+        ...(sort && { $orderby: sort }),
+      },
+    });
+
+    setDevices(res.data.value);
+    if (res.data["@iot.count"]) setTotalRows(res.data["@iot.count"]);
+    if (res.data["@iot.nextLink"]) {
+      setPageLinks((prev) => ({
+        ...prev,
+        [newPage + 1]: res.data["@iot.nextLink"],
+      }));
     }
-  };
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const fetchFrostPort = async () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL;
@@ -63,19 +101,19 @@ const Devices = () => {
     }
   };
 
-  useEffect(() => {
-    if (frostServerPort !== null) {
-      fetchThings();
-    } else {
-      fetchFrostPort();
-    }
-  }, [frostServerPort]);
+ useEffect(() => {
+  if (frostServerPort !== null) {
+    fetchThings(page, pageSize);
+  } else {
+    fetchFrostPort();
+  }
+}, [frostServerPort]);
 
   const columnDefs = [
     {
       headerName: "ID",
       field: "@iot.id",
-      filter: "agNumberColumnFilter",
+      filter: "agTextColumnFilter",
       minWidth: 100,
       autoHeight: false,
       wrapText: false,
@@ -342,6 +380,17 @@ const Devices = () => {
     },
   ];
 
+  const handlePageChange = (newPage: number) => {
+  setPage(newPage);
+  fetchThings(newPage, pageSize, filterQuery, sortQuery);
+};
+
+const handlePageSizeChange = (newPageSize: number) => {
+  setPage(0);
+  setPageSize(newPageSize);
+  setPageLinks({});
+  fetchThings(0, newPageSize, filterQuery, sortQuery);
+};
   return (
   <Dashboard>
   <ToastContainer position="bottom-right" autoClose={5000} theme="dark" />
@@ -377,13 +426,31 @@ const Devices = () => {
 
   
 
-     <DataTableCard
-        title="Devices"
-        description="This page lists all registered devices in your project. 
+     <DataTableCardV2
+  title="Devices"
+  description="This page lists all registered devices in your project. 
 Each device can have one or more datastreams (e.g., temperature, humidity) that provide sensor observations."
-        columnDefs={columnDefs}
-        rowData={devices}
-      />
+  columnDefs={columnDefs}
+  rowData={devices}
+  page={page}
+  pageSize={pageSize}
+  totalRows={totalRows}
+  loading={loading}
+  onPageChange={handlePageChange}
+  onPageSizeChange={handlePageSizeChange}
+  onFilterChange={(fq) => {
+    setFilterQuery(fq);
+    setPage(0);
+    setPageLinks({});
+    fetchThings(0, pageSize, fq, sortQuery);
+  }}
+  onSortChange={(sq) => {
+    setSortQuery(sq);
+    setPage(0);
+    setPageLinks({});
+    fetchThings(0, pageSize, filterQuery, sq);
+  }}
+/>
 </Dashboard>
 
   );
