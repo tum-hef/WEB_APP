@@ -11,7 +11,7 @@ import Swal from "sweetalert2";
 import ReactGA from "react-ga4";
 import { GAactionsSensors } from "../../utils/GA";
 import { useAppSelector, useIsOwner } from "../../hooks/hooks";
-import DataTableCard from "../../components/DataGrid";
+import DataTableCardV2 from "../../components/DataGridServerSide";
 const ListSensors = () => {
   const { keycloak } = useKeycloak();
   const userInfo = keycloak?.idTokenParsed;
@@ -19,37 +19,70 @@ const ListSensors = () => {
 
   const [frostServerPort, setFrostServerPort] = useState<number | null>(null);
   const [sensors, setSensors] = useState<any[]>([]);
+  const [page, setPage] = useState(0);
+const [pageSize, setPageSize] = useState(10);
+const [totalRows, setTotalRows] = useState(0);
+const [pageLinks, setPageLinks] = useState<{ [key: number]: string }>({});
+const [loading, setLoading] = useState(false);
+
+const [filterQuery, setFilterQuery] = useState("");
+const [sortQuery, setSortQuery] = useState("");
   const selectedGroupId = useAppSelector((state) => state.roles.selectedGroupId);
   const group = useAppSelector((state) =>
     state.roles.groups.find((g) => g?.group_name_id === selectedGroupId)
   );
   const isOwner = useIsOwner();
 
-  const fetchSensors = () => {
-    const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
-    const isDev = process.env.REACT_APP_IS_DEVELOPMENT === "true";
-    axios
-      .get(
-        isDev
-          ? `${backend_url}:${frostServerPort}/FROST-Server/v1.0/Sensors`
-          : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Sensors`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      )
-      .then((res) => {
-        if (res.status === 200 && res.data.value) {
-          setSensors(res.data.value);
-        }
-      })
-      .catch((err) => {
-        console.log(err);
-        toast.error("Error Getting Sensors");
-      });
-  };
+ const fetchSensors = async (
+  newPage = 0,
+  newPageSize = pageSize,
+  filter = filterQuery,
+  sort = sortQuery
+) => {
+  if (frostServerPort === null) return;
+  setLoading(true);
+
+  const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
+  const isDev = process.env.REACT_APP_IS_DEVELOPMENT === "true";
+
+  let url = isDev
+    ? `${backend_url}:${frostServerPort}/FROST-Server/v1.0/Sensors`
+    : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Sensors`;
+
+  if (pageLinks[newPage]) {
+    url = pageLinks[newPage];
+  }
+
+  try {
+    const res = await axios.get(url, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      params: !pageLinks[newPage] && {
+        $top: newPageSize,
+        $skip: newPage * newPageSize,
+        $count: true,
+        ...(filter && { $filter: filter }),
+        ...(sort && { $orderby: sort }),
+      },
+    });
+
+    setSensors(res.data.value);
+    if (res.data["@iot.count"]) setTotalRows(res.data["@iot.count"]);
+    if (res.data["@iot.nextLink"]) {
+      setPageLinks((prev) => ({
+        ...prev,
+        [newPage + 1]: res.data["@iot.nextLink"],
+      }));
+    }
+  } catch (err) {
+    toast.error("Error Getting Sensors");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const fetchFrostPort = async () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL;
@@ -77,17 +110,16 @@ const ListSensors = () => {
       });
   };
 
-  useEffect(() => {
-    ReactGA.event(GAactionsSensors);
+ useEffect(() => {
+  ReactGA.event(GAactionsSensors);
 
-    if (frostServerPort !== null) {
-      fetchSensors();
-    } else {
-      fetchFrostPort();
-    }
-  }, [frostServerPort]);
+  if (frostServerPort !== null) {
+    fetchSensors(page, pageSize);
+  } else {
+    fetchFrostPort();
+  }
+}, [frostServerPort]);
 
-  // ✅ Columns (keeping full edit + delete logic)
   const columnDefs = [
     {
       headerName: "ID",
@@ -271,6 +303,19 @@ const ListSensors = () => {
     },
   ];
 
+
+  // onChange 
+  const handlePageChange = (newPage: number) => {
+  setPage(newPage);
+  fetchSensors(newPage, pageSize, filterQuery, sortQuery);
+};
+
+const handlePageSizeChange = (newPageSize: number) => {
+  setPage(0);
+  setPageSize(newPageSize);
+  setPageLinks({});
+  fetchSensors(0, newPageSize, filterQuery, sortQuery);
+};
   return (
     <Dashboard>
       <ToastContainer position="bottom-right" autoClose={5000} theme="dark" />
@@ -294,8 +339,31 @@ const ListSensors = () => {
           Create
         </Button>
       )}
-      <DataTableCard title="Sensor Types" description="This page lists all sensor types available in the system. 
-Each sensor defines how a measurement is made, including its metadata and description." columnDefs={columnDefs} rowData={sensors} />
+      <DataTableCardV2
+  title="Sensor Types"
+  description="This page lists all sensor types available in the system. 
+Each sensor defines how a measurement is made, including its metadata and description."
+  columnDefs={columnDefs}
+  rowData={sensors}
+  page={page}
+  pageSize={pageSize}
+  totalRows={totalRows}
+  loading={loading}
+  onPageChange={handlePageChange}
+  onPageSizeChange={handlePageSizeChange}
+  onFilterChange={(fq) => {
+    setFilterQuery(fq);
+    setPage(0);
+    setPageLinks({});
+    fetchSensors(0, pageSize, fq, sortQuery);
+  }}
+  onSortChange={(sq) => {
+    setSortQuery(sq);
+    setPage(0);
+    setPageLinks({});
+    fetchSensors(0, pageSize, filterQuery, sq);
+  }}
+/>
     </Dashboard>
   );
 };
