@@ -7,7 +7,7 @@ import Dashboard from "../../components/DashboardComponent";
 import { useKeycloak } from "@react-keycloak/web";
 import { ToastContainer, toast } from "react-toastify";
 import { useParams } from "react-router-dom";
-import DataTableCard from "../../components/DataGrid";
+import DataTableCardV2 from "../../components/DataGridServerSide";
 
 const ListDatastreamPerDevice = () => {
   const { keycloak } = useKeycloak();
@@ -16,30 +16,66 @@ const ListDatastreamPerDevice = () => {
 
   const [frostServerPort, setFrostServerPort] = useState<number | null>(null);
   const [datastream, setDataStream] = useState<any[]>([]);
+  const [filterQuery, setFilterQuery] = useState("");
+const [sortQuery, setSortQuery] = useState("");
+const [page, setPage] = useState(0);
+const [pageSize, setPageSize] = useState(10);
+const [totalRows, setTotalRows] = useState(0);
+const [pageLinks, setPageLinks] = useState<{ [key: number]: string }>({});
+const [loading, setLoading] = useState(false);
+
 
   const { id } = useParams<{ id: string }>();
 
-  const fetchThings = () => {
-    const backend_url = process.env.REACT_APP_BACKEND_URL;
-    const isDev = process.env.REACT_APP_IS_DEVELOPMENT === "true";
-    axios
-      .get(
-        isDev
-          ? `${backend_url}:${frostServerPort}/FROST-Server/v1.0/Things(${id})/Datastreams`
-          : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Things(${id})/Datastreams`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      )
-      .then((res) => {
-        if (res.status === 200 && res.data.value) {
-          setDataStream(res.data.value);
-        }
-      });
-  };
+  const fetchThings = async (
+  newPage = 0,
+  newPageSize = pageSize,
+  filter = filterQuery,
+  sort = sortQuery
+) => {
+  if (frostServerPort === null) return;
+  setLoading(true);
+
+  const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
+  const isDev = process.env.REACT_APP_IS_DEVELOPMENT === "true";
+
+  let url = isDev
+    ? `${backend_url}:${frostServerPort}/FROST-Server/v1.0/Things(${id})/Datastreams`
+    : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Things(${id})/Datastreams`;
+
+  if (pageLinks[newPage]) {
+    url = pageLinks[newPage];
+  }
+
+  try {
+    const res = await axios.get(url, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      params: !pageLinks[newPage] && {
+        $top: newPageSize,
+        $skip: newPage * newPageSize,
+        $count: true,
+        ...(filter && { $filter: filter }),
+        ...(sort && { $orderby: sort }),
+      },
+    });
+
+    setDataStream(res.data.value);
+    if (res.data["@iot.count"]) setTotalRows(res.data["@iot.count"]);
+    if (res.data["@iot.nextLink"]) {
+      setPageLinks((prev) => ({
+        ...prev,
+        [newPage + 1]: res.data["@iot.nextLink"],
+      }));
+    }
+  } catch {
+    toast.error("Error Getting Datastreams");
+  } finally {
+    setLoading(false);
+  }
+};
 
   const fetchFrostPort = async () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL;
@@ -73,7 +109,7 @@ const ListDatastreamPerDevice = () => {
 
   useEffect(() => {
     if (frostServerPort !== null) {
-      fetchThings();
+      fetchThings(page, pageSize);
     } else {
       fetchFrostPort();
     }
@@ -133,14 +169,39 @@ const ListDatastreamPerDevice = () => {
         </Typography>
       </Breadcrumbs>
 
-      <DataTableCard
-        title={`Datastreams for Device #${id} ${datastream[0]?.name || ""}`}
-        description="This page shows the datastreams linked to the selected device. 
-Each datastream represents a single type of sensor measurement (e.g., temperature, humidity, pressure) 
-and contains its description and the related observations."
-        columnDefs={columnDefs}
-        rowData={datastream}
-      />
+     <DataTableCardV2
+  title={`Datastreams for Device #${id} ${datastream[0]?.name || ""}`}
+  description="This page shows the datastreams linked to the selected device. Each datastream represents a single type of sensor measurement (e.g., temperature, humidity, pressure) and contains its description and the related observations."
+  columnDefs={columnDefs}
+  rowData={datastream}
+  page={page}
+  pageSize={pageSize}
+  totalRows={totalRows}
+  loading={loading}
+  onPageChange={(newPage) => {
+    setPage(newPage);
+    fetchThings(newPage, pageSize, filterQuery, sortQuery);
+  }}
+  onPageSizeChange={(newPageSize) => {
+    setPage(0);
+    setPageSize(newPageSize);
+    setPageLinks({});
+    fetchThings(0, newPageSize, filterQuery, sortQuery);
+  }}
+  onFilterChange={(fq) => {
+    setFilterQuery(fq);
+    setPage(0);
+    setPageLinks({});
+    fetchThings(0, pageSize, fq, sortQuery);
+  }}
+  onSortChange={(sq) => {
+    setSortQuery(sq);
+    setPage(0);
+    setPageLinks({});
+    fetchThings(0, pageSize, filterQuery, sq);
+  }}
+/>
+
     </Dashboard>
   );
 };

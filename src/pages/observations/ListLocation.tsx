@@ -110,7 +110,7 @@ const [loading, setLoading] = useState(false);
     });
 
     if (frostServerPort !== null) {
-      fetchObservations();
+      fetchObservations(page, pageSize);
     } else {
       fetchFrostPort();
     }
