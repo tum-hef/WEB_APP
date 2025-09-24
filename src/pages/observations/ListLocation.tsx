@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import DataTable, { ExpanderComponentProps } from "react-data-table-component";
 import { Breadcrumbs, Button, Typography } from "@mui/material";
@@ -12,7 +12,8 @@ import DeleteForeverOutlinedIcon from "@mui/icons-material/DeleteForeverOutlined
 import Swal from "sweetalert2";
 import ReactGA from "react-ga4";
 import { GAactionsObservations } from "../../utils/GA";
-import DataTableCard from "../../components/DataGrid";
+import DataTableCardV2 from "../../components/DataGridServerSide";
+
 import moment from "moment";
 const ListObservations = () => {
   const { keycloak } = useKeycloak();
@@ -21,28 +22,59 @@ const ListObservations = () => {
 
   const [frostServerPort, setFrostServerPort] = useState<number | null>(null);
   const [observations, setObservations] = useState<any[]>([]);
+  const [filterQuery, setFilterQuery] = useState("");
+const [sortQuery, setSortQuery] = useState("");
+const [page, setPage] = useState(0);
+const [pageSize, setPageSize] = useState(10);
+const [totalRows, setTotalRows] = useState(0);
+const [pageLinks, setPageLinks] = useState<{ [key: number]: string }>({});
+const [loading, setLoading] = useState(false);
 
-  const fetchObservations = () => {
+
+  const fetchObservations = useCallback(
+  async (newPage = 0, newPageSize = pageSize, filter = filterQuery, sort = sortQuery) => {
+    if (frostServerPort === null) return;
+    setLoading(true);
+
     const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
-    const isDev = process.env.REACT_APP_IS_DEVELOPMENT === 'true';
-    axios
-      .get(isDev ? `${backend_url}:${frostServerPort}/FROST-Server/v1.0/Observations` : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Observations`, {
+    const isDev = process.env.REACT_APP_IS_DEVELOPMENT === "true";
+
+    let url = isDev
+      ? `${backend_url}:${frostServerPort}/FROST-Server/v1.0/Observations`
+      : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Observations`;
+
+    if (pageLinks[newPage]) {
+      url = pageLinks[newPage];
+    }
+
+    try {
+      const res = await axios.get(url, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-      })
-      .then((res) => {
-        if (res.status === 200 && res.data.value) {
-          console.log(res.data.value);
-          setObservations(res.data.value);
-        }
-      })
-      .catch((err) => {
-        console.log(err);
-        toast.error("Error Getting Locations");
+        params: !pageLinks[newPage] && {
+          $top: newPageSize,
+          $skip: newPage * newPageSize,
+          $count: true,
+          ...(filter && { $filter: filter }),
+          ...(sort && { $orderby: sort }),
+        },
       });
-  };
+
+      setObservations(res.data.value);
+      if (res.data["@iot.count"]) setTotalRows(res.data["@iot.count"]);
+      if (res.data["@iot.nextLink"]) {
+        setPageLinks((prev) => ({ ...prev, [newPage + 1]: res.data["@iot.nextLink"] }));
+      }
+    } catch {
+      toast.error("Error Getting Observations");
+    } finally {
+      setLoading(false);
+    }
+  },
+  [frostServerPort, pageSize, filterQuery, sortQuery, token, pageLinks]
+);
 
   const fetchFrostPort = async () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL;
@@ -169,8 +201,39 @@ const ListObservations = () => {
 
       {/* Create Button */}
 
-      <DataTableCard title="Observations" description="This page lists all recorded observations in the system. 
-Each observation contains a measurement result and the time it was collected." columnDefs={columnDefs} rowData={observations} />
+     <DataTableCardV2
+  title="Observations"
+  description="This page lists all recorded observations in the system. Each observation contains a measurement result and the time it was collected."
+  columnDefs={columnDefs}
+  rowData={observations}
+  page={page}
+  pageSize={pageSize}
+  totalRows={totalRows}
+  loading={loading}
+  onPageChange={(newPage) => {
+    setPage(newPage);
+    fetchObservations(newPage, pageSize, filterQuery, sortQuery);
+  }}
+  onPageSizeChange={(newPageSize) => {
+    setPage(0);
+    setPageSize(newPageSize);
+    setPageLinks({});
+    fetchObservations(0, newPageSize, filterQuery, sortQuery);
+  }}
+  onFilterChange={(fq) => {
+    setFilterQuery(fq);
+    setPage(0);
+    setPageLinks({});
+    fetchObservations(0, pageSize, fq, sortQuery);
+  }}
+  onSortChange={(sq) => {
+    setSortQuery(sq);
+    setPage(0);
+    setPageLinks({});
+    fetchObservations(0, pageSize, filterQuery, sq);
+  }}
+/>
+
     </Dashboard>
   );
 };
