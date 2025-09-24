@@ -14,7 +14,7 @@ import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import Swal from "sweetalert2";
 import { useAppSelector, useIsOwner } from "../../hooks/hooks";  
 import DeleteForeverOutlinedIcon from "@mui/icons-material/DeleteForeverOutlined";
-import DataTableCard from "../../components/DataGrid";
+import DataTableCardV2 from "../../components/DataGridServerSide";
 
 const ListLocations = () => {
   const { keycloak } = useKeycloak();
@@ -23,30 +23,67 @@ const ListLocations = () => {
 
   const [frostServerPort, setFrostServerPort] = useState<number | null>(null);
   const [locations, setLocations] = useState<any[]>([]);
+  const [page, setPage] = useState(0);
+const [pageSize, setPageSize] = useState(10);
+const [totalRows, setTotalRows] = useState(0);
+const [pageLinks, setPageLinks] = useState<{ [key: number]: string }>({});
+const [loading, setLoading] = useState(false);
+
+const [filterQuery, setFilterQuery] = useState("");
+const [sortQuery, setSortQuery] = useState("");
+
     const isOwner = useIsOwner();
 
-  const fetchLocations = () => {
-    const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
-    console.log(backend_url); 
-    const isDev = process.env.REACT_APP_IS_DEVELOPMENT === 'true';  
-    axios
-      .get( isDev ? `${backend_url}:${frostServerPort}/FROST-Server/v1.0/Locations` :  `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Locations`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      })
-      .then((res) => {
-        if (res.status === 200 && res.data.value) {
-          console.log(res.data.value);
-          setLocations(res.data.value);
-        }
-      })
-      .catch((err) => {
-        console.log(err);
-        toast.error("Error Getting Locations");
-      });
-  };
+  const fetchLocations = async (
+  newPage = 0,
+  newPageSize = pageSize,
+  filter = filterQuery,
+  sort = sortQuery
+) => {
+  if (frostServerPort === null) return;
+  setLoading(true);
+
+  const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
+  const isDev = process.env.REACT_APP_IS_DEVELOPMENT === "true";
+
+  let url = isDev
+    ? `${backend_url}:${frostServerPort}/FROST-Server/v1.0/Locations`
+    : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Locations`;
+
+  if (pageLinks[newPage]) {
+    url = pageLinks[newPage];
+  }
+
+  try {
+    const res = await axios.get(url, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      params: !pageLinks[newPage] && {
+        $top: newPageSize,
+        $skip: newPage * newPageSize,
+        $count: true,
+        ...(filter && { $filter: filter }),
+        ...(sort && { $orderby: sort }),
+      },
+    });
+
+    setLocations(res.data.value);
+    if (res.data["@iot.count"]) setTotalRows(res.data["@iot.count"]);
+    if (res.data["@iot.nextLink"]) {
+      setPageLinks((prev) => ({
+        ...prev,
+        [newPage + 1]: res.data["@iot.nextLink"],
+      }));
+    }
+  } catch (err) {
+    toast.error("Error Getting Locations");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const fetchFrostPort = async () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL;
@@ -72,20 +109,19 @@ const ListLocations = () => {
       });
   };
 
-  useEffect(() => {
+ useEffect(() => {
+  ReactGA.event({
+    category: GAactionsLocations.category,
+    action: GAactionsLocations.action,
+    label: GAactionsLocations.label,
+  });
 
-    ReactGA.event({
-      category: GAactionsLocations.category,
-      action: GAactionsLocations.action,
-      label: GAactionsLocations.label,
-    });
-
-    if (frostServerPort !== null) {
-      fetchLocations();
-    } else {
-      fetchFrostPort();
-    }
-  }, [frostServerPort]);
+  if (frostServerPort !== null) {
+    fetchLocations(page, pageSize);
+  } else {
+    fetchFrostPort();
+  }
+}, [frostServerPort]);
 
 const columnDefs = [
   {
@@ -299,34 +335,18 @@ const columnDefs = [
   },
 ];
 
-  const ExpandedComponent: React.FC<ExpanderComponentProps<any>> = ({
-    data,
-  }) => {
-    return (
-      <div
-        style={{
-          margin: "10px",
-        }}
-      >
-        <div>
-          <b>Name: </b>
-          {data?.name}
-        </div>
-        <div>
-          <b>Description: </b>
-          {data?.description}
-        </div>
-        <div>
-          <b>Longitude: </b>
-          {data?.location?.coordinates[0]}
-        </div>
-        <div>
-          <b>Latitude: </b>
-          {data?.location?.coordinates[1]}
-        </div>
-      </div>
-    );
-  };
+const handlePageChange = (newPage: number) => {
+  setPage(newPage);
+  fetchLocations(newPage, pageSize, filterQuery, sortQuery);
+};
+
+const handlePageSizeChange = (newPageSize: number) => {
+  setPage(0);
+  setPageSize(newPageSize);
+  setPageLinks({});
+  fetchLocations(0, newPageSize, filterQuery, sortQuery);
+};
+
 
   return (
   <Dashboard>
@@ -351,8 +371,32 @@ const columnDefs = [
                Create
              </Button>
            )}
-           <DataTableCard title="Locations" description="This page lists all device locations. 
-Each location includes a name, description, and geographic coordinates, and can be viewed on the map." columnDefs={columnDefs} rowData={locations} />
+         <DataTableCardV2
+  title="Locations"
+  description="This page lists all device locations. 
+Each location includes a name, description, and geographic coordinates, and can be viewed on the map."
+  columnDefs={columnDefs}
+  rowData={locations}
+  page={page}
+  pageSize={pageSize}
+  totalRows={totalRows}
+  loading={loading}
+  onPageChange={handlePageChange}
+  onPageSizeChange={handlePageSizeChange}
+  onFilterChange={(fq) => {
+    setFilterQuery(fq);
+    setPage(0);
+    setPageLinks({});
+    fetchLocations(0, pageSize, fq, sortQuery);
+  }}
+  onSortChange={(sq) => {
+    setSortQuery(sq);
+    setPage(0);
+    setPageLinks({});
+    fetchLocations(0, pageSize, filterQuery, sq);
+  }}
+/>
+
          </Dashboard>
   );
 };

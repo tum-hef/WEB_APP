@@ -2,22 +2,31 @@
 export const buildFilterQuery = (model: any): string => {
   const filters: string[] = [];
 
-  Object.keys(model).forEach((col) => {
-    const filter = model[col];
-    if (filter.filterType === "text") {
-      if (filter.type === "contains") {
-        filters.push(`substringof('${filter.filter}', ${col})`);
-      } else if (filter.type === "equals") {
-        filters.push(`${col} eq '${filter.filter}'`);
-      } else if (filter.type === "startsWith") {
-        filters.push(`startswith(${col},'${filter.filter}')`);
-      } else if (filter.type === "endsWith") {
-        filters.push(`endswith(${col},'${filter.filter}')`);
+  Object.keys(model).forEach((field) => {
+    const condition = model[field];
+    if (!condition) return;
+
+    if (condition.filterType === "date") {
+      const date = new Date(condition.dateFrom);
+      const formatted = date.toISOString(); // e.g. 2025-09-23T12:00:00Z
+
+      if (condition.type === "equals") {
+        filters.push(`${field} eq ${formatted}`);
+      } else if (condition.type === "greaterThan") {
+        filters.push(`${field} gt ${formatted}`);
+      } else if (condition.type === "lessThan") {
+        filters.push(`${field} lt ${formatted}`);
+      } else if (condition.type === "inRange") {
+        const dateTo = new Date(condition.dateTo).toISOString();
+        filters.push(`${field} ge ${formatted} and ${field} le ${dateTo}`);
       }
+    } else {
+      // fallback for text/numeric fields
+      filters.push(`${field} eq '${condition.filter}'`);
     }
   });
 
-  return filters.length > 0 ? filters.join(" and ") : "";
+  return filters.join(" and ");
 };
 
 export const buildSortQuery = (
