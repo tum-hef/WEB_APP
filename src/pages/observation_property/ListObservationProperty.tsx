@@ -14,7 +14,8 @@ import ReactGA from "react-ga4";
 
 import { GAactionsObservationProperties } from "../../utils/GA";
 import { useAppSelector, useIsOwner } from "../../hooks/hooks";
-import DataTableCard from "../../components/DataGrid";
+import DataTableCardV2 from "../../components/DataGridServerSide";
+
 const ListObservationProperty = () => {
   const { keycloak } = useKeycloak();
   const userInfo = keycloak?.idTokenParsed;
@@ -23,6 +24,14 @@ const ListObservationProperty = () => {
 
   const [frostServerPort, setFrostServerPort] = useState<number | null>(null);
   const [observationProperty, setObservationProperty] = useState<any[]>([]);
+  const [page, setPage] = useState(0);
+const [pageSize, setPageSize] = useState(10);
+const [totalRows, setTotalRows] = useState(0);
+const [pageLinks, setPageLinks] = useState<{ [key: number]: string }>({});
+const [loading, setLoading] = useState(false);
+
+const [filterQuery, setFilterQuery] = useState("");
+const [sortQuery, setSortQuery] = useState("");
   const selectedGroupId = useAppSelector(state => state.roles.selectedGroupId);
   const group = useAppSelector(state =>
     state.roles.groups.find(g => g?.group_name_id === selectedGroupId)
@@ -30,31 +39,56 @@ const ListObservationProperty = () => {
   const isOwner = useIsOwner();
 
 
-  const fetchObservationProperty = () => {
-    const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
-    console.log(backend_url);
-    const isDev = process.env.REACT_APP_IS_DEVELOPMENT === 'true';
-    axios
-      .get(
-        isDev ? `${backend_url}:${frostServerPort}/FROST-Server/v1.0/ObservedProperties` : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/ObservedProperties`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      )
-      .then((res) => {
-        if (res.status === 200 && res.data.value) {
-          console.log(res.data.value);
-          setObservationProperty(res.data.value);
-        }
-      })
-      .catch((err) => {
-        console.log(err);
-        toast.error("Error Getting Measurement Property");
-      });
-  };
+  const fetchObservationProperty = async (
+  newPage = 0,
+  newPageSize = pageSize,
+  filter = filterQuery,
+  sort = sortQuery
+) => {
+  if (frostServerPort === null) return;
+  setLoading(true);
+
+  const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
+  const isDev = process.env.REACT_APP_IS_DEVELOPMENT === "true";
+
+  let url = isDev
+    ? `${backend_url}:${frostServerPort}/FROST-Server/v1.0/ObservedProperties`
+    : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/ObservedProperties`;
+
+  if (pageLinks[newPage]) {
+    url = pageLinks[newPage];
+  }
+
+  try {
+    const res = await axios.get(url, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      params: !pageLinks[newPage] && {
+        $top: newPageSize,
+        $skip: newPage * newPageSize,
+        $count: true,
+        ...(filter && { $filter: filter }),
+        ...(sort && { $orderby: sort }),
+      },
+    });
+
+    setObservationProperty(res.data.value);
+    if (res.data["@iot.count"]) setTotalRows(res.data["@iot.count"]);
+    if (res.data["@iot.nextLink"]) {
+      setPageLinks((prev) => ({
+        ...prev,
+        [newPage + 1]: res.data["@iot.nextLink"],
+      }));
+    }
+  } catch (err) {
+    toast.error("Error Getting Measurement Property");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const fetchFrostPort = async () => {
     const backend_url = process.env.REACT_APP_BACKEND_URL;
@@ -80,19 +114,20 @@ const ListObservationProperty = () => {
       });
   };
 
-  useEffect(() => {
-    ReactGA.event({
-      category: GAactionsObservationProperties.category,
-      action: GAactionsObservationProperties.action,
-      label: GAactionsObservationProperties.label,
-    });
+ useEffect(() => {
+  ReactGA.event({
+    category: GAactionsObservationProperties.category,
+    action: GAactionsObservationProperties.action,
+    label: GAactionsObservationProperties.label,
+  });
 
-    if (frostServerPort !== null) {
-      fetchObservationProperty();
-    } else {
-      fetchFrostPort();
-    }
-  }, [frostServerPort]);
+  if (frostServerPort !== null) {
+    fetchObservationProperty(page, pageSize);
+  } else {
+    fetchFrostPort();
+  }
+}, [frostServerPort]);
+
 
   const columns = [
     {
@@ -382,6 +417,18 @@ const ListObservationProperty = () => {
     );
   };
 
+  const handlePageChange = (newPage: number) => {
+  setPage(newPage);
+  fetchObservationProperty(newPage, pageSize, filterQuery, sortQuery);
+};
+
+const handlePageSizeChange = (newPageSize: number) => {
+  setPage(0);
+  setPageSize(newPageSize);
+  setPageLinks({});
+  fetchObservationProperty(0, newPageSize, filterQuery, sortQuery);
+};
+
   return (
     <Dashboard>
       <ToastContainer position="bottom-right" autoClose={5000} theme="dark" />
@@ -405,9 +452,33 @@ const ListObservationProperty = () => {
           Create
         </Button>
       )}
-      <DataTableCard title="Measurement Property" description="This page lists all measurement properties (observed properties) used by datastreams. 
+     <DataTableCardV2
+  title="Measurement Property"
+  description="This page lists all measurement properties (observed properties) used by datastreams. 
 A measurement property describes what is being measured, such as temperature, humidity, or pressure, 
-and may include a definition or reference for clarity and standardization." columnDefs={columns} rowData={observationProperty} />
+and may include a definition or reference for clarity and standardization."
+  columnDefs={columns}
+  rowData={observationProperty}
+  page={page}
+  pageSize={pageSize}
+  totalRows={totalRows}
+  loading={loading}
+  onPageChange={handlePageChange}
+  onPageSizeChange={handlePageSizeChange}
+  onFilterChange={(fq) => {
+    setFilterQuery(fq);
+    setPage(0);
+    setPageLinks({});
+    fetchObservationProperty(0, pageSize, fq, sortQuery);
+  }}
+  onSortChange={(sq) => {
+    setSortQuery(sq);
+    setPage(0);
+    setPageLinks({});
+    fetchObservationProperty(0, pageSize, filterQuery, sq);
+  }}
+/>
+
     </Dashboard>
   );
 };
