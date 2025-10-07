@@ -15,6 +15,7 @@ import { GAactionsObservations } from "../../utils/GA";
 import DataTableCardV2 from "../../components/DataGridServerSide";
 
 import moment from "moment";
+import MuiDateRangeFilter from "../../components/MuiDateField";
 const ListObservations = () => {
   const { keycloak } = useKeycloak();
   const userInfo = keycloak?.idTokenParsed;
@@ -132,35 +133,17 @@ const [loading, setLoading] = useState(false);
       flex: 2,
     },
     {
-      headerName: "Phenomenon Time",
-      field: "phenomenonTime",
-      sortable: true,
-      filter: "agDateColumnFilter",
-      width: 280,
-      valueFormatter: (params: any) => {
-        if (!params.value) return "";
-        return moment(params.value).format("YYYY-MM-DD HH:mm:ss"); // ✅ show full datetime
-      },
-      filterParams: {
-        comparator: (filterLocalDateAtMidnight: Date, cellValue: string) => {
-          if (!cellValue) return -1;
-
-          // convert both filter date and cell value to full datetime
-          const cellDate = moment(cellValue).toDate();
-          const filterDate = moment(filterLocalDateAtMidnight).toDate();
-
-          if (cellDate.getTime() === filterDate.getTime()) {
-            return 0;
-          }
-          return cellDate < filterDate ? -1 : 1;
-        },
-        browserDatePicker: true,
-        suppressAndOrCondition: false, // ✅ enables "in range"
-      },
-      wrapText: true,
-      autoHeight: true,
-      cellStyle: { whiteSpace: "normal" },
-    },
+  headerName: "Phenomenon Time",
+  field: "phenomenonTime",
+  sortable: true,
+  filter: "agDateColumnFilter",
+  valueFormatter: (params: any) =>
+    params.value ? moment(params.value).format("YYYY-MM-DD HH:mm:ss") : "",
+  filterParams: {
+    browserDatePicker: true,       // shows native calendar
+    suppressAndOrCondition: true,  // 👈 only 1 condition
+  },
+}
   ];
 
   const ExpandedComponent: React.FC<ExpanderComponentProps<any>> = ({

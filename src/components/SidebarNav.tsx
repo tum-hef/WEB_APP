@@ -255,7 +255,7 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
   const handleLogout = () => {
     localStorage.clear();
     keycloak.logout({ redirectUri: window.location.origin }).then(() => {
-    }).catch(err => console.error("Logout failed", err));
+    }).catch((err:unknown) => console.error("Logout failed", err));
   };
   const theme = useTheme();
   const matches = useMediaQuery(theme.breakpoints.up("md"));

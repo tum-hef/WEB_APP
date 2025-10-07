@@ -109,7 +109,4 @@ const DashboardComponent: React.FC = ({ children }) => {
 };
 
 export default DashboardComponent;
-function useEffect(arg0: () => void, arg1: import("keycloak-js").default[]) {
-  throw new Error("Function not implemented.");
-}
 

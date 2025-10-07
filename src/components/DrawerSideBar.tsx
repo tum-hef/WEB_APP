@@ -26,7 +26,7 @@ export const DrawerSideBar = () => {
     localStorage.clear();
     keycloak.logout({ redirectUri: window.location.origin }).then(() => {
       console.log("Logout successful");
-    }).catch(err => console.error("Logout failed", err));
+    }).catch((err:unknown )=> console.error("Logout failed", err));
   };
   return (
     <div>

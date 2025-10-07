@@ -147,16 +147,25 @@ const columnDefs = [
     cellStyle: { whiteSpace: "normal" },
    
   },
-  {
-    headerName: "Longitude",
-    valueGetter: (params: any) => params.data?.location?.coordinates[0],
-    sortable: true,
-  },
-  {
-    headerName: "Latitude",
-    valueGetter: (params: any) => params.data?.location?.coordinates[1],
-    sortable: true,
-  },
+ {
+  headerName: "Longitude",
+  valueGetter: (params: any) =>
+    Array.isArray(params.data?.location?.coordinates)
+      ? params.data.location.coordinates[0]
+      : "",
+  sortable: true,
+   filter: false
+},
+{
+  headerName: "Latitude",
+  valueGetter: (params: any) =>
+    Array.isArray(params.data?.location?.coordinates)
+      ? params.data.location.coordinates[1]
+      : "",
+  sortable: true,
+  filter: false
+},
+
   {
     headerName: "Edit",
     cellRenderer: (params: any) => {
