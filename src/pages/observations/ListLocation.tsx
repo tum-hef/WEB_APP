@@ -64,7 +64,6 @@ const [loading, setLoading] = useState(false);
       });
 
       setObservations(res.data.value);
-      console.log("checking purspose data", res.data.value);
       if (res.data["@iot.count"]) setTotalRows(res.data["@iot.count"]);
       if (res.data["@iot.nextLink"]) {
         setPageLinks((prev) => ({ ...prev, [newPage + 1]: res.data["@iot.nextLink"] }));
