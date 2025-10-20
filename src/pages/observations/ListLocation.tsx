@@ -148,11 +148,6 @@ const [loading, setLoading] = useState(false);
   },
   ];
 
-
-useEffect(()=>{
-  console.log("observations data" , observations);
-},[observations])
-
   const ExpandedComponent: React.FC<ExpanderComponentProps<any>> = ({
     data,
   }) => {
