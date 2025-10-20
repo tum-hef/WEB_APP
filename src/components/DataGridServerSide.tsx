@@ -52,13 +52,17 @@ const DataTableCard: React.FC<DataTableCardV2Props> = ({
   const gridApiRef = useRef<GridApi<any> | null>(null);
 
   // overlays
-  useEffect(() => {
+  useEffect(() => { 
+    console.log("rowData changed", rowData);
     if (!gridApiRef.current) return;
-    if (loading) {
+    if (loading) { 
+      console.log("1")
       gridApiRef.current.showLoadingOverlay();
     } else if (rowData.length === 0) {
+       console.log("2")
       gridApiRef.current.showNoRowsOverlay();
     } else {
+      console.log("3")
       gridApiRef.current.hideOverlay();
     }
   }, [loading, rowData]);

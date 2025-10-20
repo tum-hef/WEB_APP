@@ -64,6 +64,7 @@ const [loading, setLoading] = useState(false);
       });
 
       setObservations(res.data.value);
+      console.log("checking purspose data", res.data.value);
       if (res.data["@iot.count"]) setTotalRows(res.data["@iot.count"]);
       if (res.data["@iot.nextLink"]) {
         setPageLinks((prev) => ({ ...prev, [newPage + 1]: res.data["@iot.nextLink"] }));
@@ -132,19 +133,25 @@ const [loading, setLoading] = useState(false);
       sortable: true,
       flex: 2,
     },
-    {
-  headerName: "Phenomenon Time",
-  field: "phenomenonTime",
-  sortable: true,
-  filter: "agDateColumnFilter",
-  valueFormatter: (params: any) =>
-    params.value ? moment(params.value).format("YYYY-MM-DD HH:mm:ss") : "",
-  filterParams: {
-    browserDatePicker: true,       // shows native calendar
-    suppressAndOrCondition: true,  // 👈 only 1 condition
+ {
+    headerName: "Phenomenon Time",
+    field: "phenomenonTime",
+    sortable: true,
+    filter: "agDateColumnFilter",
+    valueFormatter: (params: any) =>
+      params.value ? moment(params.value).format("YYYY-MM-DD HH:mm:ss") : "",
+    filterParams: {
+      comparator: () => 0,              // let backend handle filtering
+      browserDatePicker: true,
+      suppressAndOrCondition: true,
+    },
   },
-}
   ];
+
+
+useEffect(()=>{
+  console.log("observations data" , observations);
+},[observations])
 
   const ExpandedComponent: React.FC<ExpanderComponentProps<any>> = ({
     data,

@@ -5,7 +5,9 @@ export const buildFilterQuery = (model: any): string => {
     const condition = model[field];
     if (!condition) return;
 
-    // 📅 Date filter (FROST requires during() for phenomenonTime)
+    // ==========================
+    // 📅 DATE FILTER
+    // ==========================
     if (condition.filterType === "date") {
       const conds: string[] = [];
 
@@ -13,25 +15,36 @@ export const buildFilterQuery = (model: any): string => {
         if (!cond?.dateFrom) return null;
         const dateFrom = new Date(cond.dateFrom);
 
+        const iso = (d: Date) => d.toISOString().replace(/\.\d{3}Z$/, "Z");
+
         if (cond.type === "equals") {
           const startOfDay = new Date(
-            Date.UTC(dateFrom.getUTCFullYear(), dateFrom.getUTCMonth(), dateFrom.getUTCDate(), 0, 0, 0, 0)
+            Date.UTC(
+              dateFrom.getUTCFullYear(),
+              dateFrom.getUTCMonth(),
+              dateFrom.getUTCDate(), 0, 0, 0
+            )
           );
           const endOfDay = new Date(
-            Date.UTC(dateFrom.getUTCFullYear(), dateFrom.getUTCMonth(), dateFrom.getUTCDate(), 23, 59, 59, 999)
+            Date.UTC(
+              dateFrom.getUTCFullYear(),
+              dateFrom.getUTCMonth(),
+              dateFrom.getUTCDate(), 23, 59, 59
+            )
           );
-          return `during(${field}, ${startOfDay.toISOString()}, ${endOfDay.toISOString()})`;
+          return `${field} ge ${iso(startOfDay)} and ${field} le ${iso(endOfDay)}`;
 
         } else if (cond.type === "greaterThan") {
-          return `during(${field}, ${new Date(dateFrom).toISOString()}, 9999-12-31T23:59:59.999Z)`;
+          return `${field} gt ${iso(dateFrom)}`;
 
         } else if (cond.type === "lessThan") {
-          return `during(${field}, 0001-01-01T00:00:00.000Z, ${new Date(dateFrom).toISOString()})`;
+          return `${field} lt ${iso(dateFrom)}`;
 
         } else if (cond.type === "inRange" && cond.dateTo) {
-          const dateTo = new Date(cond.dateTo).toISOString();
-          return `during(${field}, ${new Date(cond.dateFrom).toISOString()}, ${dateTo})`;
+          const dateTo = new Date(cond.dateTo);
+          return `${field} ge ${iso(dateFrom)} and ${field} le ${iso(dateTo)}`;
         }
+
         return null;
       };
 
@@ -48,20 +61,39 @@ export const buildFilterQuery = (model: any): string => {
       if (conds.length) filters.push(...conds);
     }
 
-    // 🔤 Text filter
+    // ==========================
+    // 🔤 TEXT FILTER
+    // ==========================
     else if (condition.filterType === "text") {
+      const value = condition.filter;
+      const isNumericField = field === "@iot.id" || /^[0-9]+$/.test(value);
+
       if (condition.type === "equals") {
-        filters.push(`${field} eq '${condition.filter}'`);
+        filters.push(`${field} eq ${isNumericField ? value : `'${value}'`}`);
       } else if (condition.type === "contains") {
-        filters.push(`contains(${field}, '${condition.filter}')`);
+        if (isNumericField) {
+          filters.push(`${field} eq ${value}`); // contains not valid for numeric
+        } else {
+          filters.push(`contains(${field}, '${value}')`);
+        }
       } else if (condition.type === "startsWith") {
-        filters.push(`startswith(${field}, '${condition.filter}')`);
+        if (isNumericField) {
+          filters.push(`${field} eq ${value}`);
+        } else {
+          filters.push(`startswith(${field}, '${value}')`);
+        }
       } else if (condition.type === "endsWith") {
-        filters.push(`endswith(${field}, '${condition.filter}')`);
+        if (isNumericField) {
+          filters.push(`${field} eq ${value}`);
+        } else {
+          filters.push(`endswith(${field}, '${value}')`);
+        }
       }
     }
 
-    // 🔢 Number filter
+    // ==========================
+    // 🔢 NUMBER FILTER
+    // ==========================
     else if (condition.filterType === "number") {
       if (condition.type === "equals") {
         filters.push(`${field} eq ${condition.filter}`);
@@ -77,6 +109,7 @@ export const buildFilterQuery = (model: any): string => {
 
   return filters.join(" and ");
 };
+
 
 
 
