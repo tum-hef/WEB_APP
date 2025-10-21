@@ -1,5 +1,5 @@
 import { Box, Button, Grid, Modal, TextField, Typography } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { DateTimePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { CSVLink } from "react-csv";
@@ -8,6 +8,8 @@ import { format } from "date-fns-tz";
 import axios from "axios";
 import SaveAltIcon from "@mui/icons-material/SaveAlt";
 import DataTableCard from "./DataGrid";
+import DataTableCardV2 from "./DataGridServerSide";
+import { toast } from "react-toastify";
 
 const style = {
   position: "absolute",
@@ -58,29 +60,108 @@ function TableObservationPerDatastream({
   const [start_date, setStartDate] = useState<Date | null>(null);
   const [end_date, setEndDate] = useState<Date | null>(null);
   const [isDataFiltered, setIsDataFiltered] = useState(false);
-
-  useEffect(() => {
-    if (start_date && end_date && start_date < end_date) {
-      const backend_url = process.env.REACT_APP_FROST_URL;
-      axios
-        .get(
-          `https://${frostServerPort}-${backend_url}/FROST-Server/v1.0/Datastreams(${id})/Observations`,
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        )
-        .then((res) => {
-          if (res.status === 200 && res.data.value) {
-            setObservations(res.data.value);
-          }
-        });
-    }
-  }, [start_date, end_date]);
-
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalRows, setTotalRows] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [pageLinks, setPageLinks] = useState<{ [key: number]: string }>({});
   const [openModal, setOpenModal] = useState(false);
+    const [filterQuery, setFilterQuery] = useState("");
+    const [sortQuery, setSortQuery] = useState("");
+
+  const fetchObservations = useCallback(
+  async (
+    newPage = 0,
+    newPageSize = pageSize,
+    filter = filterQuery,
+    sort = sortQuery,
+    start = start_date,
+    end = end_date
+  ) => {
+    if (frostServerPort === null) return;
+    setLoading(true);
+
+    const backend_url = process.env.REACT_APP_FROST_URL;
+    let url = `https://${frostServerPort}-${backend_url}/FROST-Server/v1.0/Datastreams(${id})/Observations`;
+
+    if (pageLinks[newPage]) {
+      url = pageLinks[newPage];
+    }
+
+    try {
+      // --- Params for pagination and filtering
+      const params: Record<string, any> = !pageLinks[newPage]
+        ? {
+            $top: newPageSize,
+            $skip: newPage * newPageSize,
+            $count: true,
+            ...(filter && { $filter: filter }),
+            ...(sort && { $orderby: sort }),
+          }
+        : {};
+
+      // --- Add date filters if present
+      if (start && end) {
+        const startISO = start.toISOString();
+        const endISO = end.toISOString();
+        const dateFilter = `phenomenonTime ge ${startISO} and phenomenonTime le ${endISO}`;
+        params.$filter = params.$filter
+          ? `${params.$filter} and ${dateFilter}`
+          : dateFilter;
+      }
+
+      const res = await axios.get(url, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        params,
+      });
+
+      setDataStream(res.data.value);
+      if (res.data["@iot.count"]) setTotalRows(res.data["@iot.count"]);
+      if (res.data["@iot.nextLink"]) {
+        setPageLinks((prev) => ({
+          ...prev,
+          [newPage + 1]: res.data["@iot.nextLink"],
+        }));
+      }
+    } catch (err) {
+      console.error("Error fetching observations", err);
+      toast.error("Error fetching observations");
+    } finally {
+      setLoading(false);
+    }
+  },
+  [
+    frostServerPort,
+    id,
+    token,
+    pageLinks,
+    pageSize,
+    filterQuery,
+    sortQuery,
+    start_date,
+    end_date,
+  ]
+);
+
+
+
+useEffect(() => {
+  if (frostServerPort) {
+    if (start_date && end_date && start_date < end_date) {
+      // filtered mode
+      setPage(0);
+      setPageLinks({});
+      fetchObservations(0, pageSize, filterQuery, sortQuery, start_date, end_date);
+    } else {
+      // default mode (no filter)
+      fetchObservations(0, pageSize, filterQuery, sortQuery);
+    }
+  }
+}, [frostServerPort, start_date, end_date]);
+
   const handleOpenModal = () => setOpenModal(true);
   const handleCloseModal = () => {
     setOpenModal(false);
@@ -212,7 +293,7 @@ function TableObservationPerDatastream({
       headerName: "Phenomenon Time",
       field: "phenomenonTime",
       sortable: true,
-      filter: true,
+      filter: false,
       flex: 2,
       minWidth: 180,
       valueFormatter: (params: any) =>
@@ -493,13 +574,40 @@ function TableObservationPerDatastream({
           })}
         </Typography>
       )}
-      <DataTableCard
-        title={`Observations for Datastream ${id}`}
-        description="This page shows the individual observations recorded for the selected datastream. 
-Each observation represents a single measurement value captured at a specific time."
-        columnDefs={columnDefs}
-        rowData={datastream}
-      />
+    <DataTableCardV2
+  title={`Observations for Datastream ${id}`}
+  description="This page lists all recorded observations for this datastream. Each observation includes a measurement result and timestamp."
+  columnDefs={columnDefs}
+  rowData={datastream}
+  page={page}
+  pageSize={pageSize}
+  totalRows={totalRows}
+  loading={loading}
+  onPageChange={(newPage) => {
+    setPage(newPage);
+    fetchObservations(newPage, pageSize, filterQuery, sortQuery, start_date, end_date);
+  }}
+  onPageSizeChange={(newPageSize) => {
+    setPage(0);
+    setPageSize(newPageSize);
+    setPageLinks({});
+    fetchObservations(0, newPageSize, filterQuery, sortQuery, start_date, end_date);
+  }}
+  onFilterChange={(fq) => {
+    setFilterQuery(fq);
+    setPage(0);
+    setPageLinks({});
+    fetchObservations(0, pageSize, fq, sortQuery, start_date, end_date);
+  }}
+  onSortChange={(sq) => {
+    setSortQuery(sq);
+    setPage(0);
+    setPageLinks({});
+    fetchObservations(0, pageSize, filterQuery, sq, start_date, end_date);
+  }}
+/>
+
+
     </>
   );
 }
