@@ -6,7 +6,7 @@ export const buildFilterQuery = (model: any): string => {
     if (!condition) return;
 
     // ==========================
-    // 📅 DATE FILTER
+    // DATE FILTER
     // ==========================
     if (condition.filterType === "date") {
       const conds: string[] = [];
@@ -62,7 +62,7 @@ export const buildFilterQuery = (model: any): string => {
     }
 
     // ==========================
-    // 🔤 TEXT FILTER
+    // TEXT FILTER
     // ==========================
     else if (condition.filterType === "text") {
       const value = condition.filter;
@@ -92,7 +92,7 @@ export const buildFilterQuery = (model: any): string => {
     }
 
     // ==========================
-    // 🔢 NUMBER FILTER
+    //  NUMBER FILTER
     // ==========================
     else if (condition.filterType === "number") {
       if (condition.type === "equals") {

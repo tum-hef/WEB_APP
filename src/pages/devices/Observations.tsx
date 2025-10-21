@@ -93,11 +93,11 @@ const columnDefs = [
     await axios
     .post(
       `${backend_url}/frost-server`,
-      { user_email: email, group_id: group_id }, // ✅ Adding group_id to the request body
+      { user_email: email, group_id: group_id },
       {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`, // ✅ Added Authorization header
+          Authorization: `Bearer ${token}`,
         },
       }
     ).then((res) => {

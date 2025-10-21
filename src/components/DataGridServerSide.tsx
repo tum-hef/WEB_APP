@@ -148,7 +148,7 @@ useEffect(() => {
       sort: "asc" | "desc";
     }>;
     const sortString = buildSortQuery(model);
-    onSortChange?.(sortString);  // ✅ give parent ready string
+    onSortChange?.(sortString);  // give parent ready string
   }}
               enableRangeSelection
               enableCellTextSelection
@@ -158,7 +158,7 @@ useEffect(() => {
             />
           </div>
 
-          {/* ✅ Loader overlay */}
+         
           {loading && (
             <Box
               sx={{
