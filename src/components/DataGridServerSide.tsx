@@ -33,6 +33,7 @@ interface DataTableCardV2Props {
 
   onFilterChange?: (filterQuery: string) => void;
   onSortChange?: (sortQuery: string) => void;
+  clearFiltersTrigger?: boolean; 
 }
 
 const DataTableCard: React.FC<DataTableCardV2Props> = ({
@@ -48,6 +49,8 @@ const DataTableCard: React.FC<DataTableCardV2Props> = ({
   onPageSizeChange,
   onFilterChange,
   onSortChange,
+  clearFiltersTrigger
+  
 }) => {
   const gridApiRef = useRef<GridApi<any> | null>(null);
 
@@ -66,6 +69,14 @@ const DataTableCard: React.FC<DataTableCardV2Props> = ({
       gridApiRef.current.hideOverlay();
     }
   }, [loading, rowData]);
+
+useEffect(() => {
+  if (clearFiltersTrigger && gridApiRef.current) {
+    const api = gridApiRef.current;
+    api.setFilterModel(null);
+    api.onFilterChanged();
+  }
+}, [clearFiltersTrigger]);
 
   return (
     <Card elevation={1} sx={{ borderRadius: "8px" }}>
