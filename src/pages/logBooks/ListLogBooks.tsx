@@ -9,7 +9,11 @@ import DataTableCardV2 from "../../components/DataGridServerSide";
 import { useKeycloak } from "@react-keycloak/web";
 import { FilterQueryBuilder, SortQueryBuilder } from "../../utils/frostQueryBuilder";
 import moment from "moment";
-import DateTimeFilter from "../../components/AgGridDateTime";
+import DateTimeFilter from "../../components/AgGridDateTime"; 
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
+import Swal from "sweetalert2";
+
 const ListLogBook = () => {
   const { keycloak } = useKeycloak();
   const token = keycloak?.token;
@@ -132,10 +136,113 @@ const ListLogBook = () => {
 
   valueFormatter: (params:any) =>
     params.value ? moment(params.value).format("DD.MM.YYYY HH:mm:ss") : "",
-}
+},
+{
+  headerName: "",
+  field: "edit",
+  width: 60,
+  sortable: false,
+  filter: false,
+  cellRenderer: (params:any) => {
+    return (
+      <EditIcon
+        sx={{ cursor: "pointer", color: "#1976d2" }}
+        onClick={() => handleEditLog(params.data)}
+      />
+    );
+  },
+},
+{
+  headerName: "",
+  field: "delete",
+  width: 60,
+  sortable: false,
+  filter: false,
+  cellRenderer: (params:any) => {
+    return (
+      <DeleteIcon
+        sx={{ cursor: "pointer", color: "#d32f2f" }}
+        onClick={() => handleDeleteLog(params.data)}
+      />
+    );
+  },
+},
+
+
 
 
   ];
+
+  const handleEditLog = (log: any) => {
+  Swal.fire({
+    title: "Edit Log Entry",
+    html: `
+      <div class="swal-input-row-with-label">
+        <label for="description">Description</label>
+        <input id="description" class="swal2-input" value="${log.description || ""}">
+      </div>
+    `,
+    showCancelButton: true,
+    confirmButtonText: "Save",
+    preConfirm: () => {
+      const description = (document.getElementById("description") as HTMLInputElement).value.trim();
+      if (!description) {
+        Swal.showValidationMessage("Description cannot be empty");
+        return false;
+      }
+      return { description };
+    },
+  }).then(async (result) => {
+    if (result.isConfirmed) {
+      try {
+        await axios.patch(
+          `${backend_url}/log_book/${log.id}`,
+          {
+            description: result.value.description,
+          },
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+        Swal.fire("Success", "Log updated successfully!", "success");
+        fetchLogs(page, pageSize, filterQuery, sortQuery); // refresh
+      } catch (e) {
+        Swal.fire("Error", "Failed to update log", "error");
+      }
+    }
+  });
+};
+
+const handleDeleteLog = async (log: any) => {
+  Swal.fire({
+    title: "Are you sure?",
+    text: "This log entry will be permanently deleted.",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Yes, delete it",
+    cancelButtonText: "No",
+  }).then(async (result) => {
+    if (result.isConfirmed) {
+      try {
+        await axios.delete(
+          `${backend_url}/log_book/${log.id}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        Swal.fire("Deleted", "Log entry removed", "success");
+        fetchLogs(page, pageSize, filterQuery, sortQuery);
+      } catch (error:any) {
+        Swal.fire(
+          "Error",
+          error.response?.data?.message || "Failed to delete log",
+          "error"
+        );
+      }
+    }
+  });
+};
+
 
   return (
     <Dashboard>
