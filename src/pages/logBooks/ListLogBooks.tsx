@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { Breadcrumbs, Typography } from "@mui/material";
+import { Breadcrumbs, TextField, Typography } from "@mui/material";
 import { ToastContainer, toast } from "react-toastify";
 
 import Dashboard from "../../components/DashboardComponent";
@@ -9,10 +9,13 @@ import DataTableCardV2 from "../../components/DataGridServerSide";
 import { useKeycloak } from "@react-keycloak/web";
 import { FilterQueryBuilder, SortQueryBuilder } from "../../utils/frostQueryBuilder";
 import moment from "moment";
-import DateTimeFilter from "../../components/AgGridDateTime"; 
+import DateTimeFilter from "../../components/AgGridDateTime";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import Swal from "sweetalert2";
+import ReactDOM from "react-dom";
+import { DateTimePicker, LocalizationProvider } from "@mui/x-date-pickers";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 
 const ListLogBook = () => {
   const { keycloak } = useKeycloak();
@@ -108,65 +111,65 @@ const ListLogBook = () => {
       autoHeight: true,
       cellStyle: { whiteSpace: "normal" },
     },
-{
-  headerName: "Timestamp",
-  field: "timestamp",
-  sortable: true,
-  filter: "agDateColumnFilter",
-  cellDataType: "dateTime",
-  flex: 1.2,
+    {
+      headerName: "Timestamp",
+      field: "timestamp",
+      sortable: true,
+      filter: "agDateColumnFilter",
+      cellDataType: "dateTime",
+      flex: 1.2,
 
-  // Return REAL date object (for AG Grid filter)
-  valueGetter: (params:any) => params.data.timestamp ? new Date(params.data.timestamp) : null,
+      // Return REAL date object (for AG Grid filter)
+      valueGetter: (params: any) => params.data.timestamp ? new Date(params.data.timestamp) : null,
 
-  // Show readable format to user
-  valueFormatter: (params:any) =>
-    params.value ? moment(params.value).format("DD.MM.YYYY HH:mm:ss") : "",
-},
+      // Show readable format to user
+      valueFormatter: (params: any) =>
+        params.value ? moment(params.value).format("DD.MM.YYYY HH:mm:ss") : "",
+    },
 
-{
-  headerName: "Created At",
-  field: "createdAt",
-  sortable: true,
-  filter: "agDateColumnFilter",
-  cellDataType: "dateTime",
-  flex: 1.2,
+    {
+      headerName: "Created At",
+      field: "createdAt",
+      sortable: true,
+      filter: "agDateColumnFilter",
+      cellDataType: "dateTime",
+      flex: 1.2,
 
-  valueGetter: (params:any) => params.data.createdAt ? new Date(params.data.createdAt) : null,
+      valueGetter: (params: any) => params.data.createdAt ? new Date(params.data.createdAt) : null,
 
-  valueFormatter: (params:any) =>
-    params.value ? moment(params.value).format("DD.MM.YYYY HH:mm:ss") : "",
-},
-{
-  headerName: "",
-  field: "edit",
-  width: 60,
-  sortable: false,
-  filter: false,
-  cellRenderer: (params:any) => {
-    return (
-      <EditIcon
-        sx={{ cursor: "pointer", color: "#1976d2" }}
-        onClick={() => handleEditLog(params.data)}
-      />
-    );
-  },
-},
-{
-  headerName: "",
-  field: "delete",
-  width: 60,
-  sortable: false,
-  filter: false,
-  cellRenderer: (params:any) => {
-    return (
-      <DeleteIcon
-        sx={{ cursor: "pointer", color: "#d32f2f" }}
-        onClick={() => handleDeleteLog(params.data)}
-      />
-    );
-  },
-},
+      valueFormatter: (params: any) =>
+        params.value ? moment(params.value).format("DD.MM.YYYY HH:mm:ss") : "",
+    },
+    {
+      headerName: "",
+      field: "edit",
+      width: 60,
+      sortable: false,
+      filter: false,
+      cellRenderer: (params: any) => {
+        return (
+          <EditIcon
+            sx={{ cursor: "pointer", color: "#1976d2" }}
+            onClick={() => handleEditLog(params.data)}
+          />
+        );
+      },
+    },
+    {
+      headerName: "",
+      field: "delete",
+      width: 60,
+      sortable: false,
+      filter: false,
+      cellRenderer: (params: any) => {
+        return (
+          <DeleteIcon
+            sx={{ cursor: "pointer", color: "#d32f2f" }}
+            onClick={() => handleDeleteLog(params.data)}
+          />
+        );
+      },
+    },
 
 
 
@@ -174,74 +177,121 @@ const ListLogBook = () => {
   ];
 
   const handleEditLog = (log: any) => {
-  Swal.fire({
-    title: "Edit Log Entry",
-    html: `
-      <div class="swal-input-row-with-label">
-        <label for="description">Description</label>
-        <input id="description" class="swal2-input" value="${log.description || ""}">
-      </div>
+    let editedDescription = log.description;
+    let editedTimestamp: any = log.timestamp ? new Date(log.timestamp) : new Date();
+
+    Swal.fire({
+      title: "Edit Log Entry",
+      html: `
+      <div id="swal-desc"></div>
+      <div id="swal-dt" style="margin-top: 15px;"></div>
     `,
-    showCancelButton: true,
-    confirmButtonText: "Save",
-    preConfirm: () => {
-      const description = (document.getElementById("description") as HTMLInputElement).value.trim();
-      if (!description) {
-        Swal.showValidationMessage("Description cannot be empty");
-        return false;
-      }
-      return { description };
-    },
-  }).then(async (result) => {
-    if (result.isConfirmed) {
-      try {
-        await axios.patch(
-          `${backend_url}/log_book/${log.id}`,
-          {
-            description: result.value.description,
-          },
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
+      showCancelButton: true,
+      confirmButtonText: "Save",
+
+      didOpen: () => {
+        const descDiv = document.getElementById("swal-desc");
+        const dtDiv = document.getElementById("swal-dt");
+
+        // === Description field ===
+        ReactDOM.render(
+          <TextField
+            fullWidth
+            label="Description"
+            defaultValue={editedDescription}
+            onChange={(e) => (editedDescription = e.target.value)}
+          />,
+          descDiv
         );
 
-        Swal.fire("Success", "Log updated successfully!", "success");
-        fetchLogs(page, pageSize, filterQuery, sortQuery); // refresh
-      } catch (e) {
-        Swal.fire("Error", "Failed to update log", "error");
-      }
-    }
-  });
-};
-
-const handleDeleteLog = async (log: any) => {
-  Swal.fire({
-    title: "Are you sure?",
-    text: "This log entry will be permanently deleted.",
-    icon: "warning",
-    showCancelButton: true,
-    confirmButtonText: "Yes, delete it",
-    cancelButtonText: "No",
-  }).then(async (result) => {
-    if (result.isConfirmed) {
-      try {
-        await axios.delete(
-          `${backend_url}/log_book/${log.id}`,
-          { headers: { Authorization: `Bearer ${token}` } }
+        // === MUI DateTimePicker WITH MOMENT ===
+        ReactDOM.render(
+          <LocalizationProvider dateAdapter={AdapterDateFns}>
+            <DateTimePicker
+              label="Timestamp"
+              value={editedTimestamp}
+              inputFormat="dd.MM.yyyy HH:mm"  // ✔ correct Moment format
+              onChange={(value) => {
+                editedTimestamp = value;
+              }}
+              renderInput={(params) => <TextField {...params} fullWidth />}
+            />
+          </LocalizationProvider>,
+          dtDiv
         );
+      },
 
-        Swal.fire("Deleted", "Log entry removed", "success");
-        fetchLogs(page, pageSize, filterQuery, sortQuery);
-      } catch (error:any) {
-        Swal.fire(
-          "Error",
-          error.response?.data?.message || "Failed to delete log",
-          "error"
-        );
+      preConfirm: () => {
+        if (!editedDescription.trim()) {
+          Swal.showValidationMessage("Description cannot be empty");
+          return false;
+        }
+
+        if (!editedTimestamp || !editedTimestamp.isValid()) {
+          Swal.showValidationMessage("Invalid timestamp");
+          return false;
+        }
+
+        return {
+          description: editedDescription.trim(),
+          timestamp: editedTimestamp.toISOString(), // ✔ convert moment → ISO
+        };
+      },
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await axios.patch(
+            `${backend_url}/log_book/${log.id}`,
+            {
+              description: result.value.description,
+              timestamp: result.value.timestamp,
+            },
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+
+          Swal.fire("Success", "Log Book updated successfully!", "success");
+          fetchLogs(page, pageSize, filterQuery, sortQuery);
+
+        } catch (e) {
+          Swal.fire("Error", "Failed to update Log Book", "error");
+        }
       }
-    }
-  });
-};
+    });
+  };
+
+
+
+
+  const handleDeleteLog = async (log: any) => {
+    Swal.fire({
+      title: "Are you sure?",
+      text: "This log entry will be permanently deleted.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes, delete it",
+      cancelButtonText: "No",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await axios.delete(
+            `${backend_url}/log_book/${log.id}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+
+          Swal.fire("Deleted", "Log entry removed", "success");
+          fetchLogs(page, pageSize, filterQuery, sortQuery);
+        } catch (error: any) {
+          Swal.fire(
+            "Error",
+            error.response?.data?.message || "Failed to delete log",
+            "error"
+          );
+        }
+      }
+    });
+  };
 
 
   return (
@@ -264,10 +314,10 @@ const handleDeleteLog = async (log: any) => {
         totalRows={totalRows}
         loading={loading}
         onPageChange={handlePageChange}
-        onPageSizeChange={handlePageSizeChange} 
+        onPageSizeChange={handlePageSizeChange}
         frameworkComponents={{
-    dateTimeFilter: DateTimeFilter,
-  }}
+          dateTimeFilter: DateTimeFilter,
+        }}
         onFilterChange={(fq) => {
           setFilterQuery(fq);
           setPage(0);
