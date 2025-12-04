@@ -297,90 +297,109 @@ const handleCreateLog = () => {
 
   ];
 
-  const handleEditLog = (log: any) => {
-    let editedDescription = log.description;
-    let editedTimestamp: any = log.timestamp ? new Date(log.timestamp) : new Date();
+ const handleEditLog = (log: any) => {
+  Swal.fire({
+    title: "Edit Log Entry",
+    html: `<div id="swal-edit-form"></div>`,
+    showCancelButton: true,
+    confirmButtonText: "Save",
 
-    Swal.fire({
-      title: "Edit Log Entry",
-      html: `
-      <div id="swal-desc"></div>
-      <div id="swal-dt" style="margin-top: 15px;"></div>
-    `,
-      showCancelButton: true,
-      confirmButtonText: "Save",
+    didOpen: () => {
+      const mount = document.getElementById("swal-edit-form");
 
-      didOpen: () => {
-        const descDiv = document.getElementById("swal-desc");
-        const dtDiv = document.getElementById("swal-dt");
+      ReactDOM.render(
+        <Formik
+          initialValues={{
+            description: log.description ?? "",
+            timestamp: log.timestamp ? new Date(log.timestamp) : new Date(),
+           
+          }}
+          validationSchema={Yup.object({
+            description: Yup.string().required("Description is required"),
+            timestamp: Yup.date().required("Timestamp required"),
+          })}
+          onSubmit={async (values, { setSubmitting, resetForm }) => {
+            try {
+              const token = keycloak?.token;
 
-        // === Description field ===
-        ReactDOM.render(
-          <TextField
-            fullWidth
-            label="Description"
-            defaultValue={editedDescription}
-            onChange={(e) => (editedDescription = e.target.value)}
-          />,
-          descDiv
-        );
+              const formattedTimestamp = format(
+                values.timestamp,
+                "yyyy-MM-dd HH:mm:ss"
+              );
 
-        // === MUI DateTimePicker WITH MOMENT ===
-        ReactDOM.render(
-          <LocalizationProvider dateAdapter={AdapterDateFns}>
-            <DateTimePicker
-              label="Timestamp"
-              value={editedTimestamp}
-              inputFormat="dd.MM.yyyy HH:mm"  // ✔ correct Moment format
-              onChange={(value) => {
-                editedTimestamp = value;
-              }}
-              renderInput={(params) => <TextField {...params} fullWidth />}
-            />
-          </LocalizationProvider>,
-          dtDiv
-        );
-      },
+              await axios.patch(
+                `${backend_url}/log_book/${log.id}`,
+                {
+                  description: values.description,
+                  timestamp: formattedTimestamp,
+                },
+                { headers: { Authorization: `Bearer ${token}` } }
+              );
 
-      preConfirm: () => {
-        if (!editedDescription.trim()) {
-          Swal.showValidationMessage("Description cannot be empty");
-          return false;
-        }
+              // cleanup
+              const btn = Swal.getConfirmButton();
+              if (btn) btn.onclick = null;
 
-        if (!editedTimestamp || !editedTimestamp.isValid()) {
-          Swal.showValidationMessage("Invalid timestamp");
-          return false;
-        }
+              if (mount) ReactDOM.unmountComponentAtNode(mount);
+              Swal.close();
 
-        return {
-          description: editedDescription.trim(),
-          timestamp: editedTimestamp.toISOString(), // ✔ convert moment → ISO
-        };
-      },
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        try {
-          await axios.patch(
-            `${backend_url}/log_book/${log.id}`,
-            {
-              description: result.value.description,
-              timestamp: result.value.timestamp,
-            },
-            {
-              headers: { Authorization: `Bearer ${token}` },
+              await Swal.fire("Success", "Log updated successfully!", "success");
+
+              resetForm();
+              fetchLogs(page, pageSize, filterQuery, sortQuery);
+            } catch (err) {
+              Swal.fire("Error", "Failed to update log", "error");
             }
-          );
 
-          Swal.fire("Success", "Log Book updated successfully!", "success");
-          fetchLogs(page, pageSize, filterQuery, sortQuery);
+            setSubmitting(false);
+          }}
+        >
+          {({ values, errors, touched, setFieldValue, submitForm }) => {
+            const btn = Swal.getConfirmButton();
+            if (btn) btn.onclick = submitForm;
 
-        } catch (e) {
-          Swal.fire("Error", "Failed to update Log Book", "error");
-        }
-      }
-    });
-  };
+            return (
+              <Form style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
+                
+                <TextField
+                  fullWidth
+                  label="Description"
+                  value={values.description}
+                  onChange={(e) => setFieldValue("description", e.target.value)}
+                  error={touched.description && Boolean(errors.description)}
+                  helperText={touched.description && errors.description}
+                />
+
+                <LocalizationProvider dateAdapter={AdapterDateFns}>
+                  <DateTimePicker
+                    label="Timestamp"
+                    value={values.timestamp}
+                    inputFormat="dd.MM.yyyy HH:mm"
+                    onChange={(val) => {
+                      if (val instanceof Date && !isNaN(val.getTime())) {
+                        setFieldValue("timestamp", val);
+                      }
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        fullWidth
+                        error={touched.timestamp && Boolean(errors.timestamp)}
+                        helperText={touched.timestamp && errors.timestamp}
+                      />
+                    )}
+                  />
+                </LocalizationProvider>
+
+              </Form>
+            );
+          }}
+        </Formik>,
+        mount
+      );
+    },
+  });
+};
 
 
 
