@@ -270,38 +270,71 @@ const handleCreateLog = () => {
 
   flex: 1.2,
 }
-
 ,
-    {
-      headerName: "",
-      field: "edit",
-      width: 60,
-      sortable: false,
-      filter: false,
-      cellRenderer: (params: any) => {
-        return (
-          <EditIcon
-            sx={{ cursor: "pointer", color: "#1976d2" }}
-            onClick={() => handleEditLog(params.data)}
-          />
-        );
-      },
-    },
-    {
-      headerName: "",
-      field: "delete",
-      width: 60,
-      sortable: false,
-      filter: false,
-      cellRenderer: (params: any) => {
-        return (
-          <DeleteIcon
-            sx={{ cursor: "pointer", color: "#d32f2f" }}
-            onClick={() => handleDeleteLog(params.data)}
-          />
-        );
-      },
-    },
+{
+  headerName: "",
+  field: "edit",
+  width: 50,
+  minWidth: 50,
+  maxWidth: 50,
+  sortable: false,
+  filter: false,
+  suppressMovable: true,
+  suppressSizeToFit: true,
+  cellStyle: { borderRight: "none" }, // remove grid line
+
+  cellRenderer: (params: any) => {
+    const isOwner = params.context.isOwner;
+
+    return (
+      <EditIcon
+        sx={{
+          cursor: isOwner ? "pointer" : "not-allowed",
+          color: isOwner ? "#233044" : "#999999",
+          opacity: isOwner ? 1 : 0.4,
+          width: "22px",
+          height: "22px",
+        }}
+        onClick={() => {
+          if (!isOwner) return;
+          handleEditLog(params.data);
+        }}
+      />
+    );
+  },
+},
+{
+  headerName: "",
+  field: "delete",
+  width: 50,
+  minWidth: 50,
+  maxWidth: 50,
+  sortable: false,
+  filter: false,
+  suppressMovable: true,
+  suppressSizeToFit: true,
+  cellStyle: { borderRight: "none" }, // remove grid line
+
+  cellRenderer: (params: any) => {
+    const isOwner = params.context.isOwner;
+
+    return (
+      <DeleteIcon
+        sx={{
+          cursor: isOwner ? "pointer" : "not-allowed",
+          color: isOwner ? "#d32f2f" : "#999999",
+          opacity: isOwner ? 1 : 0.4,
+          width: "22px",
+          height: "22px",
+        }}
+        onClick={() => {
+          if (!isOwner) return;
+          handleDeleteLog(params.data);
+        }}
+      />
+    );
+  },
+},
 
 
 
@@ -490,6 +523,7 @@ const handleCreateLog = () => {
         frameworkComponents={{
           dateTimeFilter: DateTimeFilter,
         }}
+        context={{ isOwner }}
         onFilterChange={(fq) => {
           setFilterQuery(fq);
           setPage(0);

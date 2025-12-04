@@ -30,6 +30,9 @@ interface DataTableCardV2Props {
 
   onPageChange: (newPage: number) => void;
   onPageSizeChange: (newSize: number) => void;
+  frameworkComponents?: any
+  context?: any;
+
 
   onFilterChange?: (filterQuery: string) => void;
   onSortChange?: (sortQuery: string) => void;
@@ -47,6 +50,8 @@ const DataTableCard: React.FC<DataTableCardV2Props> = ({
   loading = false,
   onPageChange,
   onPageSizeChange,
+  frameworkComponents,
+  context,
   onFilterChange,
   onSortChange,
   clearFiltersTrigger
@@ -122,7 +127,9 @@ useEffect(() => {
               domLayout="normal"
               rowHeight={65}
               headerHeight={42}
-              suppressRowTransform={true}
+              suppressRowTransform={true} 
+              components={frameworkComponents} 
+              context={context}
               defaultColDef={{
                 filter: true,
                 floatingFilter: true,
