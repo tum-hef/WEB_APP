@@ -333,7 +333,8 @@ export default function ListClients() {
   };
 
   const handleAction = (action: string, userId: any) => {
-    let data = { "membership_id": userId, "action": action }
+    let data = { "membership_id": userId, "action": action } 
+      const token = keycloak?.token;
     Swal.fire({
       title: `Are you sure you want to ${action} this request?`,
       icon: "warning",
@@ -345,7 +346,8 @@ export default function ListClients() {
         try {
           const response = await axios.post(
             `${process.env.REACT_APP_BACKEND_URL}/manage_membership`,
-            data
+            data,
+            { headers: { Authorization: `Bearer ${token}` } }
           );
           Swal.fire("Success", response.data.message, "success");
           getAllGroups();
@@ -482,6 +484,7 @@ const handleApplyNodeRed = async (groupId: string) => {
               user_email: userEmail,
               group_id: groupId,
             }
+            ,            { headers: { Authorization: `Bearer ${keycloak?.token}` } }
           );
           Swal.fire("Success", response.data.message, "success");
           getAllGroups();
