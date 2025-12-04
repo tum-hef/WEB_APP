@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { Breadcrumbs, TextField, Typography } from "@mui/material";
+import { Breadcrumbs, Button, TextField, Typography } from "@mui/material";
 import { ToastContainer, toast } from "react-toastify";
 
 import Dashboard from "../../components/DashboardComponent";
@@ -16,6 +16,10 @@ import Swal from "sweetalert2";
 import ReactDOM from "react-dom";
 import { DateTimePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import { Formik, Form, Field } from "formik";
+import * as Yup from "yup";
+import { useIsOwner } from "../../hooks/hooks";
+import { format } from "date-fns";
 
 const ListLogBook = () => {
   const { keycloak } = useKeycloak();
@@ -30,6 +34,123 @@ const ListLogBook = () => {
   const [filterQuery, setFilterQuery] = useState("");
   const [sortQuery, setSortQuery] = useState("");
   const [loading, setLoading] = useState(false);
+  const isOwner = useIsOwner();
+  const CreateLogSchema = Yup.object().shape({
+    description: Yup.string()
+      .min(3, "Too short")
+      .required("Description is required"),
+    timestamp: Yup.date()
+      .required("Timestamp required")
+      .nullable(),
+  });
+
+const handleCreateLog = () => {
+  Swal.fire({
+    title: "Create Log Entry",
+    html: `<div id="swal-create-form"></div>`,
+    showCancelButton: true,
+    confirmButtonText: "Create",
+
+    didOpen: () => {
+      const mount = document.getElementById("swal-create-form");
+
+      ReactDOM.render(
+        <Formik
+          initialValues={{
+            description: "",
+            timestamp: new Date(),
+          }}
+          validationSchema={CreateLogSchema}
+          onSubmit={async (values, { setSubmitting, resetForm }) => {
+            try {
+              const token = keycloak?.token;
+
+              // backend format: "2025-11-25 14:30:00"
+              const formattedTimestamp = format(
+                values.timestamp,
+                "yyyy-MM-dd HH:mm:ss"
+              );
+
+              await axios.post(
+                `${backend_url}/log_book`,
+                {
+                  description: values.description,
+                  timestamp: formattedTimestamp,
+                  group_id: localStorage.getItem("group_id"),
+                },
+                { headers: { Authorization: `Bearer ${token}` } }
+              );
+
+              const btn = Swal.getConfirmButton();
+              if (btn) btn.onclick = null; /** Remove previous Formik submit binding */
+
+              if (mount) {
+                ReactDOM.unmountComponentAtNode(mount); /** Unmount form */
+              }
+
+              Swal.close(); /** Close form dialog */
+
+              await Swal.fire("Success", "Log entry created!", "success");
+
+              // Refresh table + reset form
+              resetForm();
+              fetchLogs(page, pageSize, filterQuery, sortQuery);
+
+            } catch (err) {
+              Swal.fire("Error", "Failed to create log", "error");
+            }
+
+            setSubmitting(false);
+          }}
+        >
+          {({ values, errors, touched, setFieldValue, submitForm }) => {
+            const btn = Swal.getConfirmButton();
+            if (btn) btn.onclick = submitForm;
+
+            return (
+              <Form style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
+                
+                {/* DESCRIPTION */}
+                <TextField
+                  name="description"
+                  label="Description"
+                  value={values.description}
+                  onChange={(e) => setFieldValue("description", e.target.value)}
+                  error={touched.description && Boolean(errors.description)}
+                  helperText={touched.description && errors.description}
+                  fullWidth
+                />
+
+                {/* DATETIME PICKER */}
+                <LocalizationProvider dateAdapter={AdapterDateFns}>
+                  <DateTimePicker
+                    label="Timestamp"
+                    value={values.timestamp}
+                    inputFormat="dd.MM.yyyy HH:mm"
+                    onChange={(val) => setFieldValue("timestamp", val)}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        fullWidth
+                        error={touched.timestamp && Boolean(errors.timestamp)}
+                        helperText={touched.timestamp && errors.timestamp}
+                      />
+                    )}
+                  />
+                </LocalizationProvider>
+
+              </Form>
+            );
+          }}
+        </Formik>,
+        mount
+      );
+    },
+  });
+};
+
+
+
 
   const fetchLogs = async (
     newPage: number = 0,
@@ -303,6 +424,27 @@ const ListLogBook = () => {
         <LinkCustom to="/">Data Space</LinkCustom>
         <Typography color="text.primary">Log Book</Typography>
       </Breadcrumbs>
+
+      {isOwner ? (
+        <Button
+          variant="contained"
+          color="primary"
+          style={{ marginBottom: "10px" }}
+          onClick={handleCreateLog}
+        >
+          Create
+        </Button>
+      ) : (
+        <Button
+          variant="contained"
+          color="primary"
+          disabled
+          style={{ marginBottom: "10px" }}
+        >
+          Create
+        </Button>
+      )}
+
 
       <DataTableCardV2
         title="Log Book"
