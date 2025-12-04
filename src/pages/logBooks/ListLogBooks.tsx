@@ -247,20 +247,31 @@ const handleCreateLog = () => {
       valueFormatter: (params: any) =>
         params.value ? moment(params.value).format("DD.MM.YYYY HH:mm:ss") : "",
     },
+  {
+  headerName: "Created At",
+  field: "createdAt",
+  sortable: true,
+  filter: "agDateColumnFilter",
+  cellDataType: "dateTime",
 
-    {
-      headerName: "Created At",
-      field: "createdAt",
-      sortable: true,
-      filter: "agDateColumnFilter",
-      cellDataType: "dateTime",
-      flex: 1.2,
+  valueGetter: (params:any) => {
+    const raw = params.data.createdAt;
+    if (!raw) return null;
+    const utc = raw.replace(" ", "T") + "Z";
 
-      valueGetter: (params: any) => params.data.createdAt ? new Date(params.data.createdAt) : null,
+    return new Date(utc); 
+  },
 
-      valueFormatter: (params: any) =>
-        params.value ? moment(params.value).format("DD.MM.YYYY HH:mm:ss") : "",
-    },
+  valueFormatter: (params:any) => {
+    return params.value
+      ? moment(params.value).format("DD.MM.YYYY HH:mm:ss")
+      : "";
+  },
+
+  flex: 1.2,
+}
+
+,
     {
       headerName: "",
       field: "edit",
