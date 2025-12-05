@@ -16,7 +16,7 @@ import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-material.css";
-import { buildFilterQuery, buildSortQuery, FilterQueryBuilderV2 } from "../utils/frostQueryBuilder"; 
+import { buildFilterQuery, buildSortQuery, FilterQueryBuilderV2 } from "../utils/frostQueryBuilder";
 import { CsvExportModule, ModuleRegistry } from "ag-grid-community";
 ModuleRegistry.registerModules([CsvExportModule]);
 
@@ -41,8 +41,8 @@ interface DataTableCardV2Props {
   clearFiltersTrigger?: boolean;
   filterType?: boolean;
 
-exportEnabled?: boolean; 
-csv_title?: string;
+  exportEnabled?: boolean;
+  csv_title?: string;
 
 }
 
@@ -64,7 +64,7 @@ const DataTableCard: React.FC<DataTableCardV2Props> = ({
   onSortChange,
   clearFiltersTrigger,
   filterType,
-  exportEnabled = false ,
+  exportEnabled = false,
   csv_title
 }) => {
   const gridApiRef = useRef<GridApi<any> | null>(null);
@@ -87,70 +87,72 @@ const DataTableCard: React.FC<DataTableCardV2Props> = ({
       api.setFilterModel(null);
       api.onFilterChanged();
     }
-  }, [clearFiltersTrigger]); 
+  }, [clearFiltersTrigger]);
 
   const handleExportCurrentPage = () => {
-  if (gridApiRef.current) {
-    gridApiRef.current.exportDataAsCsv({
-      fileName: `${csv_title}.csv` ,
-      columnKeys: ["id", "description", "timestamp", "createdAt"],
-      columnSeparator: ","
-    });
-  }
-};
+    if (gridApiRef.current) {
+      gridApiRef.current.exportDataAsCsv({
+        fileName: `${csv_title}.csv`,
+        columnKeys: ["id", "description", "timestamp", "createdAt"],
+        columnSeparator: ","
+      });
+    }
+  };
 
   return (
     <Card elevation={1} sx={{ borderRadius: "8px" }}>
-  <CardHeader
-  title={
-    <Box display="flex" alignItems="center">
-      <Typography variant="h3" sx={{ fontWeight: 400 }}>
-        {title}
-      </Typography>
+      <CardHeader
+        title={
+          <Box display="flex" alignItems="center">
+            <Typography variant="h3" sx={{ fontWeight: 400 }}>
+              {title}
+            </Typography>
 
-      {description && (
-        <Tooltip title={description} placement="top" arrow>
-          <InfoOutlinedIcon
-            sx={{
-              ml: 1,
-              fontSize: 22,
-              color: "gray",
-              cursor: "pointer",
-              mt: 2,
-            }}
-          />
-        </Tooltip>
-      )}
-    </Box>
-  }
-  action={
-    exportEnabled ? (
-      <Box display="flex" alignItems="center" gap={1} sx={{ mt: 1, mr: 1 }}>
+            {description && (
+              <Tooltip title={description} placement="top" arrow>
+                <InfoOutlinedIcon
+                  sx={{
+                    ml: 1,
+                    fontSize: 22,
+                    color: "gray",
+                    cursor: "pointer",
+                    mt: 2,
+                  }}
+                />
+              </Tooltip>
+            )}
+          </Box>
+        }
+        action={
+          exportEnabled ? (
+            <Box display="flex" alignItems="center" gap={1} sx={{ mt: 1, mr: 1 }}>
 
-        {/* Export Current Page (AG-Grid) */}
-        <Button
-          variant="contained"
-          size="small"
-          onClick={handleExportCurrentPage}
-          sx={{ textTransform: "none" }}
-        >
-          Export Page
-        </Button>
+              {/* Export Current Page (AG-Grid) */}
+              <Button
+                variant="contained"
+                color="primary"
+                size="small"
+                sx={{ backgroundColor: "#233044", whiteSpace: "nowrap", "&:hover": { backgroundColor: "#233044" } }}
+                onClick={handleExportCurrentPage}
+              >
+                Export Page
+              </Button>
 
-        {/* Export All (Backend) */}
-        <Button
-          variant="contained"
-          size="small"
-          onClick={() => {}}
-          sx={{ textTransform: "none" }}
-        >
-          Export All
-        </Button>
+              {/* Export All (Backend) */}
+              <Button
+                variant="contained"
+                color="primary"
+                size="small"
+                sx={{ backgroundColor: "#233044", whiteSpace: "nowrap", "&:hover": { backgroundColor: "#233044" } }}
+                onClick={() => { }}
+              >
+                Export All
+              </Button>
 
-      </Box>
-    ) : null
-  }
-/>
+            </Box>
+          ) : null
+        }
+      />
 
 
 
