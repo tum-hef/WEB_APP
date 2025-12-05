@@ -41,8 +41,9 @@ interface DataTableCardV2Props {
   clearFiltersTrigger?: boolean;
   filterType?: boolean;
 
-  /** NEW PROP */
-  exportEnabled?: boolean; // Only show export button when true
+exportEnabled?: boolean; 
+csv_title?: string;
+
 }
 
 
@@ -63,16 +64,11 @@ const DataTableCard: React.FC<DataTableCardV2Props> = ({
   onSortChange,
   clearFiltersTrigger,
   filterType,
-  exportEnabled
+  exportEnabled = false ,
+  csv_title
 }) => {
   const gridApiRef = useRef<GridApi<any> | null>(null);
 
-  const handleExportCsv = () => {
-    if (!gridApiRef.current) return;
-    gridApiRef.current.exportDataAsCsv({
-      fileName: `${title.replace(/\s+/g, "_").toLowerCase()}_export.csv`,
-    });
-  };
 
   useEffect(() => {
     if (!gridApiRef.current) return;
@@ -91,16 +87,27 @@ const DataTableCard: React.FC<DataTableCardV2Props> = ({
       api.setFilterModel(null);
       api.onFilterChanged();
     }
-  }, [clearFiltersTrigger]);
+  }, [clearFiltersTrigger]); 
+
+  const handleExportCurrentPage = () => {
+  if (gridApiRef.current) {
+    gridApiRef.current.exportDataAsCsv({
+      fileName: `${csv_title}.csv` ,
+      columnKeys: ["id", "description", "timestamp", "createdAt"],
+      columnSeparator: ","
+    });
+  }
+};
 
   return (
     <Card elevation={1} sx={{ borderRadius: "8px" }}>
-      <CardHeader
+  <CardHeader
   title={
     <Box display="flex" alignItems="center">
       <Typography variant="h3" sx={{ fontWeight: 400 }}>
         {title}
       </Typography>
+
       {description && (
         <Tooltip title={description} placement="top" arrow>
           <InfoOutlinedIcon
@@ -118,17 +125,33 @@ const DataTableCard: React.FC<DataTableCardV2Props> = ({
   }
   action={
     exportEnabled ? (
-      <Button
-        variant="outlined"
-        size="small"
-        onClick={handleExportCsv}
-        sx={{ mt: 1, mr: 1 }}
-      >
-        Export CSV
-      </Button>
+      <Box display="flex" alignItems="center" gap={1} sx={{ mt: 1, mr: 1 }}>
+
+        {/* Export Current Page (AG-Grid) */}
+        <Button
+          variant="contained"
+          size="small"
+          onClick={handleExportCurrentPage}
+          sx={{ textTransform: "none" }}
+        >
+          Export Page
+        </Button>
+
+        {/* Export All (Backend) */}
+        <Button
+          variant="contained"
+          size="small"
+          onClick={() => {}}
+          sx={{ textTransform: "none" }}
+        >
+          Export All
+        </Button>
+
+      </Box>
     ) : null
   }
 />
+
 
 
       <CardContent
