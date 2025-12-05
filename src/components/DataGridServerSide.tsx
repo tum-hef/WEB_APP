@@ -18,6 +18,7 @@ import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-material.css";
 import { buildFilterQuery, buildSortQuery, FilterQueryBuilderV2 } from "../utils/frostQueryBuilder";
 import { CsvExportModule, ModuleRegistry } from "ag-grid-community";
+import { toast } from "react-toastify";
 ModuleRegistry.registerModules([CsvExportModule]);
 
 interface DataTableCardV2Props {
@@ -92,14 +93,24 @@ const DataTableCard: React.FC<DataTableCardV2Props> = ({
   }, [clearFiltersTrigger]);
 
   const handleExportCurrentPage = () => {
-    if (gridApiRef.current) {
-      gridApiRef.current.exportDataAsCsv({
-        fileName: `${csv_title}.csv`,
-        columnKeys: ["id", "description", "timestamp", "createdAt"],
-        columnSeparator: ","
-      });
-    }
-  };
+  const api = gridApiRef.current;
+  if (!api) return;
+  let visibleRowCount = 0;
+  api.forEachNodeAfterFilterAndSort(() => {
+    visibleRowCount++;
+  });
+
+  if (visibleRowCount === 0) {
+    toast.error("No data available on this page to export.");
+    return;
+  }
+
+  api.exportDataAsCsv({
+    fileName: "logbook_current_page.csv",
+    columnKeys: ["id", "description", "timestamp", "createdAt"],
+    allColumns: false,
+  });
+};
 
   return (
     <Card elevation={1} sx={{ borderRadius: "8px" }}>
