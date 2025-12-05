@@ -525,7 +525,7 @@ const handleExportAll = async () => {
     );
 
     if (response.status === 204) {
-      toast.info("No data available for export.");
+      toast.error("No data available for export.");
       setLoading(false);
       return;
     }
