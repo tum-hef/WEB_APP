@@ -85,3 +85,27 @@
   padding: 6px 12px;
   background: #fff;
 }
+
+
+/* EXPAND AG GRID FILTER POPUP SIZE */
+.ag-theme-alpine .ag-filter-body-wrapper {
+  max-height: none !important;          /* remove forced vertical scrolling */
+  height: auto !important;
+  overflow: visible !important;
+}
+
+/* Expand the filter popup container itself */
+.ag-theme-alpine .ag-filter-wrapper,
+.ag-theme-alpine .ag-filter-body {
+  overflow: visible !important;
+  max-height: none !important;
+}
+
+/* Expand popup box */
+.ag-theme-alpine .ag-filter {
+  width: auto !important;
+  min-width: 300px !important;
+  max-width: 500px !important;          /* responsive max */
+  padding: 8px !important;
+}
+

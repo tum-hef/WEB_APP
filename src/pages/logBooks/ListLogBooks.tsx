@@ -62,110 +62,7 @@ const ListLogBook = () => {
       .nullable(),
   });
 
-const handleCreateLog = () => {
-  Swal.fire({
-    title: "Create Log Entry",
-    html: `<div id="swal-create-form"></div>`,
-    showCancelButton: true,
-    confirmButtonText: "Create",
 
-    didOpen: () => {
-      const mount = document.getElementById("swal-create-form");
-
-      ReactDOM.render(
-        <Formik
-          initialValues={{
-            description: "",
-            timestamp: new Date(),
-          }}
-          validationSchema={CreateLogSchema}
-          onSubmit={async (values, { setSubmitting, resetForm }) => {
-            try {
-              const token = keycloak?.token;
-
-              // backend format: "2025-11-25 14:30:00"
-              const formattedTimestamp = format(
-                values.timestamp,
-                "yyyy-MM-dd HH:mm:ss"
-              );
-
-              await axios.post(
-                `${backend_url}/log_book`,
-                {
-                  description: values.description,
-                  timestamp: formattedTimestamp,
-                  group_id: localStorage.getItem("group_id"),
-                },
-                { headers: { Authorization: `Bearer ${token}` } }
-              );
-
-              const btn = Swal.getConfirmButton();
-              if (btn) btn.onclick = null; /** Remove previous Formik submit binding */
-
-              if (mount) {
-                ReactDOM.unmountComponentAtNode(mount); /** Unmount form */
-              }
-
-              Swal.close(); /** Close form dialog */
-
-              await Swal.fire("Success", "Log entry created!", "success");
-
-              // Refresh table + reset form
-              resetForm();
-              fetchLogs(page, pageSize, filterQuery, sortQuery);
-
-            } catch (err) {
-              Swal.fire("Error", "Failed to create log", "error");
-            }
-
-            setSubmitting(false);
-          }}
-        >
-          {({ values, errors, touched, setFieldValue, submitForm }) => {
-            const btn = Swal.getConfirmButton();
-            if (btn) btn.onclick = submitForm;
-
-            return (
-              <Form style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
-                
-                {/* DESCRIPTION */}
-                <TextField
-                  name="description"
-                  label="Description"
-                  value={values.description}
-                  onChange={(e) => setFieldValue("description", e.target.value)}
-                  error={touched.description && Boolean(errors.description)}
-                  helperText={touched.description && errors.description}
-                  fullWidth
-                />
-
-                {/* DATETIME PICKER */}
-                <LocalizationProvider dateAdapter={AdapterDateFns}>
-                  <DateTimePicker
-                    label="Timestamp"
-                    value={values.timestamp}
-                    inputFormat="dd.MM.yyyy HH:mm"
-                    onChange={(val) => setFieldValue("timestamp", val)}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        fullWidth
-                        error={touched.timestamp && Boolean(errors.timestamp)}
-                        helperText={touched.timestamp && errors.timestamp}
-                      />
-                    )}
-                  />
-                </LocalizationProvider>
-
-              </Form>
-            );
-          }}
-        </Formik>,
-        mount
-      );
-    },
-  });
-};
 
 
 
@@ -359,6 +256,112 @@ const handleCreateLog = () => {
 
   ];
 
+
+  const handleCreateLog = () => {
+  Swal.fire({
+    title: "Create Log Entry",
+    html: `<div id="swal-create-form"></div>`,
+    showCancelButton: true,
+    confirmButtonText: "Create",
+
+    didOpen: () => {
+      const mount = document.getElementById("swal-create-form");
+
+      ReactDOM.render(
+        <Formik
+          initialValues={{
+            description: "",
+            timestamp: new Date(),
+          }}
+          validationSchema={CreateLogSchema}
+          onSubmit={async (values, { setSubmitting, resetForm }) => {
+            try {
+              const token = keycloak?.token;
+
+              // backend format: "2025-11-25 14:30:00"
+              const formattedTimestamp = format(
+                values.timestamp,
+                "yyyy-MM-dd HH:mm:ss"
+              );
+
+              await axios.post(
+                `${backend_url}/log_book`,
+                {
+                  description: values.description,
+                  timestamp: formattedTimestamp,
+                  group_id: localStorage.getItem("group_id"),
+                },
+                { headers: { Authorization: `Bearer ${token}` } }
+              );
+
+              const btn = Swal.getConfirmButton();
+              if (btn) btn.onclick = null; /** Remove previous Formik submit binding */
+
+              if (mount) {
+                ReactDOM.unmountComponentAtNode(mount); /** Unmount form */
+              }
+
+              Swal.close(); /** Close form dialog */
+
+              await Swal.fire("Success", "Log entry created!", "success");
+
+              // Refresh table + reset form
+              resetForm();
+              fetchLogs(page, pageSize, filterQuery, sortQuery);
+
+            } catch (err) {
+              Swal.fire("Error", "Failed to create log", "error");
+            }
+
+            setSubmitting(false);
+          }}
+        >
+          {({ values, errors, touched, setFieldValue, submitForm }) => {
+            const btn = Swal.getConfirmButton();
+            if (btn) btn.onclick = submitForm;
+
+            return (
+              <Form style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
+                
+                {/* DESCRIPTION */}
+                <TextField
+                  name="description"
+                  label="Description"
+                  value={values.description}
+                  onChange={(e) => setFieldValue("description", e.target.value)}
+                  error={touched.description && Boolean(errors.description)}
+                  helperText={touched.description && errors.description}
+                  fullWidth
+                />
+
+                {/* DATETIME PICKER */}
+                <LocalizationProvider dateAdapter={AdapterDateFns}>
+                  <DateTimePicker
+                    label="Timestamp"
+                    value={values.timestamp}
+                    inputFormat="dd.MM.yyyy HH:mm" 
+                     maxDateTime={new Date()} 
+                    onChange={(val) => setFieldValue("timestamp", val)}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        fullWidth
+                        error={touched.timestamp && Boolean(errors.timestamp)}
+                        helperText={touched.timestamp && errors.timestamp}
+                      />
+                    )}
+                  />
+                </LocalizationProvider>
+
+              </Form>
+            );
+          }}
+        </Formik>,
+        mount
+      );
+    },
+  });
+};
  const handleEditLog = (log: any) => {
   Swal.fire({
     title: "Edit Log Entry",
@@ -436,7 +439,8 @@ const handleCreateLog = () => {
                   <DateTimePicker
                     label="Timestamp"
                     value={values.timestamp}
-                    inputFormat="dd.MM.yyyy HH:mm"
+                    inputFormat="dd.MM.yyyy HH:mm" 
+                     maxDateTime={new Date()} 
                     onChange={(val) => {
                       if (val instanceof Date && !isNaN(val.getTime())) {
                         setFieldValue("timestamp", val);
@@ -620,7 +624,7 @@ const handleExportAll = async () => {
           setPage(0);
           fetchLogs(0, pageSize, filterQuery, sq);
         }} 
-        filterType={false}
+        filterType={true}
         exportEnabled={true} 
         csv_title="log_book" 
         handleExportAll={handleExportAll}

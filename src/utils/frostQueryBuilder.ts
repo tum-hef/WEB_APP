@@ -5,9 +5,6 @@ export const buildFilterQuery = (model: any): string => {
     const condition = model[field];
     if (!condition) return;
 
-    // ==========================
-    // DATE FILTER
-    // ==========================
     if (condition.filterType === "date") {
       const conds: string[] = [];
 
@@ -61,9 +58,6 @@ export const buildFilterQuery = (model: any): string => {
       if (conds.length) filters.push(...conds);
     }
 
-    // ==========================
-    // TEXT FILTER
-    // ==========================
     else if (condition.filterType === "text") {
       const value = condition.filter;
       const isNumericField = field === "@iot.id" || /^[0-9]+$/.test(value);
@@ -91,9 +85,7 @@ export const buildFilterQuery = (model: any): string => {
       }
     }
 
-    // ==========================
-    //  NUMBER FILTER
-    // ==========================
+  
     else if (condition.filterType === "number") {
       if (condition.type === "equals") {
         filters.push(`${field} eq ${condition.filter}`);
@@ -122,7 +114,7 @@ export const buildSortQuery = (
 };
 
 
-export const FilterQueryBuilder = (model: any): string => {
+export const FilterQueryBuilderV2 = (model: any): string => {
   const filters: string[] = [];
 
   Object.keys(model).forEach((field) => {
@@ -131,56 +123,63 @@ export const FilterQueryBuilder = (model: any): string => {
 
     const isNumericField = field === "id";
 
+    if (condition?.filterType === "date")  {
+      console.log("Processing date filter for field:", field, "with condition:", condition);
+      // Parse AG-Grid date input safely
+      const toDate = (input: any): Date | null => {
+        if (!input) return null;
 
-    if (condition.filterType === "date") {
-      const conds: string[] = [];
+        // Already a Date object?
+        if (input instanceof Date) return input;
 
-      const toIso = (date: Date): string =>
-        date.toISOString().replace(/\.\d{3}Z$/, "Z");
-
-      const buildDateExpr = (cond: any): string | null => {
-        if (!cond?.dateFrom) return null;
-
-        const dateFrom = new Date(cond.dateFrom);
-
-        if (cond.type === "equals") {
-          const start = new Date(
-            Date.UTC(
-              dateFrom.getUTCFullYear(),
-              dateFrom.getUTCMonth(),
-              dateFrom.getUTCDate(),
-              0, 0, 0
-            )
-          );
-          const end = new Date(
-            Date.UTC(
-              dateFrom.getUTCFullYear(),
-              dateFrom.getUTCMonth(),
-              dateFrom.getUTCDate(),
-              23, 59, 59
-            )
-          );
-          return `${field} ge '${toIso(start)}' and ${field} le '${toIso(end)}'`;
-        }
-
-        if (cond.type === "greaterThan") {
-          return `${field} gt '${toIso(dateFrom)}'`;
-        }
-
-        if (cond.type === "lessThan") {
-          return `${field} lt '${toIso(dateFrom)}'`;
-        }
-
-        if (cond.type === "inRange" && cond.dateTo) {
-          const dateTo = new Date(cond.dateTo);
-          return `${field} ge '${toIso(dateFrom)}' and ${field} le '${toIso(dateTo)}'`;
-        }
-
-        return null;
+        // AG Grid provides string "YYYY-MM-DD HH:mm:ss"
+        const parsed = new Date(input.replace(" ", "T"));
+        return isNaN(parsed.getTime()) ? null : parsed;
       };
 
-      const expr1 = buildDateExpr(condition.condition1 || condition);
-      const expr2 = buildDateExpr(condition.condition2);
+      // Convert JS Date → SQL datetime string
+      const toSql = (date: Date): string => {
+        const yyyy = date.getFullYear();
+        const mm = String(date.getMonth() + 1).padStart(2, "0");
+        const dd = String(date.getDate()).padStart(2, "0");
+        const hh = String(date.getHours()).padStart(2, "0");
+        const mi = String(date.getMinutes()).padStart(2, "0");
+        const ss = String(date.getSeconds()).padStart(2, "0");
+        return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
+      };
+
+      // Build backend OData → SQL expression
+      const buildExpr = (cond: any): string | null => {
+        const dateFrom = toDate(cond?.dateFrom);
+        if (!dateFrom) return null;
+
+        const sqlFrom = toSql(dateFrom); 
+        switch (cond?.type) {
+          case "equals":
+            // Exact datetime match 
+            return `${field} eq '${sqlFrom}'`;
+
+          case "greaterThan": 
+            return `${field} gt '${sqlFrom}'`;
+
+          case "lessThan": 
+            return `${field} lt '${sqlFrom}'`;
+
+          case "inRange": {  
+
+            const dateTo = toDate(cond.dateTo);
+            if (!dateTo) return null;
+            const sqlTo = toSql(dateTo);
+            return `${field} ge '${sqlFrom}' and ${field} le '${sqlTo}'`;
+          }
+
+          default:
+            return null;
+        }
+      };
+
+      const expr1 = buildExpr(condition.condition1 || condition);
+      const expr2 = buildExpr(condition.condition2);
 
       if (expr1 && expr2) {
         const op = condition.operator === "OR" ? "or" : "and";
@@ -188,55 +187,60 @@ export const FilterQueryBuilder = (model: any): string => {
       } else if (expr1) {
         filters.push(expr1);
       }
+
+      return; // skip remaining handlers
     }
 
-    else if (condition.filterType === "text") {
+    if (condition.filterType === "text") {
       const value = condition.filter;
 
-      if (condition.type === "equals") {
-        filters.push(`${field} eq '${value}'`);
+      switch (condition.type) {
+        case "equals":
+          filters.push(`${field} eq '${value}'`);
+          break;
+        case "contains":
+          filters.push(`contains(${field}, '${value}')`);
+          break;
+        case "startsWith":
+          filters.push(`startswith(${field}, '${value}')`);
+          break;
+        case "endsWith":
+          filters.push(`endswith(${field}, '${value}')`);
+          break;
       }
 
-      if (condition.type === "contains") {
-        filters.push(`contains(${field}, '${value}')`);
-      }
-
-      if (condition.type === "startsWith") {
-        filters.push(`startswith(${field}, '${value}')`);
-      }
-
-      if (condition.type === "endsWith") {
-        filters.push(`endswith(${field}, '${value}')`);
-      }
+      return;
     }
 
+    if (condition.filterType === "number" && isNumericField) {
 
-    else if (condition.filterType === "number" && isNumericField) {
-      if (condition.type === "equals") {
-        filters.push(`${field} eq ${condition.filter}`);
-      }
+      switch (condition.type) {
+        case "equals":
+          filters.push(`${field} eq ${condition.filter}`);
+          break;
 
-      if (condition.type === "greaterThan") {
-        filters.push(`${field} gt ${condition.filter}`);
-      }
+        case "greaterThan":
+          filters.push(`${field} gt ${condition.filter}`);
+          break;
 
-      if (condition.type === "lessThan") {
-        filters.push(`${field} lt ${condition.filter}`);
-      }
+        case "lessThan":
+          filters.push(`${field} lt ${condition.filter}`);
+          break;
 
-      if (
-        condition.type === "inRange" &&
-        condition.filterTo !== undefined
-      ) {
-        filters.push(
-          `${field} ge ${condition.filter} and ${field} le ${condition.filterTo}`
-        );
+        case "inRange":
+          if (condition.filterTo !== undefined) {
+            filters.push(
+              `${field} ge ${condition.filter} and ${field} le ${condition.filterTo}`
+            );
+          }
+          break;
       }
     }
   });
 
   return filters.join(" and ");
 };
+
 
 
 
