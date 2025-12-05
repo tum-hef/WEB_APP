@@ -7,7 +7,7 @@ import Dashboard from "../../components/DashboardComponent";
 import LinkCustom from "../../components/LinkCustom";
 import DataTableCardV2 from "../../components/DataGridServerSide";
 import { useKeycloak } from "@react-keycloak/web";
-import { FilterQueryBuilder, SortQueryBuilder } from "../../utils/frostQueryBuilder";
+import { FilterQueryBuilderV2, SortQueryBuilder } from "../../utils/frostQueryBuilder";
 import moment from "moment";
 import DateTimeFilter from "../../components/AgGridDateTime";
 import EditIcon from "@mui/icons-material/Edit";
@@ -20,6 +20,24 @@ import { Formik, Form, Field } from "formik";
 import * as Yup from "yup";
 import { useIsOwner } from "../../hooks/hooks";
 import { format } from "date-fns";
+
+
+const normalizeDateFilterForBackend = (filter: string): string => {
+  if (!filter) return filter;
+
+  // Replace ISO-like datetime `YYYY-MM-DDTHH:mm:ss(.sss)Z` → `YYYY-MM-DD HH:mm:ss`
+  return filter.replace(
+    /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z/g,
+    (iso) => {
+      // 1) remove trailing 'Z'
+      let s = iso.replace("Z", "");
+      // 2) split off milliseconds if present
+      const [main] = s.split(".");
+      // 3) replace 'T' with space
+      return main.replace("T", " ");
+    }
+  );
+};
 
 const ListLogBook = () => {
   const { keycloak } = useKeycloak();
@@ -478,6 +496,72 @@ const handleCreateLog = () => {
   };
 
 
+const handleExportAll = async () => {
+  try {
+    const token = keycloak?.token;
+    const group_id = localStorage.getItem("group_id");
+
+    if (!group_id) {
+      toast.error("Project not selected");
+      return;
+    }
+
+    setLoading(true);
+
+    const response = await axios.get(
+      `${backend_url}/log_books/export`,
+      {
+        params: {
+          group_id,
+          ...(filterQuery && { $filter: filterQuery }),
+          ...(sortQuery && { $orderby: sortQuery }),
+        },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        responseType: "blob",
+        validateStatus: (s) => s < 500,
+      }
+    );
+
+    if (response.status === 204) {
+      toast.info("No data available for export.");
+      setLoading(false);
+      return;
+    }
+    if (response.status !== 200) {
+      toast.error("Failed to export logs.");
+      setLoading(false);
+      return;
+    }
+
+    const blob = new Blob([response.data], { type: "text/csv" });
+
+    // Extract filename from response headers
+    const disposition = response.headers["content-disposition"];
+    let filename = "logbook_export.csv";
+
+    if (disposition && disposition.includes("filename=")) {
+      filename = disposition.split("filename=")[1].replace(/"/g, "");
+    }
+
+    // Create download link
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    window.URL.revokeObjectURL(url);
+
+    toast.success("Export completed!");
+  } catch (error) {
+    console.error(error);
+    toast.error("Error during export.");
+  } finally {
+    setLoading(false);
+  }
+};
+
   return (
     <Dashboard>
       <ToastContainer position="bottom-right" autoClose={5000} theme="dark" />
@@ -524,8 +608,9 @@ const handleCreateLog = () => {
           dateTimeFilter: DateTimeFilter,
         }}
         context={{ isOwner }}
-        onFilterChange={(fq) => {
-          setFilterQuery(fq);
+        onFilterChange={(fq) => { 
+          const normalized = normalizeDateFilterForBackend(fq);
+          setFilterQuery(normalized);
           setPage(0);
           fetchLogs(0, pageSize, fq, sortQuery);
         }}
@@ -534,7 +619,11 @@ const handleCreateLog = () => {
           setSortQuery(sq);
           setPage(0);
           fetchLogs(0, pageSize, filterQuery, sq);
-        }}
+        }} 
+        filterType={false}
+        exportEnabled={true} 
+        csv_title="log_book" 
+        handleExportAll={handleExportAll}
       />
     </Dashboard>
   );

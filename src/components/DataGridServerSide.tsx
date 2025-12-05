@@ -42,7 +42,8 @@ interface DataTableCardV2Props {
   filterType?: boolean;
 
   exportEnabled?: boolean;
-  csv_title?: string;
+  csv_title?: string; 
+  handleExportAll?: () => void;
 
 }
 
@@ -65,7 +66,8 @@ const DataTableCard: React.FC<DataTableCardV2Props> = ({
   clearFiltersTrigger,
   filterType,
   exportEnabled = false,
-  csv_title
+  csv_title,
+  handleExportAll
 }) => {
   const gridApiRef = useRef<GridApi<any> | null>(null);
 
@@ -144,7 +146,7 @@ const DataTableCard: React.FC<DataTableCardV2Props> = ({
                 color="primary"
                 size="small"
                 sx={{ backgroundColor: "#233044", whiteSpace: "nowrap", "&:hover": { backgroundColor: "#233044" } }}
-                onClick={() => { }}
+                onClick={handleExportAll}
               >
                 Export All
               </Button>
