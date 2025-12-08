@@ -260,7 +260,8 @@ const ListLogBook = () => {
   const handleCreateLog = () => {
   Swal.fire({
     title: "Create Log Entry",
-    html: `<div id="swal-create-form"></div>`,
+    html: `<div id="swal-create-form" style="display:flex;flex-direction:column;gap:15px;"></div>`,
+
     showCancelButton: true,
     confirmButtonText: "Create",
 
@@ -321,39 +322,43 @@ const ListLogBook = () => {
             if (btn) btn.onclick = submitForm;
 
             return (
-              <Form style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
-                
-                {/* DESCRIPTION */}
-                <TextField
-                  name="description"
-                  label="Description"
-                  value={values.description}
-                  onChange={(e) => setFieldValue("description", e.target.value)}
-                  error={touched.description && Boolean(errors.description)}
-                  helperText={touched.description && errors.description}
-                  fullWidth
-                />
+          <Form style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
 
-                {/* DATETIME PICKER */}
-                <LocalizationProvider dateAdapter={AdapterDateFns}>
-                  <DateTimePicker
-                    label="Timestamp"
-                    value={values.timestamp}
-                    inputFormat="dd.MM.yyyy HH:mm" 
-                     maxDateTime={new Date()} 
-                    onChange={(val) => setFieldValue("timestamp", val)}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        fullWidth
-                        error={touched.timestamp && Boolean(errors.timestamp)}
-                        helperText={touched.timestamp && errors.timestamp}
-                      />
-                    )}
-                  />
-                </LocalizationProvider>
+  {/* DATETIME PICKER */}
+  <LocalizationProvider dateAdapter={AdapterDateFns}>
+    <DateTimePicker
+      label="Timestamp"
+      value={values.timestamp}
+      inputFormat="dd.MM.yyyy HH:mm"
+      maxDateTime={new Date()}
+      onChange={(val) => setFieldValue("timestamp", val)}
+      renderInput={(params) => (
+        <TextField
+          {...params}
+          fullWidth
+          error={touched.timestamp && Boolean(errors.timestamp)}
+          helperText={touched.timestamp && errors.timestamp}
+        />
+      )}
+    />
+  </LocalizationProvider>
 
-              </Form>
+  {/* DESCRIPTION TEXTAREA */}
+  <TextField
+    name="description"
+    label="Description"
+    value={values.description}
+    onChange={(e) => setFieldValue("description", e.target.value)}
+    multiline
+    minRows={4}
+    maxRows={8}
+    fullWidth
+    error={touched.description && Boolean(errors.description)}
+    helperText={touched.description && errors.description}
+  />
+
+</Form>
+
             );
           }}
         </Formik>,
@@ -426,15 +431,7 @@ const ListLogBook = () => {
             return (
               <Form style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
                 
-                <TextField
-                  fullWidth
-                  label="Description"
-                  value={values.description}
-                  onChange={(e) => setFieldValue("description", e.target.value)}
-                  error={touched.description && Boolean(errors.description)}
-                  helperText={touched.description && errors.description}
-                />
-
+              
                 <LocalizationProvider dateAdapter={AdapterDateFns}>
                   <DateTimePicker
                     label="Timestamp"
@@ -456,6 +453,18 @@ const ListLogBook = () => {
                     )}
                   />
                 </LocalizationProvider>
+                  <TextField
+                  fullWidth
+                  label="Description"
+                  value={values.description} 
+                  multiline={true} 
+                  minRows={3}
+                  maxRows={6}
+                  onChange={(e) => setFieldValue("description", e.target.value)}
+                  error={touched.description && Boolean(errors.description)}
+                  helperText={touched.description && errors.description}
+                />
+
 
               </Form>
             );
