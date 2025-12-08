@@ -457,9 +457,11 @@ const ListLogBook = () => {
                   fullWidth
                   label="Description"
                   value={values.description} 
-                  multiline={true} 
-                  minRows={3}
-                  maxRows={6}
+                  multiline 
+                  minRows={4}
+                  maxRows={8}
+                  
+
                   onChange={(e) => setFieldValue("description", e.target.value)}
                   error={touched.description && Boolean(errors.description)}
                   helperText={touched.description && errors.description}
