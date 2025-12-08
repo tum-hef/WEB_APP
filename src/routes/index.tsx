@@ -46,6 +46,7 @@ import Reports from "../pages/Reports";
 import ListDatastreamPerDevice from "../pages/devices/ListDatastreamPerDevice";
 import Observations from "../pages/devices/Observations";
 import ReactGA from "react-ga4";
+import ListLogBook from "../pages/logBooks/ListLogBooks";
 
 const styles = {
   container: {
@@ -202,7 +203,12 @@ const AppRouter = (props: any) => {
                     exact
                     path="/observations"
                     component={ListObservations}
-                  />{" "}
+                  />{" "} 
+                  <PrivateRoute
+                    exact
+                    path="/log_books"
+                    component={ListLogBook}
+                  />
                   {/* <PrivateRoute
                     exact
                     path="/devices/:device_id/datastreams/:id/observations/graph"

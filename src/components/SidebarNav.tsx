@@ -33,6 +33,7 @@ import LocationOnIcon from "@mui/icons-material/LocationOn";
 import PersonSearchIcon from "@mui/icons-material/PersonSearch";
 import BiotechSharpIcon from "@mui/icons-material/BiotechSharp";
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
+import MenuBookIcon from '@mui/icons-material/MenuBook';
 import DnsIcon from "@mui/icons-material/Dns";
 import PublicIcon from "@mui/icons-material/Public";
 import { toast } from "react-toastify";
@@ -696,6 +697,51 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
   </a>
 )}
 
+<LinkCustom
+  to="/log_books"
+  onClick={(event) => {
+    if (
+      (currentUrl === "/dashboard" ||
+        currentUrl === "/contact" ||
+        currentUrl === "/database/frost" ||
+        currentUrl === "/database/node_red" ||
+        currentUrl === "/database/web_app") &&
+      !group_id
+    ) {
+      event.preventDefault();
+    }
+  }}
+>
+  <ListItem key={"Log Book"} disablePadding>
+    <ListItemButton
+      selected={location.pathname === "/log_books"}
+      disabled={
+        (currentUrl === "/dashboard" ||
+          currentUrl === "/contact" ||
+          currentUrl === "/database/frost" ||
+          currentUrl === "/database/node_red" ||
+          currentUrl === "/database/web_app") &&
+        !group_id
+      }
+    >
+      <ListItemIcon>
+        <MenuBookIcon
+          style={{
+            color: "white",
+          }}
+        />
+      </ListItemIcon>
+
+      <ListItemText
+        primaryTypographyProps={{ fontSize: "18px" }}
+        style={{
+          color: "white",
+        }}
+        primary={"Log Book"}
+      />
+    </ListItemButton>
+  </ListItem>
+</LinkCustom>
 
 
 

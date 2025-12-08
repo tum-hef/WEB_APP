@@ -8,6 +8,7 @@ import {
   Box,
   CircularProgress,
   TablePagination,
+  Button,
 } from "@mui/material";
 import { AgGridReact } from "ag-grid-react";
 import type { GridApi, ColumnState, SortChangedEvent } from "ag-grid-community";
@@ -15,7 +16,10 @@ import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-material.css";
-import { buildFilterQuery, buildSortQuery } from "../utils/frostQueryBuilder";
+import { buildFilterQuery, buildSortQuery, FilterQueryBuilderV2 } from "../utils/frostQueryBuilder";
+import { CsvExportModule, ModuleRegistry } from "ag-grid-community";
+import { toast } from "react-toastify";
+ModuleRegistry.registerModules([CsvExportModule]);
 
 interface DataTableCardV2Props {
   title: string;
@@ -30,11 +34,20 @@ interface DataTableCardV2Props {
 
   onPageChange: (newPage: number) => void;
   onPageSizeChange: (newSize: number) => void;
+  frameworkComponents?: any;
+  context?: any;
 
   onFilterChange?: (filterQuery: string) => void;
   onSortChange?: (sortQuery: string) => void;
-  clearFiltersTrigger?: boolean; 
+  clearFiltersTrigger?: boolean;
+  filterType?: boolean;
+
+  exportEnabled?: boolean;
+  csv_title?: string; 
+  handleExportAll?: () => void;
+
 }
+
 
 const DataTableCard: React.FC<DataTableCardV2Props> = ({
   title,
@@ -47,46 +60,67 @@ const DataTableCard: React.FC<DataTableCardV2Props> = ({
   loading = false,
   onPageChange,
   onPageSizeChange,
+  frameworkComponents,
+  context,
   onFilterChange,
   onSortChange,
-  clearFiltersTrigger
-  
+  clearFiltersTrigger,
+  filterType,
+  exportEnabled = false,
+  csv_title,
+  handleExportAll
 }) => {
   const gridApiRef = useRef<GridApi<any> | null>(null);
 
-  // overlays
-  useEffect(() => { 
-    
-    if (!gridApiRef.current) return;
-    if (loading) { 
 
+  useEffect(() => {
+    if (!gridApiRef.current) return;
+    if (loading) {
       gridApiRef.current.showLoadingOverlay();
     } else if (rowData.length === 0) {
-     
       gridApiRef.current.showNoRowsOverlay();
     } else {
-    
       gridApiRef.current.hideOverlay();
     }
   }, [loading, rowData]);
 
-useEffect(() => {
-  if (clearFiltersTrigger && gridApiRef.current) {
-    const api = gridApiRef.current;
-    api.setFilterModel(null);
-    api.onFilterChanged();
+  useEffect(() => {
+    if (clearFiltersTrigger && gridApiRef.current) {
+      const api = gridApiRef.current;
+      api.setFilterModel(null);
+      api.onFilterChanged();
+    }
+  }, [clearFiltersTrigger]);
+
+  const handleExportCurrentPage = () => {
+  const api = gridApiRef.current;
+  if (!api) return;
+  let visibleRowCount = 0;
+  api.forEachNodeAfterFilterAndSort(() => {
+    visibleRowCount++;
+  });
+
+  if (visibleRowCount === 0) {
+    toast.error("No data available on this page to export.");
+    return;
   }
-}, [clearFiltersTrigger]);
+
+  api.exportDataAsCsv({
+    fileName: "logbook_current_page.csv",
+    columnKeys: ["id", "description", "timestamp", "createdAt"],
+    allColumns: false,
+  });
+};
 
   return (
     <Card elevation={1} sx={{ borderRadius: "8px" }}>
-      {/* Header */}
       <CardHeader
         title={
           <Box display="flex" alignItems="center">
             <Typography variant="h3" sx={{ fontWeight: 400 }}>
               {title}
             </Typography>
+
             {description && (
               <Tooltip title={description} placement="top" arrow>
                 <InfoOutlinedIcon
@@ -102,17 +136,44 @@ useEffect(() => {
             )}
           </Box>
         }
+        action={
+          exportEnabled ? (
+            <Box display="flex" alignItems="center" gap={1} sx={{ mt: 1, mr: 1 }}>
+
+              {/* Export Current Page (AG-Grid) */}
+              <Button
+                variant="contained"
+                color="primary"
+                size="small"
+                sx={{ backgroundColor: "#233044", whiteSpace: "nowrap", "&:hover": { backgroundColor: "#233044" } }}
+                onClick={handleExportCurrentPage}
+              >
+                Export Page
+              </Button>
+
+              {/* Export All (Backend) */}
+              <Button
+                variant="contained"
+                color="primary"
+                size="small"
+                sx={{ backgroundColor: "#233044", whiteSpace: "nowrap", "&:hover": { backgroundColor: "#233044" } }}
+                onClick={handleExportAll}
+              >
+                Export All
+              </Button>
+
+            </Box>
+          ) : null
+        }
       />
 
-      {/* Grid */}
+
+
       <CardContent
         sx={{ p: 0, height: "600px", display: "flex", flexDirection: "column" }}
       >
         <div style={{ flex: 1, position: "relative" }}>
-          <div
-            className="ag-theme-material custom-ag-grid"
-            style={{ height: "100%", width: "100%" }}
-          >
+          <div className="ag-theme-material custom-ag-grid" style={{ height: "100%", width: "100%" }}>
             <AgGridReact
               onGridReady={(params) => (gridApiRef.current = params.api)}
               columnDefs={columnDefs}
@@ -123,6 +184,8 @@ useEffect(() => {
               rowHeight={65}
               headerHeight={42}
               suppressRowTransform={true}
+              components={frameworkComponents}
+              context={context}
               defaultColDef={{
                 filter: true,
                 floatingFilter: true,
@@ -136,20 +199,23 @@ useEffect(() => {
               overlayNoRowsTemplate={
                 '<span class="ag-overlay-no-rows-center">No rows to display</span>'
               }
-             onFilterChanged={(params) => {
-    const model = params.api.getFilterModel();
-    const filterString = buildFilterQuery(model);
-    onFilterChange?.(filterString);  // ✅ give parent ready string
-  }}
-  onSortChanged={(params: SortChangedEvent) => {
-    const colState: ColumnState[] = params.api.getColumnState();
-    const model = colState.filter((col) => col.sort) as Array<{
-      colId: string;
-      sort: "asc" | "desc";
-    }>;
-    const sortString = buildSortQuery(model);
-    onSortChange?.(sortString);  // give parent ready string
-  }}
+              onFilterChanged={(params) => {
+                const model = params.api.getFilterModel();
+                console.log("Filter Model:", model);
+                const filterString: string = filterType
+                  ? FilterQueryBuilderV2(model)
+                  : buildFilterQuery(model);
+                onFilterChange?.(filterString);
+              }}
+              onSortChanged={(params: SortChangedEvent) => {
+                const colState: ColumnState[] = params.api.getColumnState();
+                const model = colState.filter((col) => col.sort) as Array<{
+                  colId: string;
+                  sort: "asc" | "desc";
+                }>;
+                const sortString = buildSortQuery(model);
+                onSortChange?.(sortString);
+              }}
               enableRangeSelection
               enableCellTextSelection
               suppressCopyRowsToClipboard={false}
@@ -158,7 +224,6 @@ useEffect(() => {
             />
           </div>
 
-         
           {loading && (
             <Box
               sx={{
@@ -176,7 +241,6 @@ useEffect(() => {
           )}
         </div>
 
-        {/* Footer */}
         <TablePagination
           component="div"
           count={totalRows}
@@ -192,5 +256,6 @@ useEffect(() => {
     </Card>
   );
 };
+
 
 export default DataTableCard;
