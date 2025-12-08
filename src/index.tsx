@@ -14,11 +14,12 @@ import 'ag-grid-community/styles/ag-theme-alpine.css';
 ModuleRegistry.registerModules([AllCommunityModule]);
 
 
-const initOptions = {
-  onLoad: "login-required",
-  checkLoginIframe: false, // important for localhost
-  pkceMethod: "S256",
-  redirectUri: "http://localhost:3000", 
+const keycloakInitOptions = {
+  onLoad: 'check-sso',
+  silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html',
+  checkLoginIframe: false,
+  pkceMethod: 'S256',               
+  redirectUri: window.location.origin, 
 };
 const eventLogger = (event: unknown, error: unknown) => {
   console.log("onKeycloakEvent", event, error);
@@ -33,7 +34,7 @@ ReactDOM.render(
      <Provider store={store}>
     <ReactKeycloakProvider
       authClient={keycloak}
-      initOptions={initOptions}
+      initOptions={keycloakInitOptions}
       onEvent={eventLogger}
       onTokens={tokenLogger}
     >
