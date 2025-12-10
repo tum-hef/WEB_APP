@@ -123,73 +123,111 @@ export const FilterQueryBuilderV2 = (model: any): string => {
 
     const isNumericField = field === "id";
 
-    if (condition?.filterType === "date")  {
-      console.log("Processing date filter for field:", field, "with condition:", condition);
-      // Parse AG-Grid date input safely
-      const toDate = (input: any): Date | null => {
-        if (!input) return null;
+    if (condition?.filterType === "date") {
+  console.log("Processing date filter for field:", field, "with condition:", condition);
 
-        // Already a Date object?
-        if (input instanceof Date) return input;
+  // 1) Safe parser for AG-Grid inputs
+  const toDate = (input: any): Date | null => {
+    if (!input) return null;
 
-        // AG Grid provides string "YYYY-MM-DD HH:mm:ss"
-        const parsed = new Date(input.replace(" ", "T"));
-        return isNaN(parsed.getTime()) ? null : parsed;
-      };
+    // Already a Date object
+    if (input instanceof Date) {
+      if (isNaN(input.getTime())) return null;
+      return input;
+    }
 
-      // Convert JS Date → SQL datetime string
-      const toSql = (date: Date): string => {
-        const yyyy = date.getFullYear();
-        const mm = String(date.getMonth() + 1).padStart(2, "0");
-        const dd = String(date.getDate()).padStart(2, "0");
-        const hh = String(date.getHours()).padStart(2, "0");
-        const mi = String(date.getMinutes()).padStart(2, "0");
-        const ss = String(date.getSeconds()).padStart(2, "0");
-        return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
-      };
+    // AG Grid often provides string like "2025-12-05 21:30:18"
+    if (typeof input === "string") {
+      const parsed = new Date(input.replace(" ", "T"));
+      return isNaN(parsed.getTime()) ? null : parsed;
+    }
 
-      // Build backend OData → SQL expression
-      const buildExpr = (cond: any): string | null => {
-        const dateFrom = toDate(cond?.dateFrom);
-        if (!dateFrom) return null;
+    return null;
+  };
 
-        const sqlFrom = toSql(dateFrom); 
-        switch (cond?.type) {
-          case "equals":
-            // Exact datetime match 
-            return `${field} eq '${sqlFrom}'`;
+  // 2) Convert JS Date → backend SQL datetime
+  const toSql = (date: Date): string => {
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, "0");
+    const dd = String(date.getDate()).padStart(2, "0");
+    const hh = String(date.getHours()).padStart(2, "0");
+    const mi = String(date.getMinutes()).padStart(2, "0");
+    const ss = String(date.getSeconds()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
+  };
 
-          case "greaterThan": 
-            return `${field} gt '${sqlFrom}'`;
+  // 3) Build expressions for equals / greaterThan / lessThan / inRange
+  const buildExpr = (cond: any): string | null => {
+    if (!cond) return null;
 
-          case "lessThan": 
-            return `${field} lt '${sqlFrom}'`;
+    const dateFrom = toDate(cond.dateFrom);
+    const dateTo = toDate(cond.dateTo);
 
-          case "inRange": {  
+    // ---- EQUALS ----
+    if (cond.type === "equals") {
+      if (!dateFrom) return null;
+      return `${field} eq '${toSql(dateFrom)}'`;
+    }
 
-            const dateTo = toDate(cond.dateTo);
-            if (!dateTo) return null;
-            const sqlTo = toSql(dateTo);
-            return `${field} ge '${sqlFrom}' and ${field} le '${sqlTo}'`;
-          }
+    // ---- GREATER THAN ----
+    if (cond.type === "greaterThan") {
+      if (!dateFrom) return null;
+      return `${field} gt '${toSql(dateFrom)}'`;
+    }
 
-          default:
-            return null;
-        }
-      };
+    // ---- LESS THAN ----
+    if (cond.type === "lessThan") {
+      if (!dateFrom) return null;
+      return `${field} lt '${toSql(dateFrom)}'`;
+    }
 
-      const expr1 = buildExpr(condition.condition1 || condition);
-      const expr2 = buildExpr(condition.condition2);
+    // ---- IN RANGE ----
+    if (cond.type === "inRange") {
+      if (!dateFrom && !dateTo) return null;
 
-      if (expr1 && expr2) {
-        const op = condition.operator === "OR" ? "or" : "and";
-        filters.push(`(${expr1} ${op} ${expr2})`);
-      } else if (expr1) {
-        filters.push(expr1);
+      // Only FROM → >=
+      if (dateFrom && !dateTo) {
+        return `${field} ge '${toSql(dateFrom)}'`;
       }
 
-      return; // skip remaining handlers
+      // Only TO → <=
+      if (!dateFrom && dateTo) {
+        return `${field} le '${toSql(dateTo)}'`;
+      }
+
+      // Both given → VALIDATE
+      if (dateFrom && dateTo) {
+        if (dateFrom > dateTo) {
+          return "__INVALID_RANGE__";
+        }
+
+        return `${field} ge '${toSql(dateFrom)}' and ${field} le '${toSql(dateTo)}'`;
+      }
     }
+
+    return null;
+  };
+
+  // Handle AG-Grid condition1/condition2 structure
+  const expr1 = buildExpr(condition.condition1 || condition);
+  const expr2 = buildExpr(condition.condition2);
+
+  // Check for invalid range
+  if (expr1 === "__INVALID_RANGE__" || expr2 === "__INVALID_RANGE__") {
+    filters.push("__INVALID_RANGE__");
+    return;
+  }
+
+  if (expr1 && expr2) {
+    const op = condition.operator === "OR" ? "or" : "and";
+    filters.push(`(${expr1} ${op} ${expr2})`);
+  } else if (expr1) {
+    filters.push(expr1);
+  }
+
+  return; // prevent handling by other filter types
+}
+
 
     if (condition.filterType === "text") {
       const value = condition.filter;

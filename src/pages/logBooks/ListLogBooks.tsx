@@ -148,11 +148,17 @@ const ListLogBook = () => {
       cellStyle: { whiteSpace: "normal" },
     },
     {
-      headerName: "Timestamp",
+      headerName: "Event Timestamp",
       field: "timestamp",
       sortable: true,
       filter: "agDateColumnFilter",
-      cellDataType: "dateTime",
+      cellDataType: "dateTime", 
+     filterParams: {
+  defaultOption: "inRange",
+  suppressAndOrCondition: true,
+  buttons: ["apply", "reset"],
+  closeOnApply: true,             // 🔥 Big one
+},
       flex: 1.2,
 
       // Return REAL date object (for AG Grid filter)
@@ -163,12 +169,18 @@ const ListLogBook = () => {
         params.value ? moment(params.value).format("DD.MM.YYYY HH:mm:ss") : "",
     },
   {
-  headerName: "Created At",
+  headerName: "Recorded Timestamp",
   field: "createdAt",
   sortable: true,
   filter: "agDateColumnFilter",
-  cellDataType: "dateTime",
-
+  cellDataType: "dateTime",  
+   filterParams: {
+  defaultOption: "inRange",
+  suppressAndOrCondition: true,
+  buttons: ["apply", "reset"],
+  closeOnApply: true,             // 🔥 Big one
+},
+ 
   valueGetter: (params:any) => {
     const raw = params.data.createdAt;
     if (!raw) return null;
@@ -327,7 +339,7 @@ const ListLogBook = () => {
   {/* DATETIME PICKER */}
   <LocalizationProvider dateAdapter={AdapterDateFns}>
     <DateTimePicker
-      label="Timestamp"
+      label="Event Timestamp"
       value={values.timestamp}
       inputFormat="dd.MM.yyyy HH:mm"
       maxDateTime={new Date()}
@@ -434,7 +446,7 @@ const ListLogBook = () => {
               
                 <LocalizationProvider dateAdapter={AdapterDateFns}>
                   <DateTimePicker
-                    label="Timestamp"
+                    label="Event Timestamp"
                     value={values.timestamp}
                     inputFormat="dd.MM.yyyy HH:mm" 
                      maxDateTime={new Date()} 
