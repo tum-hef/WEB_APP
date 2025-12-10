@@ -173,7 +173,13 @@ const ListLogBook = () => {
   field: "createdAt",
   sortable: true,
   filter: "agDateColumnFilter",
-  cellDataType: "dateTime", 
+  cellDataType: "dateTime",  
+   filterParams: {
+  defaultOption: "inRange",
+  suppressAndOrCondition: true,
+  buttons: ["apply", "reset"],
+  closeOnApply: true,             // 🔥 Big one
+},
  
   valueGetter: (params:any) => {
     const raw = params.data.createdAt;
