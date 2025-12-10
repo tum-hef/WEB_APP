@@ -152,7 +152,13 @@ const ListLogBook = () => {
       field: "timestamp",
       sortable: true,
       filter: "agDateColumnFilter",
-      cellDataType: "dateTime",
+      cellDataType: "dateTime", 
+     filterParams: {
+  defaultOption: "inRange",
+  suppressAndOrCondition: true,
+  buttons: ["apply", "reset"],
+  closeOnApply: true,             // 🔥 Big one
+},
       flex: 1.2,
 
       // Return REAL date object (for AG Grid filter)
@@ -167,8 +173,8 @@ const ListLogBook = () => {
   field: "createdAt",
   sortable: true,
   filter: "agDateColumnFilter",
-  cellDataType: "dateTime",
-
+  cellDataType: "dateTime", 
+ 
   valueGetter: (params:any) => {
     const raw = params.data.createdAt;
     if (!raw) return null;
