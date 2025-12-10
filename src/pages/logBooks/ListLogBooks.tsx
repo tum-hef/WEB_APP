@@ -148,7 +148,7 @@ const ListLogBook = () => {
       cellStyle: { whiteSpace: "normal" },
     },
     {
-      headerName: "Timestamp",
+      headerName: "Event Timestamp",
       field: "timestamp",
       sortable: true,
       filter: "agDateColumnFilter",
@@ -163,7 +163,7 @@ const ListLogBook = () => {
         params.value ? moment(params.value).format("DD.MM.YYYY HH:mm:ss") : "",
     },
   {
-  headerName: "Created At",
+  headerName: "Recorded Timestamp",
   field: "createdAt",
   sortable: true,
   filter: "agDateColumnFilter",
@@ -327,7 +327,7 @@ const ListLogBook = () => {
   {/* DATETIME PICKER */}
   <LocalizationProvider dateAdapter={AdapterDateFns}>
     <DateTimePicker
-      label="Timestamp"
+      label="Event Timestamp"
       value={values.timestamp}
       inputFormat="dd.MM.yyyy HH:mm"
       maxDateTime={new Date()}
@@ -434,7 +434,7 @@ const ListLogBook = () => {
               
                 <LocalizationProvider dateAdapter={AdapterDateFns}>
                   <DateTimePicker
-                    label="Timestamp"
+                    label="Event Timestamp"
                     value={values.timestamp}
                     inputFormat="dd.MM.yyyy HH:mm" 
                      maxDateTime={new Date()} 
