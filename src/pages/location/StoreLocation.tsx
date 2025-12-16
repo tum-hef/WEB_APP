@@ -15,13 +15,26 @@ import Swal from "sweetalert2";
 import LinkCustom from "../../components/LinkCustom";
 import { location_initial_values } from "../../formik/initial_values";
 import { location_validationSchema } from "../../formik/validation_schema";
+import Autocomplete from "@mui/material/Autocomplete";
+import debounce from "lodash.debounce";
 
+type Thing = {
+  "@iot.id": number;
+  name: string;
+};
+const PAGE_SIZE = 20;
 function StoreLocation() {
   const { keycloak } = useKeycloak();
   const userInfo = keycloak?.idTokenParsed;
   const [error, setError] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [frostServerPort, setFrostServerPort] = useState<number | null>(null);
+  const [things, setThings] = useState<Thing[]>([]);
+  const [thingsPage, setThingsPage] = useState(0);
+  const [thingsHasMore, setThingsHasMore] = useState(true);
+  const [thingsLoading, setThingsLoading] = useState(false);
+  const [thingsSearch, setThingsSearch] = useState("");
+  const [selectedThing, setSelectedThing] = useState<Thing | null>(null);
   const token = keycloak?.token;
 
   const formik = useFormik({
@@ -123,10 +136,68 @@ function StoreLocation() {
     }
   };
 
+  const fetchThings = async (
+    search: string,
+    page: number,
+    append = false
+  ) => {
+    if (!frostServerPort || thingsLoading) return;
+
+    setThingsLoading(true);
+
+    const isDev = process.env.REACT_APP_IS_DEVELOPMENT === "true";
+    const baseUrl = isDev
+      ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}`
+      : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}`;
+
+    const params = new URLSearchParams({
+      $top: PAGE_SIZE.toString(),
+      $skip: (page * PAGE_SIZE).toString(),
+      ...(search && { $filter: `contains(name,'${search}')` }),
+    });
+
+    try {
+      const res = await axios.get(
+        `${baseUrl}/FROST-Server/v1.0/Things?${params.toString()}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const newItems = res.data.value || [];
+
+      setThings((prev) =>
+        append ? [...prev, ...newItems] : newItems
+      );
+      setThingsHasMore(newItems.length === PAGE_SIZE);
+    } finally {
+      setThingsLoading(false);
+    }
+  };
+
+  const debouncedSearch = debounce((value: string) => {
+    setThingsPage(0);
+    fetchThings(value, 0, false);
+  }, 500);
+
+
+
+
   useEffect(() => {
     fetchData();
     setLoading(false);
+    return () => {
+      debouncedSearch.cancel();
+    };
   }, []);
+
+  useEffect(() => {
+    if (frostServerPort) {
+      fetchThings("", 0, false);
+    }
+  }, [frostServerPort]);
 
   return (
     <DashboardComponent>
@@ -156,7 +227,41 @@ function StoreLocation() {
               Location Information
             </Typography>
             <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={4}>
+                <Autocomplete
+                  options={things}
+                  getOptionLabel={(option) => option.name}
+                  value={selectedThing}
+                  loading={thingsLoading}
+                  onChange={(_, value) => setSelectedThing(value)}
+                  onInputChange={(_, value) => debouncedSearch(value)}
+                  ListboxProps={{
+                    onScroll: (event) => {
+                      const listboxNode = event.currentTarget;
+                      const isBottom =
+                        listboxNode.scrollTop + listboxNode.clientHeight >=
+                        listboxNode.scrollHeight - 5;
+
+                      if (isBottom && thingsHasMore && !thingsLoading) {
+                        const nextPage = thingsPage + 1;
+                        setThingsPage(nextPage);
+                        fetchThings(thingsSearch, nextPage, true);
+                      }
+                    },
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Select Device"
+                      placeholder="Search device name"
+                      fullWidth
+                    />
+                  )}
+                />
+              </Grid>
+
+
+              <Grid item xs={12} sm={4}>
                 <TextField
                   required
                   id="location_name"
@@ -167,7 +272,7 @@ function StoreLocation() {
                   onChange={formik.handleChange}
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12} sm={4}>
                 <TextField
                   required
                   id="location_description"
@@ -178,7 +283,7 @@ function StoreLocation() {
                   onChange={formik.handleChange}
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12} sm={4}>
                 <TextField
                   required
                   id="latitude"
@@ -189,7 +294,7 @@ function StoreLocation() {
                   onChange={formik.handleChange}
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12} sm={4}>
                 <TextField
                   required
                   id="longitude"
