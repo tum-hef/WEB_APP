@@ -24,7 +24,14 @@ const Location = () => {
 
   const [loading, setLoading] = useState(true);
   // const [current_time, setCurrentTime] = useState<Date | null>(null);
-  const [displayName, setDisplayName] = useState("");
+  const [displayName, setDisplayName] = useState(""); 
+  const [sensorThingDesc, setSensorThingDesc] = useState<{
+  name: string;
+  description: string;
+}>({
+  name: "",
+  description: "",
+});
   const [frostServerPort, setFrostServerPort] = useState<number | null>(null);
   const { id } = useParams<{ id: string }>();
 
@@ -105,9 +112,10 @@ const Location = () => {
               )
               .then((response) => {
                 if (response.data.display_name) {
-                  setDisplayName(response.data.display_name);
+                  setDisplayName(response.data.display_name); 
                 }
-              });
+              }); 
+              setSensorThingDesc({name:response?.data?.name , description:response?.data?.description})
           }
         })
         .catch((err) => {
@@ -153,12 +161,25 @@ const Location = () => {
         </Button>
       </LinkCustom>
 
-      {displayName && (
+      {(displayName && sensorThingDesc?.name && sensorThingDesc?.description) && ( 
+        <>
         <Grid container justifyContent="left" alignItems="left">
           <Typography variant="h6" component="h6" m={2}>
-            <b>Location Name: </b> {displayName}
+            <b>Title: </b> {displayName}
           </Typography>{" "}
         </Grid>
+        <Grid container justifyContent="left" alignItems="left">
+          <Typography variant="h6" component="h6" m={2}>
+            <b>Location Name: </b> {sensorThingDesc?.name}
+          </Typography>{" "}
+        </Grid>
+        <Grid container justifyContent="left" alignItems="left">
+          <Typography variant="h6" component="h6" m={2}>
+            <b>Location Description: </b> {sensorThingDesc?.description}
+          </Typography>{" "}
+        </Grid>
+        </>
+        
       )}
       {latitude && longitude && (
         <>
