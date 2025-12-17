@@ -77,6 +77,11 @@ export const location_validationSchema = yup.object().shape({
       /^-?\d+(\.\d+)?$/,
       "Longitude must be a valid number (decimal allowed)"
     ),
+   selectedThing: yup
+  .object()
+  .nullable()
+  .required("Please select a device")
+
 });
 
 export const observation_property_validationSchema = yup.object().shape({
