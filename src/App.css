@@ -109,3 +109,21 @@
   padding: 8px !important;
 }
 
+
+/* Make AG Grid filter buttons look like MUI buttons */
+.ag-theme-material .ag-filter-apply-panel button {
+  background-color: #1976d2 !important;   /* your theme blue */
+  color: white !important;
+  border-radius: 4px !important;
+  padding: 4px 10px !important;
+  margin-right: 6px !important;
+  border: none !important;
+}
+
+.ag-theme-material .ag-filter-apply-panel button:hover {
+  background-color: #125aaa !important;
+}
+
+.ag-theme-material .ag-filter-apply-panel button.ag-filter-reset-button {
+  background-color: #d32f2f !important;   /* red reset */
+}

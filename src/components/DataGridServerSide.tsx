@@ -43,7 +43,7 @@ interface DataTableCardV2Props {
   filterType?: boolean;
 
   exportEnabled?: boolean;
-  csv_title?: string; 
+  csv_title?: string;
   handleExportAll?: () => void;
 
 }
@@ -93,24 +93,24 @@ const DataTableCard: React.FC<DataTableCardV2Props> = ({
   }, [clearFiltersTrigger]);
 
   const handleExportCurrentPage = () => {
-  const api = gridApiRef.current;
-  if (!api) return;
-  let visibleRowCount = 0;
-  api.forEachNodeAfterFilterAndSort(() => {
-    visibleRowCount++;
-  });
+    const api = gridApiRef.current;
+    if (!api) return;
+    let visibleRowCount = 0;
+    api.forEachNodeAfterFilterAndSort(() => {
+      visibleRowCount++;
+    });
 
-  if (visibleRowCount === 0) {
-    toast.error("No data available on this page to export.");
-    return;
-  }
+    if (visibleRowCount === 0) {
+      toast.error("No data available on this page to export.");
+      return;
+    }
 
-  api.exportDataAsCsv({
-    fileName: "logbook_current_page.csv",
-    columnKeys: ["id", "description", "timestamp", "createdAt"],
-    allColumns: false,
-  });
-};
+    api.exportDataAsCsv({
+      fileName: "logbook_current_page.csv",
+      columnKeys: ["id", "description", "timestamp", "createdAt"],
+      allColumns: false,
+    });
+  };
 
   return (
     <Card elevation={1} sx={{ borderRadius: "8px" }}>
@@ -205,6 +205,11 @@ const DataTableCard: React.FC<DataTableCardV2Props> = ({
                 const filterString: string = filterType
                   ? FilterQueryBuilderV2(model)
                   : buildFilterQuery(model);
+                if (filterString === "__INVALID_RANGE__") {
+                  toast.error("Invalid date range: Start date cannot be later than End date.");
+                  return; 
+                }
+
                 onFilterChange?.(filterString);
               }}
               onSortChanged={(params: SortChangedEvent) => {
