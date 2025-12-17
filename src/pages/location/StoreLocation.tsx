@@ -41,7 +41,8 @@ function StoreLocation() {
     initialValues: location_initial_values,
     validationSchema: location_validationSchema,
     onSubmit: async (values: any) => {
-      formik.resetForm();
+      formik.resetForm(); 
+      console.log("sss",values?.selectedThing?.["@iot.id"])
       const isDev = process.env.REACT_APP_IS_DEVELOPMENT === "true";
       const api_url = isDev
         ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Locations`
@@ -58,6 +59,9 @@ function StoreLocation() {
               type: "Point",
               coordinates: [parseFloat(values.longitude), parseFloat(values.latitude)],
             },
+            Things:[
+              {"@iot.id":values?.selectedThing?.["@iot.id"]}
+            ]
           },
           {
             headers: {
@@ -151,9 +155,10 @@ function StoreLocation() {
       : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}`;
 
     const params = new URLSearchParams({
+      $select: "@iot.id,name",
       $top: PAGE_SIZE.toString(),
       $skip: (page * PAGE_SIZE).toString(),
-      ...(search && { $filter: `contains(name,'${search}')` }),
+      ...(search && { $filter: `startswith(name,'${search}')` }),
     });
 
     try {
@@ -230,10 +235,15 @@ function StoreLocation() {
               <Grid item xs={4}>
                 <Autocomplete
                   options={things}
-                  getOptionLabel={(option) => option.name}
-                  value={selectedThing}
                   loading={thingsLoading}
-                  onChange={(_, value) => setSelectedThing(value)}
+                  getOptionLabel={(option) => option.name}
+                  value={formik.values.selectedThing}
+                  isOptionEqualToValue={(option, value) =>
+                    option["@iot.id"] === value["@iot.id"]
+                  }
+                  onChange={(_, value) =>
+                    formik.setFieldValue("selectedThing", value)
+                  }
                   onInputChange={(_, value) => debouncedSearch(value)}
                   ListboxProps={{
                     onScroll: (event) => {
@@ -245,7 +255,7 @@ function StoreLocation() {
                       if (isBottom && thingsHasMore && !thingsLoading) {
                         const nextPage = thingsPage + 1;
                         setThingsPage(nextPage);
-                        fetchThings(thingsSearch, nextPage, true);
+                        fetchThings("", nextPage, true);
                       }
                     },
                   }}
@@ -255,9 +265,18 @@ function StoreLocation() {
                       label="Select Device"
                       placeholder="Search device name"
                       fullWidth
+                      error={
+                        formik.touched.selectedThing &&
+                        Boolean(formik.errors.selectedThing)
+                      }
+                      helperText={
+                        formik.touched.selectedThing &&
+                        formik.errors.selectedThing
+                      }
                     />
                   )}
                 />
+
               </Grid>
 
 
