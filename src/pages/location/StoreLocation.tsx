@@ -237,7 +237,7 @@ function StoreLocation() {
                     loading={thingsLoading}
                     getOptionLabel={(option) => option.name}
                     value={formik.values.selectedThing}
-                    inputValue={formik.values.thingInputValue}   // 🔥 FORMik controls text
+                    inputValue={formik.values.thingInputValue}  
                     isOptionEqualToValue={(option, value) =>
                       option["@iot.id"] === value["@iot.id"]
                     }
