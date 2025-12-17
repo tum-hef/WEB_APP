@@ -17,7 +17,9 @@ export const location_initial_values =  {
       location_name: "",
       location_description: "",
       latitude: "",
-      longitude: "",
+      longitude: "", 
+      selectedThing: null,
+      thingInputValue: ""
     }
 
 export const observation_property_initial_values =  {
