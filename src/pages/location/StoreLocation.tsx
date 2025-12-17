@@ -33,16 +33,13 @@ function StoreLocation() {
   const [thingsPage, setThingsPage] = useState(0);
   const [thingsHasMore, setThingsHasMore] = useState(true);
   const [thingsLoading, setThingsLoading] = useState(false);
-  const [thingsSearch, setThingsSearch] = useState("");
-  const [selectedThing, setSelectedThing] = useState<Thing | null>(null);
   const token = keycloak?.token;
 
   const formik = useFormik({
     initialValues: location_initial_values,
     validationSchema: location_validationSchema,
     onSubmit: async (values: any) => {
-      formik.resetForm(); 
-      console.log("sss",values?.selectedThing?.["@iot.id"])
+      formik.resetForm();
       const isDev = process.env.REACT_APP_IS_DEVELOPMENT === "true";
       const api_url = isDev
         ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Locations`
@@ -59,8 +56,8 @@ function StoreLocation() {
               type: "Point",
               coordinates: [parseFloat(values.longitude), parseFloat(values.latitude)],
             },
-            Things:[
-              {"@iot.id":values?.selectedThing?.["@iot.id"]}
+            Things: [
+              { "@iot.id": values?.selectedThing?.["@iot.id"] }
             ]
           },
           {
@@ -233,49 +230,64 @@ function StoreLocation() {
             </Typography>
             <Grid container spacing={2}>
               <Grid item xs={4}>
-                <Autocomplete
-                  options={things}
-                  loading={thingsLoading}
-                  getOptionLabel={(option) => option.name}
-                  value={formik.values.selectedThing}
-                  isOptionEqualToValue={(option, value) =>
-                    option["@iot.id"] === value["@iot.id"]
-                  }
-                  onChange={(_, value) =>
-                    formik.setFieldValue("selectedThing", value)
-                  }
-                  onInputChange={(_, value) => debouncedSearch(value)}
-                  ListboxProps={{
-                    onScroll: (event) => {
-                      const listboxNode = event.currentTarget;
-                      const isBottom =
-                        listboxNode.scrollTop + listboxNode.clientHeight >=
-                        listboxNode.scrollHeight - 5;
+                <div style={{ position: "relative" }}>
+                  <Autocomplete
+                    disablePortal
+                    options={things}
+                    loading={thingsLoading}
+                    getOptionLabel={(option) => option.name}
+                    value={formik.values.selectedThing}
+                    inputValue={formik.values.thingInputValue}   // 🔥 FORMik controls text
+                    isOptionEqualToValue={(option, value) =>
+                      option["@iot.id"] === value["@iot.id"]
+                    }
+                    onChange={(_, value) => {
+                      formik.setFieldValue("selectedThing", value);
+                      formik.setFieldValue(
+                        "thingInputValue",
+                        value ? value.name : ""
+                      );
+                    }}
+                    onInputChange={(_, value, reason) => {
+                      // Prevent MUI from clearing input on blur/reset
+                      if (reason !== "reset") {
+                        formik.setFieldValue("thingInputValue", value);
+                        debouncedSearch(value);
+                      }
+                    }}
+                    ListboxProps={{
+                      onScroll: (event) => {
+                        const listboxNode = event.currentTarget;
+                        const isBottom =
+                          listboxNode.scrollTop + listboxNode.clientHeight >=
+                          listboxNode.scrollHeight - 5;
 
-                      if (isBottom && thingsHasMore && !thingsLoading) {
-                        const nextPage = thingsPage + 1;
-                        setThingsPage(nextPage);
-                        fetchThings("", nextPage, true);
-                      }
-                    },
-                  }}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Select Device"
-                      placeholder="Search device name"
-                      fullWidth
-                      error={
-                        formik.touched.selectedThing &&
-                        Boolean(formik.errors.selectedThing)
-                      }
-                      helperText={
-                        formik.touched.selectedThing &&
-                        formik.errors.selectedThing
-                      }
-                    />
-                  )}
-                />
+                        if (isBottom && thingsHasMore && !thingsLoading) {
+                          const nextPage = thingsPage + 1;
+                          setThingsPage(nextPage);
+                          fetchThings("", nextPage, true);
+                        }
+                      },
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Select Device"
+                        placeholder="Search device name"
+                        fullWidth
+                        error={
+                          formik.touched.selectedThing &&
+                          Boolean(formik.errors.selectedThing)
+                        }
+                        helperText={
+                          formik.touched.selectedThing &&
+                          formik.errors.selectedThing
+                        }
+                      />
+                    )}
+                  />
+
+                </div>
 
               </Grid>
 
