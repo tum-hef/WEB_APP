@@ -1,3 +1,6 @@
+const escapeODataString = (value: string): string =>
+  value.replace(/'/g, "''");
+
 export const buildFilterQuery = (model: any): string => {
   const filters: string[] = [];
 
@@ -68,7 +71,7 @@ export const buildFilterQuery = (model: any): string => {
         if (isNumericField) {
           filters.push(`${field} eq ${value}`); // contains not valid for numeric
         } else {
-          filters.push(`contains(${field}, '${value}')`);
+          filters.push(`startswith(${field},'${escapeODataString(value)}')`);
         }
       } else if (condition.type === "startsWith") {
         if (isNumericField) {
