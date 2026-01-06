@@ -174,7 +174,6 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
     }
   );
   
-      console.log("Grafana response:", response);
   
       if (response.status === 200 && response.data.success) {
         setGrafanaPort(response.data.PORT!); // Assuming setGrafanaPort exists

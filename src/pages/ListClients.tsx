@@ -193,7 +193,6 @@ export default function ListClients() {
             `${process.env.REACT_APP_BACKEND_URL}/get_clients?user_id=${userID}`
           );
 
-          console.log("API Response:", response.data);
 
           // ✅ Check if API response contains success: false
           if (!response.data.success) {
@@ -230,9 +229,6 @@ export default function ListClients() {
     getAllGroups();
   }, [userID]);
 
-  useEffect(() => {
-    console.log("pendingPopover", pendingPopover)
-  }, [pendingPopover])
 
   const getAllGroups = async () => {
     if (userID) {
