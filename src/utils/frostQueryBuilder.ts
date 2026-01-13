@@ -1,6 +1,9 @@
 const escapeODataString = (value: string): string =>
   value.replace(/'/g, "''");
 
+const toFrostInstant = (value: string) =>
+  new Date(value).toISOString().replace('.000Z', 'Z');
+
 export const buildFilterQuery = (model: any): string => {
   const filters: string[] = [];
 
@@ -8,102 +11,120 @@ export const buildFilterQuery = (model: any): string => {
     const condition = model[field];
     if (!condition) return;
 
-    if (condition.filterType === "date") {
-      const conds: string[] = [];
-
-      const buildDateExpr = (cond: any): string | null => {
-        if (!cond?.dateFrom) return null;
-        const dateFrom = new Date(cond.dateFrom);
-
-        const iso = (d: Date) => d.toISOString().replace(/\.\d{3}Z$/, "Z");
-
-        if (cond.type === "equals") {
-          const startOfDay = new Date(
-            Date.UTC(
-              dateFrom.getUTCFullYear(),
-              dateFrom.getUTCMonth(),
-              dateFrom.getUTCDate(), 0, 0, 0
-            )
-          );
-          const endOfDay = new Date(
-            Date.UTC(
-              dateFrom.getUTCFullYear(),
-              dateFrom.getUTCMonth(),
-              dateFrom.getUTCDate(), 23, 59, 59
-            )
-          );
-          return `${field} ge ${iso(startOfDay)} and ${field} le ${iso(endOfDay)}`;
-
-        } else if (cond.type === "greaterThan") {
-          return `${field} gt ${iso(dateFrom)}`;
-
-        } else if (cond.type === "lessThan") {
-          return `${field} lt ${iso(dateFrom)}`;
-
-        } else if (cond.type === "inRange" && cond.dateTo) {
-          const dateTo = new Date(cond.dateTo);
-          return `${field} ge ${iso(dateFrom)} and ${field} le ${iso(dateTo)}`;
-        }
-
-        return null;
-      };
-
-      const expr1 = buildDateExpr(condition.condition1 || condition);
-      const expr2 = buildDateExpr(condition.condition2);
-
-      if (expr1 && expr2) {
-        const op = condition.operator === "OR" ? "or" : "and";
-        conds.push(`(${expr1} ${op} ${expr2})`);
-      } else if (expr1) {
-        conds.push(expr1);
+    /* ======================================================
+       ✅ CUSTOM MUI DATE-TIME FILTER (PRIMARY FIX)
+    ====================================================== */
+    if (condition.filterType === "customDateTime") {
+      if (
+        condition.operator === "between" &&
+        condition.from &&
+        condition.to
+      ) {
+        filters.push(
+          `${field} ge ${condition.from} and ${field} le ${condition.to}`
+        );
       }
-
-      if (conds.length) filters.push(...conds);
+      return;
     }
 
-    else if (condition.filterType === "text") {
+    /* ======================================================
+       AG GRID DATE FILTER (legacy / fallback)
+    ====================================================== */
+if (condition?.filterType === "date") {
+  const from = condition?.dateFrom
+    ? toFrostInstant(condition.dateFrom)
+    : null;
+
+  const to = condition.dateTo
+    ? toFrostInstant(condition.dateTo)
+    : null;
+
+  if (condition.type === "inRange" && from && to) {
+    filters.push(
+      `(${field} ge ${from} and ${field} le ${to})`
+    );
+  } 
+  else if (condition.type === "greaterThan" && from) {
+    filters.push(
+      `${field} ge ${from}`
+    );
+  } 
+  else if (condition.type === "lessThan" && from) {
+    filters.push(
+      `${field} le ${from}`
+    );
+  } 
+  else if (condition.type === "equals" && from) {
+    // AG Grid "equals" = same day → expand to full day
+    const start = from;
+    const end = toFrostInstant(
+      new Date(new Date(from)?.getTime() + 24 * 60 * 60 * 1000)?.toISOString()
+    );
+
+    filters.push(
+      `(${field} ge ${start} and ${field} lt ${end})`
+    );
+  }
+
+  return;
+}
+
+
+    /* ======================================================
+       TEXT FILTERS
+    ====================================================== */
+    if (condition.filterType === "text") {
       const value = condition.filter;
-      const isNumericField = field === "@iot.id" || /^[0-9]+$/.test(value);
+      if (value == null) return;
+
+      const isNumericField =
+        field === "@iot.id" || /^[0-9]+$/.test(value);
 
       if (condition.type === "equals") {
-        filters.push(`${field} eq ${isNumericField ? value : `'${value}'`}`);
-      } else if (condition.type === "contains") {
-        if (isNumericField) {
-          filters.push(`${field} eq ${value}`); // contains not valid for numeric
-        } else {
-          filters.push(`startswith(${field},'${escapeODataString(value)}')`);
-        }
-      } else if (condition.type === "startsWith") {
-        if (isNumericField) {
-          filters.push(`${field} eq ${value}`);
-        } else {
-          filters.push(`startswith(${field}, '${value}')`);
-        }
-      } else if (condition.type === "endsWith") {
-        if (isNumericField) {
-          filters.push(`${field} eq ${value}`);
-        } else {
-          filters.push(`endswith(${field}, '${value}')`);
-        }
+        filters.push(
+          `${field} eq ${isNumericField ? value : `'${escapeODataString(value)}'`}`
+        );
+      } else if (condition.type === "contains" && !isNumericField) {
+        filters.push(
+          `contains(${field},'${escapeODataString(value)}')`
+        );
+      } else if (condition.type === "startsWith" && !isNumericField) {
+        filters.push(
+          `startswith(${field},'${escapeODataString(value)}')`
+        );
+      } else if (condition.type === "endsWith" && !isNumericField) {
+        filters.push(
+          `endswith(${field},'${escapeODataString(value)}')`
+        );
       }
+      return;
     }
 
-  
-    else if (condition.filterType === "number") {
+    /* ======================================================
+       NUMBER FILTERS
+    ====================================================== */
+    if (condition.filterType === "number") {
       if (condition.type === "equals") {
         filters.push(`${field} eq ${condition.filter}`);
       } else if (condition.type === "greaterThan") {
         filters.push(`${field} gt ${condition.filter}`);
       } else if (condition.type === "lessThan") {
         filters.push(`${field} lt ${condition.filter}`);
-      } else if (condition.type === "inRange" && condition.filterTo !== undefined) {
-        filters.push(`${field} ge ${condition.filter} and ${field} le ${condition.filterTo}`);
+      } else if (
+        condition.type === "inRange" &&
+        condition.filterTo !== undefined
+      ) {
+        filters.push(
+          `${field} ge ${condition.filter} and ${field} le ${condition.filterTo}`
+        );
       }
+      return;
     }
   });
 
   return filters.join(" and ");
 };
+
 
 
 
