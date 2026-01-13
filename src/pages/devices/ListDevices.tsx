@@ -55,7 +55,6 @@ const Devices = () => {
     if (pageLinks[newPage]) {
       url = pageLinks[newPage];
     }
-
     try {
       const res = await axios.get(url, {
         headers: {
