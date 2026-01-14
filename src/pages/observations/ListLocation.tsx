@@ -15,10 +15,6 @@ import { GAactionsObservations } from "../../utils/GA";
 import DataTableCardV2 from "../../components/DataGridServerSide";
 
 import moment from "moment";
-import MuiDateRangeFilter from "../../components/MuiDateField";
-import MuiDateTimeRangeFilter from "../../components/MuiDateRangePickerFilter";
-import { buildFilterQuery, buildSortQuery } from "../../utils/frostQueryBuilder";
-import { AgGridReact } from "ag-grid-react";
 import InfiniteDataTableCard from "../../components/InfiniteDataTableCard";
 import { createObservationsDatasource } from "../services/createObservationsDatasource";
 const ListObservations = () => {
