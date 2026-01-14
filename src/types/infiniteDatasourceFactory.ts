@@ -2,8 +2,8 @@ import type { IGetRowsParams } from "ag-grid-community";
 
 export type InfiniteDatasourceFactory = (
   context: {
-    filterQuery?: string;
-    sortQuery?: string;
+    pageSize: number;
+    currentPage: number;
     onRowCountChange?: (count: number) => void;
   }
 ) => {
