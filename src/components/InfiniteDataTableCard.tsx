@@ -172,10 +172,14 @@ const InfiniteDataTableCard: React.FC<InfiniteDataTableCardProps> = ({
             defaultColDef={{
               filter: true,
               floatingFilter: true,
-              sortable: true,
-              resizable: true,
-              wrapText: false,
-              autoHeight: false,
+               floatingFilterComponentParams: {
+    suppressFilterButton: true,
+  },  sortable: true,
+                resizable: true,
+                wrapText: false,
+                autoHeight: false,
+                cellStyle: { textAlign: "left", whiteSpace: "nowrap" },
+      
             }}
           />
             </div>

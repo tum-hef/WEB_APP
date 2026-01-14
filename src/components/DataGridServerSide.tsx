@@ -183,7 +183,8 @@ const DataTableCard: React.FC<DataTableCardV2Props> = ({
               domLayout="normal"
               rowHeight={65}
               headerHeight={42}
-              suppressRowTransform={true}
+              suppressRowTransform={true}  
+               getRowId={(params) => params.data["@iot.id"]}
               components={frameworkComponents}
               context={context}
               defaultColDef={{
