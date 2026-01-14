@@ -2,43 +2,65 @@ import axios from "axios";
 import type { IGetRowsParams } from "ag-grid-community";
 import { buildFilterQuery, buildSortQuery } from "../../utils/frostQueryBuilder";
 
-
 export const createObservationsDatasource = ({
   token,
   baseUrl,
+  pageSize,
+  currentPage,
   onRowCountChange,
 }: {
   token: string;
   baseUrl: string;
+  pageSize: number;
+  currentPage: number;
   onRowCountChange?: (count: number) => void;
 }) => ({
   getRows: async (params: IGetRowsParams) => {
-    const pageSize = params.endRow - params.startRow;
-    const filter = buildFilterQuery(params.filterModel);
-    const sort = buildSortQuery(params.sortModel);
+  const pageStart = currentPage * pageSize;
 
-    try {
-      const res = await axios.get(baseUrl, {
-        headers: { Authorization: `Bearer ${token}` },
-        params: {
-          $top: pageSize,
-          $skip: params.startRow,
-          $count: true,
-          ...(filter ? { $filter: filter } : {}),
-          ...(sort ? { $orderby: sort } : {}),
-        },
-      });
+  console.log(
+    "getRows called:",
+    params.startRow,
+    params.endRow,
+    "page:",
+    currentPage,
+    "backend skip:",
+    pageStart
+  );
 
-      const rows = res.data.value ?? [];
-      const total = res.data["@iot.count"] ?? 0;
+  if (params.startRow !== 0) {
+    params.successCallback([], pageSize);
+    return;
+  }
 
-      params.successCallback(rows, total);
-      if (typeof total === "number" && total > 0) {
-        onRowCountChange?.(total);
-      }
-    } catch (e) {
-      console.error("FROST fetch failed:", e);
-      params.failCallback();
+  const filter = buildFilterQuery(params.filterModel);
+  const sort = buildSortQuery(params.sortModel);
+
+  try {
+    const res = await axios.get(baseUrl, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      params: {
+        $top: pageSize,
+        $skip: pageStart, 
+        $count: true,
+        ...(filter && { $filter: filter }),
+        ...(sort && { $orderby: sort }),
+      },
+    });
+
+    const rows = res.data.value ?? [];
+    const total = res.data["@iot.count"] ?? 0;
+
+    params.successCallback(rows, pageSize);
+
+    if (total > 0) {
+      onRowCountChange?.(total);
     }
-  },
+  } catch (err) {
+    console.error("FROST fetch failed", err);
+    params.failCallback();
+  }
+}
 });
