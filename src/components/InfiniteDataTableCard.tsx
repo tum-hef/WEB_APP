@@ -15,35 +15,29 @@ import type { GridApi, IGetRowsParams } from "ag-grid-community";
 
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-material.css";
-
-/* ================================
-   Props
-================================ */
 interface InfiniteDataTableCardProps {
   title: string;
   description?: string;
   columnDefs: any[];
 
-  /** Factory that returns an AG Grid Infinite datasource */
+
   createDatasource: (args: {
-  pageSize: number;
-  currentPage: number;
-  onRowCountChange?: (count: number) => void;
-}) => {
-  getRows: (params: import("ag-grid-community").IGetRowsParams) => void;
-};
+    pageSize: number;
+    currentPage: number;
+    onRowCountChange?: (count: number) => void; 
+    onLoadingChange?: (loading: boolean) => void;
+  }) => {
+    getRows: (params: import("ag-grid-community").IGetRowsParams) => void;
+  };
 
   filterQuery?: string;
   sortQuery?: string;
 
   loading?: boolean;
-    onFilterModelChange?: (model: any) => void;
+  onFilterModelChange?: (model: any) => void;
   onSortModelChange?: (model: any) => void;
 }
 
-/* ================================
-   Component
-================================ */
 const InfiniteDataTableCard: React.FC<InfiniteDataTableCardProps> = ({
   title,
   description,
@@ -51,62 +45,62 @@ const InfiniteDataTableCard: React.FC<InfiniteDataTableCardProps> = ({
   createDatasource,
   filterQuery,
   sortQuery,
-    onFilterModelChange,
+  onFilterModelChange,
   onSortModelChange,
-  loading = false,
 }) => {
   const gridApiRef = useRef<GridApi | null>(null);
 
-  /* ------------------------------
-     Pagination state (UI only)
-  ------------------------------ */
+
   const [pageSize, setPageSize] = useState<any>(10);
   const [currentPage, setCurrentPage] = useState(0);
   const [rowCount, setRowCount] = useState(0);
-
-  /* ------------------------------
-     Datasource (v29+ declarative)
-  ------------------------------ */
-
-   const handleRowCountChange = (count: number) => { 
-  setRowCount((prev) => (count > 0 ? count : prev));
-};
-const datasource = useMemo(
-  () =>
-    createDatasource({
-      pageSize,
-      currentPage,
-      onRowCountChange: handleRowCountChange,
-    }),
-  [createDatasource, pageSize, currentPage]
-);
+  const [loading, setLoading] = useState(false);
+  const handleRowCountChange = (count: number) => {
+    setRowCount((prev) => (count > 0 ? count : prev));
+  };
+  const datasource = useMemo(
+    () =>
+      createDatasource({
+        pageSize,
+        currentPage,
+        onRowCountChange: handleRowCountChange, 
+        onLoadingChange: setLoading,
+      }),
+    [createDatasource, pageSize, currentPage]
+  );
 
 
-  /* ------------------------------
-     Page navigation (KEY LOGIC)
-  ------------------------------ */
-  useEffect(()=>{
-   console.log("currentPage changed:", currentPage);
-  },[currentPage])
+  useEffect(() => {
+    console.log("currentPage changed:", currentPage);
+  }, [currentPage])
 
- useEffect(() => {
-  if (!gridApiRef.current) return;
+  useEffect(() => {
+    if (!gridApiRef.current) return;
 
-  console.log("🔁 Setting new datasource with filter:", filterQuery);
+    gridApiRef.current.setGridOption("datasource", datasource);
+    gridApiRef.current.ensureIndexVisible(0, "top");
+  }, [datasource]);
 
-  gridApiRef.current.setGridOption("datasource", datasource);
-  gridApiRef.current.ensureIndexVisible(0, "top");
-}, [datasource]);
+  const handlePageChange = (_: any, newPage: number) => {
+    setCurrentPage(newPage);
 
-const handlePageChange = (_: any, newPage: number) => {
-  setCurrentPage(newPage);
+    gridApiRef.current?.purgeInfiniteCache();
+  };
+  const loadingOverlayTemplate = `
+  <div style="
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(255,255,255,0.6);
+    z-index: 2;
+  ">
+    <div class="ag-spinner ag-spinner-large"></div>
+  </div>
+`;
 
-  // 🔑 FORCE AG Grid to refetch
-  gridApiRef.current?.purgeInfiniteCache();
-};
-  React.useEffect(() => {
-  console.log("ROW COUNT STATE UPDATED:", rowCount);
-}, [rowCount]);
+
   return (
     <Card elevation={1} sx={{ borderRadius: "8px" }}>
       <CardHeader
@@ -142,10 +136,12 @@ const handlePageChange = (_: any, newPage: number) => {
           flexDirection: "column",
         }}
       >
-        {/* ================================
-            AG Grid
-        ================================ */}
-        <div style={{ flex: 1 }} className="ag-theme-material">
+      
+        <div style={{ flex: 1, position: "relative" }}>
+  <div
+    className="ag-theme-material custom-ag-grid"
+    style={{ height: "100%", width: "100%" }}
+  >
           <AgGridReact
             onGridReady={(params) => {
               gridApiRef.current = params.api;
@@ -154,18 +150,18 @@ const handlePageChange = (_: any, newPage: number) => {
             datasource={datasource}
             maxBlocksInCache={1}
             columnDefs={columnDefs}
-            cacheBlockSize={pageSize} 
-             rowBuffer={0}
-              domLayout="normal"
-suppressHorizontalScroll={true}
-  // UX (optional but recommended)
-  suppressScrollOnNewData={true} 
- suppressRowVirtualisation={true}
-  pagination={false}
-alwaysShowHorizontalScroll={true}
-  suppressPaginationPanel
+            cacheBlockSize={pageSize}
+            rowBuffer={0}
+            overlayLoadingTemplate={loadingOverlayTemplate}
+            domLayout="normal"
+            suppressHorizontalScroll={true}
+            suppressScrollOnNewData={true}
+            suppressRowVirtualisation={true}
+            pagination={false}
+            alwaysShowHorizontalScroll={true}
+            suppressPaginationPanel
             getRowId={(params) => params.data["@iot.id"]}
-             onFilterChanged={(p) =>
+            onFilterChanged={(p) =>
               onFilterModelChange?.(p.api.getFilterModel())
             }
             onSortChanged={(p) =>
@@ -182,26 +178,20 @@ alwaysShowHorizontalScroll={true}
               autoHeight: false,
             }}
           />
+            </div>
         </div>
 
-        {/* ================================
-            MUI Pagination (UI only)
-        ================================ */}
-       <TablePagination
-  component="div"
-  count={rowCount}
-  page={currentPage}
-  onPageChange={handlePageChange}
-  rowsPerPage={pageSize}
-  onRowsPerPageChange={(e) => {
-    setPageSize(Number(e.target.value));
-    setCurrentPage(0);
-  }}
-/>
-
-        {/* ================================
-            Loading Overlay
-        ================================ */}
+        <TablePagination
+          component="div"
+          count={rowCount}
+          page={currentPage}
+          onPageChange={handlePageChange}
+          rowsPerPage={pageSize}
+          onRowsPerPageChange={(e) => {
+            setPageSize(Number(e.target.value));
+            setCurrentPage(0);
+          }}
+        />
         {loading && (
           <Box
             sx={{
