@@ -26,12 +26,12 @@ interface InfiniteDataTableCardProps {
 
   /** Factory that returns an AG Grid Infinite datasource */
   createDatasource: (args: {
-    filterQuery?: string;
-    sortQuery?: string;
-    onRowCountChange?: (count: number) => void;
-  }) => {
-    getRows: (params: IGetRowsParams) => void;
-  };
+  pageSize: number;
+  currentPage: number;
+  onRowCountChange?: (count: number) => void;
+}) => {
+  getRows: (params: import("ag-grid-community").IGetRowsParams) => void;
+};
 
   filterQuery?: string;
   sortQuery?: string;
@@ -60,7 +60,7 @@ const InfiniteDataTableCard: React.FC<InfiniteDataTableCardProps> = ({
   /* ------------------------------
      Pagination state (UI only)
   ------------------------------ */
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState<any>(10);
   const [currentPage, setCurrentPage] = useState(0);
   const [rowCount, setRowCount] = useState(0);
 
@@ -69,37 +69,25 @@ const InfiniteDataTableCard: React.FC<InfiniteDataTableCardProps> = ({
   ------------------------------ */
 
    const handleRowCountChange = (count: number) => { 
-    console.log("Received row count from datasource:", count);
   setRowCount((prev) => (count > 0 ? count : prev));
 };
-  const datasource = useMemo(
-    () =>
-      createDatasource({
-        filterQuery,
-        sortQuery,
-        onRowCountChange: handleRowCountChange,
-      }),
-    [createDatasource, filterQuery, sortQuery]
-  );
+const datasource = useMemo(
+  () =>
+    createDatasource({
+      pageSize,
+      currentPage,
+      onRowCountChange: handleRowCountChange,
+    }),
+  [createDatasource, pageSize, currentPage]
+);
+
 
   /* ------------------------------
      Page navigation (KEY LOGIC)
   ------------------------------ */
-  const goToPage = (page: number) => {
-    if (!gridApiRef.current) return;
-
-    const rowIndex = page * pageSize;
-    gridApiRef.current.ensureIndexVisible(rowIndex, "top");
-    setCurrentPage(page);
-  };
-
-  const handlePageSizeChange = (newSize: number) => {
-    setPageSize(newSize);
-    setCurrentPage(0);
-
-    // reset view to top
-    gridApiRef.current?.ensureIndexVisible(0, "top");
-  };
+  useEffect(()=>{
+   console.log("currentPage changed:", currentPage);
+  },[currentPage])
 
  useEffect(() => {
   if (!gridApiRef.current) return;
@@ -110,6 +98,12 @@ const InfiniteDataTableCard: React.FC<InfiniteDataTableCardProps> = ({
   gridApiRef.current.ensureIndexVisible(0, "top");
 }, [datasource]);
 
+const handlePageChange = (_: any, newPage: number) => {
+  setCurrentPage(newPage);
+
+  // 🔑 FORCE AG Grid to refetch
+  gridApiRef.current?.purgeInfiniteCache();
+};
   React.useEffect(() => {
   console.log("ROW COUNT STATE UPDATED:", rowCount);
 }, [rowCount]);
@@ -158,17 +152,25 @@ const InfiniteDataTableCard: React.FC<InfiniteDataTableCardProps> = ({
             }}
             rowModelType="infinite"
             datasource={datasource}
+            maxBlocksInCache={1}
             columnDefs={columnDefs}
-            cacheBlockSize={pageSize}
+            cacheBlockSize={pageSize} 
+             rowBuffer={0}
+              domLayout="normal"
+suppressHorizontalScroll={true}
+  // UX (optional but recommended)
+  suppressScrollOnNewData={true} 
+ suppressRowVirtualisation={true}
+  pagination={false}
+alwaysShowHorizontalScroll={true}
+  suppressPaginationPanel
             getRowId={(params) => params.data["@iot.id"]}
-            suppressPaginationPanel 
              onFilterChanged={(p) =>
               onFilterModelChange?.(p.api.getFilterModel())
             }
             onSortChanged={(p) =>
               onSortModelChange?.(p.api.getState().sort)
             }
-            pagination={false}
             rowHeight={65}
             headerHeight={42}
             defaultColDef={{
@@ -185,17 +187,17 @@ const InfiniteDataTableCard: React.FC<InfiniteDataTableCardProps> = ({
         {/* ================================
             MUI Pagination (UI only)
         ================================ */}
-        <TablePagination
-          component="div"
-          count={rowCount}
-          page={currentPage}
-          onPageChange={(_, newPage) => goToPage(newPage)}
-          rowsPerPage={pageSize}
-          onRowsPerPageChange={(e) =>
-            handlePageSizeChange(parseInt(e.target.value, 10))
-          }
-          rowsPerPageOptions={[10, 20, 50, 100]}
-        />
+       <TablePagination
+  component="div"
+  count={rowCount}
+  page={currentPage}
+  onPageChange={handlePageChange}
+  rowsPerPage={pageSize}
+  onRowsPerPageChange={(e) => {
+    setPageSize(Number(e.target.value));
+    setCurrentPage(0);
+  }}
+/>
 
         {/* ================================
             Loading Overlay
