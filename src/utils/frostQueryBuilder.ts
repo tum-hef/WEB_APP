@@ -11,9 +11,6 @@ export const buildFilterQuery = (model: any): string => {
     const condition = model[field];
     if (!condition) return;
 
-    /* ======================================================
-       ✅ CUSTOM MUI DATE-TIME FILTER (PRIMARY FIX)
-    ====================================================== */
     if (condition.filterType === "customDateTime") {
       if (
         condition.operator === "between" &&
@@ -26,10 +23,6 @@ export const buildFilterQuery = (model: any): string => {
       }
       return;
     }
-
-    /* ======================================================
-       AG GRID DATE FILTER (legacy / fallback)
-    ====================================================== */
 if (condition?.filterType === "date") {
   const from = condition?.dateFrom
     ? toFrostInstant(condition.dateFrom)
@@ -68,11 +61,6 @@ if (condition?.filterType === "date") {
 
   return;
 }
-
-
-    /* ======================================================
-       TEXT FILTERS
-    ====================================================== */
     if (condition.filterType === "text") {
       const value = condition.filter;
       if (value == null) return;
@@ -100,9 +88,6 @@ if (condition?.filterType === "date") {
       return;
     }
 
-    /* ======================================================
-       NUMBER FILTERS
-    ====================================================== */
     if (condition.filterType === "number") {
       if (condition.type === "equals") {
         filters.push(`${field} eq ${condition.filter}`);
@@ -253,26 +238,42 @@ export const FilterQueryBuilderV2 = (model: any): string => {
 }
 
 
-    if (condition.filterType === "text") {
-      const value = condition.filter;
+  if (condition.filterType === "text") {
+  const value = condition.filter;
+  if (value == null) return;
 
-      switch (condition.type) {
-        case "equals":
-          filters.push(`${field} eq '${value}'`);
-          break;
-        case "contains":
-          filters.push(`contains(${field}, '${value}')`);
-          break;
-        case "startsWith":
-          filters.push(`startswith(${field}, '${value}')`);
-          break;
-        case "endsWith":
-          filters.push(`endswith(${field}, '${value}')`);
-          break;
-      }
+  const isNumericValue = /^[0-9]+$/.test(value);
+  const isNumericField =
+    field === "@iot.id" || field === "result";
 
-      return;
-    }
+  // 🔑 Numeric field → numeric comparison
+  if (isNumericField && isNumericValue) {
+    filters.push(`${field} eq ${Number(value)}`);
+    return;
+  }
+
+  // 🔑 String field → string operations
+  if (condition.type === "equals") {
+    filters.push(
+      `${field} eq '${escapeODataString(value)}'`
+    );
+  } else if (condition.type === "contains") {
+    filters.push(
+      `contains(${field},'${escapeODataString(value)}')`
+    );
+  } else if (condition.type === "startsWith") {
+    filters.push(
+      `startswith(${field},'${escapeODataString(value)}')`
+    );
+  } else if (condition.type === "endsWith") {
+    filters.push(
+      `endswith(${field},'${escapeODataString(value)}')`
+    );
+  }
+
+  return;
+}
+
 
     if (condition.filterType === "number" && isNumericField) {
 
