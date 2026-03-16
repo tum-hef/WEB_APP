@@ -4,11 +4,14 @@ FROM node:16-alpine AS builder
 # Set working directory
 WORKDIR /app
 
-# Copy application files
-COPY . .
+# Copy dependency manifests first for better layer caching
+COPY package.json package-lock.json ./
 
 # Install dependencies
-RUN npm ci
+RUN npm ci --no-audit --fund=false
+
+# Copy application files
+COPY . .
 
 # Build the app
 RUN npm run build

@@ -1,2 +1,7 @@
 node_modules
 build
+.git
+.github
+.vscode
+npm-debug.log*
+yarn-error.log*
