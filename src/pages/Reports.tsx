@@ -29,6 +29,7 @@ const Reports = () => {
       let storedLogs: any[] = [];
 
       const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
+      const apiBackendUrl = (process.env.REACT_APP_BACKEND_URL || "").replace(/\/+$/, "");
       console.log(backend_url);
       const isDev = process.env.REACT_APP_IS_DEVELOPMENT === 'true';  
       const url = isDev ?  `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Datastreams` : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Things`
@@ -78,7 +79,7 @@ const Reports = () => {
         });
       }
 
-      const logRes = await axios.get(`http://localhost:4500/logs`, {
+      const logRes = await axios.get(`${apiBackendUrl}/logs`, {
         params: {
           keycloak_id: userInfo?.sub,
         },
