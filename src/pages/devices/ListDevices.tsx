@@ -50,7 +50,7 @@ const Devices = () => {
 
     let url = isDev
       ? `${backend_url}:${frostServerPort}/FROST-Server/v1.0/Things`
-      : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Things`;
+      : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Things?$expand=Locations&$count=true`;
 
     if (pageLinks[newPage]) {
       url = pageLinks[newPage];
@@ -70,7 +70,7 @@ const Devices = () => {
         },
       });
 
-      setDevices(res.data.value);
+      setDevices(res.data.value ?? []);
       if (res.data["@iot.count"]) setTotalRows(res.data["@iot.count"]);
       if (res.data["@iot.nextLink"]) {
         setPageLinks((prev) => ({
@@ -381,11 +381,19 @@ const Devices = () => {
       filter: false,
       minWidth: 120,
       cellClass: "ag-center-cell",
-      cellRenderer: (params: any) => (
-        <LinkCustom to={`/locations/${params.data["@iot.id"]}`}>
-          <MapIcon />
-        </LinkCustom>
-      ),
+      cellRenderer: (params: any) => {
+        const locationId = params.data?.Locations?.[0]?.["@iot.id"];
+
+        if (!locationId) {
+          return <MapIcon style={{ opacity: 0.35 }} />;
+        }
+
+        return (
+          <LinkCustom to={`/locations/${locationId}`}>
+            <MapIcon />
+          </LinkCustom>
+        );
+      },
     },
   ];
 
