@@ -312,8 +312,11 @@ const ListLocations = () => {
                         Swal.fire("Error", "Failed to update location.", "error");
                       }
                     })
-                    .catch(() => {
-                      Swal.fire("Error", "Server error occurred.", "error");
+                    .catch((error) => {
+                      const errorMessage = axios.isAxiosError(error)
+                        ? error.response?.data?.error || error.response?.data?.message || "Server error occurred."
+                        : "Server error occurred.";
+                      Swal.fire("Error", errorMessage, "error");
                     });
                 }
               });
