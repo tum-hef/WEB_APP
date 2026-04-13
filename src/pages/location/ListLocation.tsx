@@ -314,7 +314,7 @@ const ListLocations = () => {
                     })
                     .catch((error) => {
                       const errorMessage = axios.isAxiosError(error)
-                        ? error.response?.data?.error || error.response?.data?.message || "Server error occurred."
+                        ? (error.response?.data as any)?.error || (error.response?.data as any)?.message || "Server error occurred."
                         : "Server error occurred.";
                       Swal.fire("Error", errorMessage, "error");
                     });
