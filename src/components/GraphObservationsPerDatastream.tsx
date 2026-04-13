@@ -55,6 +55,7 @@ function GraphObservationsPerDatastream({
   };
   const options = {
     responsive: true,
+    maintainAspectRatio: false,
     elements: {
       line: {
         borderColor: "#1976D2",
@@ -396,7 +397,20 @@ function GraphObservationsPerDatastream({
               <Grid item xs={12} md={12} mt={2}></Grid>
             </Grid>
           </LocalizationProvider>
-          <Line options={options} data={data} />
+          <Box
+            sx={{
+              width: "100%",
+              maxWidth: "100%",
+              height: { xs: 360, md: 480 },
+              overflow: "hidden",
+            }}
+          >
+            <Line
+              options={options}
+              data={data}
+              style={{ width: "100%", height: "100%" }}
+            />
+          </Box>
         </>
       )}
     </>

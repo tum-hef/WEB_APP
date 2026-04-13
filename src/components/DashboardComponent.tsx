@@ -33,12 +33,15 @@ const AppContent = styled.div`
   display: flex;
   flex-direction: column;
   max-width: 100%;
+  min-width: 0;
 `;
 
 const Paper = styled(MuiPaper)(spacing);
 
 const MainContent = styled(Paper)`
   flex: 1;
+  min-width: 0;
+  overflow-x: hidden;
   background: ${(props) => props.theme.palette.background.default};
 
   @media all and (-ms-high-contrast: none), (-ms-high-contrast: active) {
