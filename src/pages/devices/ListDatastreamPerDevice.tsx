@@ -9,6 +9,48 @@ import { ToastContainer, toast } from "react-toastify";
 import { useParams } from "react-router-dom";
 import DataTableCardV2 from "../../components/DataGridServerSide";
 
+const DESCRIPTION_WORD_LIMIT = 7;
+
+const getDescriptionPreview = (value: string) => {
+  const words = value.trim().split(/\s+/).filter(Boolean);
+  if (words.length <= DESCRIPTION_WORD_LIMIT) return value;
+  return `${words.slice(0, DESCRIPTION_WORD_LIMIT).join(" ")}...`;
+};
+
+const DescriptionCellRenderer = ({ value }: { value?: string }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const fullText = String(value ?? "");
+  const wordCount = fullText.trim().split(/\s+/).filter(Boolean).length;
+  const isExpandable = wordCount > DESCRIPTION_WORD_LIMIT;
+  const displayText = isExpanded || !isExpandable ? fullText : getDescriptionPreview(fullText);
+
+  return (
+    <span title={fullText}>
+      {displayText}
+      {isExpandable && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsExpanded((prev) => !prev);
+          }}
+          style={{
+            marginLeft: 6,
+            border: "none",
+            background: "transparent",
+            color: "#1976d2",
+            cursor: "pointer",
+            padding: 0,
+            fontSize: "0.85rem",
+            fontWeight: 500,
+          }}
+        >
+          {isExpanded ? "Less" : "More"}
+        </button>
+      )}
+    </span>
+  );
+};
 const ListDatastreamPerDevice = () => {
   const { keycloak } = useKeycloak();
   const userInfo = keycloak?.idTokenParsed;
@@ -133,9 +175,12 @@ const [loading, setLoading] = useState(false);
       headerName: "Description",
       field: "description",
       sortable: true,
-      filter: true,
+      flex: 3,
       wrapText: true,
       autoHeight: true,
+      filter: "agTextColumnFilter",
+      cellStyle: { whiteSpace: "normal" },
+        cellRenderer: (params: any) => <DescriptionCellRenderer value={params.value} />,
     },
        {
   headerName: "Time Range",
