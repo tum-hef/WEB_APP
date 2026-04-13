@@ -14,6 +14,8 @@ import ReactGA from "react-ga4";
 import { GAactionsDataStreams } from "../../utils/GA";
 import { useAppSelector, useIsOwner } from "../../hooks/hooks";
 import DataTableCardV2 from "../../components/DataGridServerSide"
+import BiotechSharpIcon from "@mui/icons-material/BiotechSharp";
+
 
 
 const ListDatastream = () => {
@@ -518,6 +520,20 @@ const handlePageSizeChange = (newPageSize: number) => {
           }}
         />
       ),
+    },
+     {
+      headerName: "Observations",
+      field: "observations",
+      cellRenderer: (params: any) => (
+        <LinkCustom
+          style={{ color: "#233044", textDecoration: "none" }}
+          to={`/datastreams/${params.data["@iot.id"]}/observations`}
+        >
+          <BiotechSharpIcon />
+        </LinkCustom>
+      ),
+      sortable: false,
+      filter: false,
     },
   ];
 
