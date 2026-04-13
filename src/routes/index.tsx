@@ -140,6 +140,11 @@ const AppRouter = (props: any) => {
                     path="/devices/:device_id/datastreams/:id/observations"
                     component={Observations}
                   />
+                   <PrivateRoute
+                    exact
+                    path="/datastreams/:id/observations"
+                    component={Observations}
+                  />
                   <PrivateRoute
                     exact
                     path="/devices/store"
