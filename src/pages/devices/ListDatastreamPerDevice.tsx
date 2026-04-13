@@ -137,6 +137,40 @@ const [loading, setLoading] = useState(false);
       wrapText: true,
       autoHeight: true,
     },
+       {
+  headerName: "Time Range",
+  field: "phenomenonTime",
+  filter: false,
+  sortable: true,
+
+  valueFormatter: (params: any) => {
+    if (!params.value) return "";
+
+    const [start, end] = (params.value as string).split("/");
+
+    const formatUTC = (dateStr: string) => {
+      const d = new Date(dateStr);
+      const pad = (n: number) => String(n).padStart(2, "0");
+
+      return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())} ` +
+             `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}`;
+    };
+
+    if (!end) return `${formatUTC(start)} → ongoing`;
+    if (start === end) return formatUTC(start);
+
+    return `${formatUTC(start)} → ${formatUTC(end)}`;
+  },
+
+  comparator: (valueA: string, valueB: string) => {
+    const getStart = (val: string) => {
+      if (!val) return 0;
+      return new Date(val.split("/")[0]).getTime();
+    };
+
+    return getStart(valueA) - getStart(valueB);
+  }
+},
     {
       headerName: "Observations",
       field: "observations",
