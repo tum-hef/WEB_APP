@@ -299,7 +299,7 @@ const ListLocations = () => {
                         },
                       }
                     )
-                    .then((response) => {
+                    .then((response:any) => {
                       if (response.status === 200) {
                         const updated = locations.map((loc: any) =>
                           loc["@iot.id"] === row["@iot.id"]
@@ -312,9 +312,9 @@ const ListLocations = () => {
                         Swal.fire("Error", "Failed to update location.", "error");
                       }
                     })
-                    .catch((error) => {
+                    .catch((error:any) => {
                       const errorMessage = axios.isAxiosError(error)
-                        ? error.response?.data?.error || error.response?.data?.message || "Server error occurred."
+                        ? (error.response?.data as any)?.error || (error.response?.data as any)?.message || "Server error occurred."
                         : "Server error occurred.";
                       Swal.fire("Error", errorMessage, "error");
                     });
