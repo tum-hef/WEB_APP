@@ -114,8 +114,8 @@ const columnDefs = [
       const isDev = process.env.REACT_APP_IS_DEVELOPMENT === 'true';
 
       const url = isDev
-        ? `${backend_url}:${frostServerPort}/FROST-Server/v1.0/Datastreams(${id})`
-        : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Datastreams(${id})`;
+        ? `${backend_url}:${frostServerPort}/FROST-Server/v1.0/Datastreams(${id})?$expand=ObservedProperty`
+        : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Datastreams(${id})?$expand=ObservedProperty`;
 
       const response = await axios.get(url, {
         headers: {
@@ -125,6 +125,7 @@ const columnDefs = [
       });
 
       if (response.status === 200 && response.data) {
+        console.log ("Datastream metadata:", response.data);
         setDatastreamMetadata(response.data);
       }
     } catch (error) {

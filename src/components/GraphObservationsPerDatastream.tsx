@@ -37,18 +37,23 @@ function GraphObservationsPerDatastream({
   const [result_times, setResultTimes] = useState<any[]>([]);
   const [observations, setObservations] = useState<any[]>([]);
   const [isLoading, setLoading] = useState(false);
-  
+
+  const observedPropertyLabel =
+    datastreamMetadata?.ObservedProperty?.name ||
+    datastreamMetadata?.ObservedProperty?.description ||
+    datastreamMetadata?.name ||
+    "Observation";
 
   const data = {
     labels: phenomenon_times,
     datasets: [
       {
-        label:
-          datastreamMetadata?.name || datastreamMetadata?.name || "Observation",
+        label: observedPropertyLabel,
         data: result_times,
         backgroundColor: "#1976D2",
         borderColor: "#1976D2",
         borderWidth: 3,
+        pointStyle: "line",
         pointBackgroundColor: "#1976D2",
         pointBorderColor: "#1976D2",
       },
@@ -85,9 +90,10 @@ function GraphObservationsPerDatastream({
             weight: 'bold',
             size: 12,
           },
-          usePointStyle: false,
-          boxWidth: 40,
-          boxHeight: 12,
+          usePointStyle: true,
+          pointStyleWidth: 36,
+          boxWidth: 36,
+          boxHeight: 2,
           padding: 15,
           generateLabels(chart: any) {
             const defaultLabels =
@@ -95,9 +101,10 @@ function GraphObservationsPerDatastream({
 
             return defaultLabels.map((label: any) => ({
               ...label,
-              fillStyle: "#1976D2",
+              pointStyle: "line",
               strokeStyle: "#1976D2",
-              lineWidth: 4,
+              fillStyle: "#1976D2",
+              lineWidth: 5,
             }));
           },
         }
