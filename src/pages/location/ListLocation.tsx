@@ -312,7 +312,7 @@ const ListLocations = () => {
                         Swal.fire("Error", "Failed to update location.", "error");
                       }
                     })
-                    .catch((error:any) => {
+                    .catch((error) => {
                       const errorMessage = axios.isAxiosError(error)
                         ? (error.response?.data as any)?.error || (error.response?.data as any)?.message || "Server error occurred."
                         : "Server error occurred.";
