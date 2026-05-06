@@ -294,16 +294,12 @@ function GraphObservationsPerDatastream({
         "Loading.."
       ) : (
         <>
-          <Grid container spacing={2}>
+          <Grid container spacing={2} alignItems="center">
             {/* Left side buttons */}
             <Grid
               item
               xs={12}
               sm={6}
-              md={4}
-              lg={3}
-              mt={4}
-              mb={4}
               style={{ display: "flex" }}
             >
               <Button
@@ -339,17 +335,8 @@ function GraphObservationsPerDatastream({
               </Button>
             </Grid>
 
-            {/* Right side button */}
-            <Grid
-              item
-              xs={12}
-              sm={6}
-              md={4}
-              lg={3}
-              mt={4}
-              mb={4}
-              style={{ marginLeft: "auto" }}
-            >
+            {/* Right side button - Download CSV */}
+            <Box sx={{ ml: "auto", display: "flex" }}>
               <Button
                 disabled={
                   start_date && end_date && start_date > end_date ? true : false
@@ -379,7 +366,7 @@ function GraphObservationsPerDatastream({
                   Download CSV
                 </CSVLink>
               </Button>
-            </Grid>
+            </Box>
           </Grid>
 
           <LocalizationProvider dateAdapter={AdapterDateFns}>
