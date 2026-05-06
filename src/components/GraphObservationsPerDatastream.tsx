@@ -1,4 +1,4 @@
-import { Box, Button, Grid, TextField } from "@mui/material";
+import { Box, Button, Grid, TextField, useMediaQuery } from "@mui/material";
 import React, { useEffect, useState, useCallback } from "react";
 import { CSVLink } from "react-csv";
 import { MobileDateTimePicker, LocalizationProvider } from "@mui/x-date-pickers";
@@ -30,6 +30,7 @@ function GraphObservationsPerDatastream({
   setIsGraphButtonSelected,
   datastreamMetadata,
 }: any) {
+  const isMobile = useMediaQuery("(max-width:600px)");
   const [start_date, setStartDate] = useState<any | null>(null);
   const [end_date, setEndDate] = useState<any | null>(null);
   const [phenomenon_times, setPhenomenonTimes] = useState<any[]>([]);
@@ -43,9 +44,13 @@ function GraphObservationsPerDatastream({
     datasets: [
       {
         label:
-          datastreamMetadata?.description || datastreamMetadata?.name || "Observation",
+          datastreamMetadata?.name || datastreamMetadata?.name || "Observation",
         data: result_times,
         backgroundColor: "#1976D2",
+        borderColor: "#1976D2",
+        borderWidth: 3,
+        pointBackgroundColor: "#1976D2",
+        pointBorderColor: "#1976D2",
       },
     ],
   };
@@ -55,6 +60,12 @@ function GraphObservationsPerDatastream({
     datastreamMetadata?.unitOfMeasurement?.name ||
     datastreamMetadata?.ObservedProperty?.definition ||
     "";
+
+  const xAxisTickLimit = isMobile ? 4 : 8;
+  const xAxisTickStep =
+    phenomenon_times.length > xAxisTickLimit
+      ? Math.ceil(phenomenon_times.length / xAxisTickLimit)
+      : 1;
 
   const options = {
     responsive: true,
@@ -67,23 +78,33 @@ function GraphObservationsPerDatastream({
     plugins: {
       legend: {
         display: true,
-        position: "top" as const,
+        position: "bottom" as const,
         labels: {
+          color: "#1976D2",
           font: {
             weight: 'bold',
             size: 12,
-            color:'#1976D2'
           },
-          usePointStyle: true,
-          pointStyle: 'line',
-          borderColor: '#1976D2',
-          borderWidth: 3,
-          padding: 15
+          usePointStyle: false,
+          boxWidth: 40,
+          boxHeight: 12,
+          padding: 15,
+          generateLabels(chart: any) {
+            const defaultLabels =
+              ChartJS.defaults.plugins.legend.labels.generateLabels(chart);
+
+            return defaultLabels.map((label: any) => ({
+              ...label,
+              fillStyle: "#1976D2",
+              strokeStyle: "#1976D2",
+              lineWidth: 4,
+            }));
+          },
         }
       },
       title: {
         display: true,
-        text: datastreamMetadata?.description || datastreamMetadata?.name || "Observations",
+        text: datastreamMetadata?.name || datastreamMetadata?.name || "Observations",
         font: {
           weight: 'bold',
           size: 16
@@ -94,7 +115,7 @@ function GraphObservationsPerDatastream({
       y: {
         title: {
           display: true,
-          text: "values",
+          text: unit || "Value",
           font: {
             weight: 'bold',
             size: 13
@@ -122,9 +143,32 @@ function GraphObservationsPerDatastream({
             size: 11
           },
           autoSkip: true,
-          maxRotation: 45,
+          maxTicksLimit: xAxisTickLimit,
+          maxRotation: 0,
           minRotation: 0,
           padding: 6,
+          callback: function (_tickValue: any, index: number) {
+            const label = phenomenon_times[index];
+
+            if (!label) {
+              return "";
+            }
+
+            const isFirst = index === 0;
+            const isLast = index === phenomenon_times.length - 1;
+            const shouldShowTick =
+              isFirst || isLast || index % xAxisTickStep === 0;
+
+            if (!shouldShowTick) {
+              return "";
+            }
+
+            const [date, time] = label.split(" ");
+            return [date, time];
+          },
+        },
+        grid: {
+          drawTicks: true,
         },
       },
     },

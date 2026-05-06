@@ -18,7 +18,8 @@ const drawerWidth = 258;
 
 const Root = styled.div`
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
 `;
 
 const Drawer = styled.div`
@@ -34,6 +35,8 @@ const AppContent = styled.div`
   flex-direction: column;
   max-width: 100%;
   min-width: 0;
+  min-height: 0;
+  overflow: hidden;
 `;
 
 const Paper = styled(MuiPaper)(spacing);
@@ -41,7 +44,9 @@ const Paper = styled(MuiPaper)(spacing);
 const MainContent = styled(Paper)`
   flex: 1;
   min-width: 0;
+  min-height: 0;
   overflow-x: hidden;
+  overflow-y: auto;
   background: ${(props) => props.theme.palette.background.default};
 
   @media all and (-ms-high-contrast: none), (-ms-high-contrast: active) {
