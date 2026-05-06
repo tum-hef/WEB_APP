@@ -26,6 +26,7 @@ function GraphObservationsPerDatastream({
   fetchFrostPort,
   isGraphButtonSelected,
   setIsGraphButtonSelected,
+  datastreamMetadata,
 }: any) {
   const [start_date, setStartDate] = useState<any | null>(null);
   const [end_date, setEndDate] = useState<any | null>(null);
@@ -67,7 +68,7 @@ function GraphObservationsPerDatastream({
       },
       title: {
         display: true,
-        text: "Observations",
+        text: datastreamMetadata?.name || datastreamMetadata?.name || "Observations",
       },
     },
   };
