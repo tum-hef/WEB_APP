@@ -294,152 +294,130 @@ function GraphObservationsPerDatastream({
         "Loading.."
       ) : (
         <>
-          <Grid container spacing={2} alignItems="center">
-            {/* Left side buttons */}
-            <Grid
-              item
-              xs={12}
-              sm={6}
-              style={{ display: "flex" }}
-            >
-              <Button
-                disabled={isGraphButtonSelected ? false : true}
-                variant="contained"
-                onClick={() => {
-                  setIsGraphButtonSelected(false);
-                }}
-                style={{
-                  backgroundColor: isGraphButtonSelected
-                    ? "#233044"
-                    : "#cccccc",
-                  color: isGraphButtonSelected ? "#ffffff" : "#000000",
-                  marginRight: "8px",
-                }}
-              >
-                Table View
-              </Button>
-              <Button
-                disabled={isGraphButtonSelected ? true : false}
-                variant="contained"
-                onClick={() => {
-                  setIsGraphButtonSelected(true);
-                }}
-                style={{
-                  backgroundColor: isGraphButtonSelected
-                    ? "#cccccc"
-                    : "#233044",
-                  color: isGraphButtonSelected ? "#000000" : "#ffffff",
-                }}
-              >
-                Graph View
-              </Button>
-            </Grid>
-
-            {/* Right side button - Download CSV */}
-            <Box sx={{ ml: "auto", display: "flex" }}>
-              <Button
-                disabled={
-                  start_date && end_date && start_date > end_date ? true : false
-                }
-                variant="contained"
-                endIcon={<SaveAltIcon />}
-                style={{
-                  backgroundColor:
-                    start_date && end_date && start_date > end_date
-                      ? "#cccccc"
-                      : "",
-                  color:
-                    start_date && end_date && start_date > end_date
-                      ? "#000000"
-                      : "",
-                }}
-              >
-                <CSVLink
-                  filename="observation.csv"
-                  data={getCsvData()}
-                  style={{
-                    color: "#ffffff",
-                    textDecoration: "none",
-                    backgroundColor: "#1976D2",
-                  }}
-                >
-                  Download CSV
-                </CSVLink>
-              </Button>
-            </Box>
-          </Grid>
-
           <LocalizationProvider dateAdapter={AdapterDateFns}>
-            <Grid container justifyContent="center" alignItems="center">
+            <Grid container spacing={2} alignItems="center" sx={{ mb: 2 }}>
+              {/* Left side buttons - Table View / Graph View */}
               <Grid
                 item
                 xs={12}
-                md={6}
-                m={{
-                  xs: 2,
-                  md: 2,
-                }}
+                sm="auto"
+                sx={{ display: "flex", gap: 1 }}
               >
-                <Box sx={{ display: "flex", justifyContent: "center" }}>
-                  <DateTimePicker
-                    label="Start Datetime"
-                    inputFormat="dd.MM.yyyy HH:mm"
-                    value={start_date}
-                    onChange={handleChangeStartDate}
-                    renderInput={(params) => <TextField {...params} />}
-                  />
-                </Box>
-              </Grid>{" "}
-              <Grid item xs={12} md={6}>
-                <Box sx={{ display: "flex", justifyContent: "center" }}>
-                  <DateTimePicker
-                    label="End Datetime"
-                    value={end_date}
-                    inputFormat="dd.MM.yyyy HH:mm"
-                    onChange={handleChangeEndDate}
-                    renderInput={(params) => <TextField {...params} />}
-                  />
-                </Box>
-              </Grid>{" "}
-              {start_date && end_date && (
-                <Grid item xs={12} md={12}>
-                  <Box sx={{ display: "flex", justifyContent: "center" }}>
-                    <Button
-                      style={{
-                        color: "red",
-                      }}
-                      onClick={() => {
-                        setStartDate(null);
-                        setEndDate(null);
-                        fetchObservations();
-                      }}
-                    >
-                      Clear Filter
-                    </Button>
-                  </Box>
-                </Grid>
-              )}
-              <Grid item xs={12} md={12} mt={3}>
-                <Box sx={{ display: "flex", justifyContent: "center" }}>
+                <Button
+                  disabled={isGraphButtonSelected ? false : true}
+                  variant="contained"
+                  onClick={() => {
+                    setIsGraphButtonSelected(false);
+                  }}
+                  style={{
+                    backgroundColor: isGraphButtonSelected
+                      ? "#233044"
+                      : "#cccccc",
+                    color: isGraphButtonSelected ? "#ffffff" : "#000000",
+                  }}
+                >
+                  Table View
+                </Button>
+                <Button
+                  disabled={isGraphButtonSelected ? true : false}
+                  variant="contained"
+                  onClick={() => {
+                    setIsGraphButtonSelected(true);
+                  }}
+                  style={{
+                    backgroundColor: isGraphButtonSelected
+                      ? "#cccccc"
+                      : "#233044",
+                    color: isGraphButtonSelected ? "#000000" : "#ffffff",
+                  }}
+                >
+                  Graph View
+                </Button>
+              </Grid>
+
+              {/* Center - Filter Fields */}
+              <Grid item xs={12} sm="auto" sx={{ display: "flex", gap: 1, flexWrap: "wrap", alignItems: "center" }}>
+                <DateTimePicker
+                  label="Start Datetime"
+                  inputFormat="dd.MM.yyyy HH:mm"
+                  value={start_date}
+                  onChange={handleChangeStartDate}
+                  renderInput={(params) => <TextField {...params} size="small" />}
+                />
+                <DateTimePicker
+                  label="End Datetime"
+                  value={end_date}
+                  inputFormat="dd.MM.yyyy HH:mm"
+                  onChange={handleChangeEndDate}
+                  renderInput={(params) => <TextField {...params} size="small" />}
+                />
+                {start_date && end_date && (
                   <Button
-                    disabled={
-                      !start_date || !end_date || start_date > end_date
-                        ? true
-                        : false
-                    }
                     variant="contained"
                     style={{
-                      backgroundColor:
-                        !start_date || !end_date ? "#cccccc" : "",
-                      color: !start_date || !end_date ? "#000000" : "",
+                      color: "red",
+                      backgroundColor: "#ffffff",
+                      border: "1px solid red"
                     }}
-                    onClick={filterObservations}
+                    onClick={() => {
+                      setStartDate(null);
+                      setEndDate(null);
+                      fetchObservations();
+                    }}
                   >
-                    Filter Data
+                    Clear
                   </Button>
-                </Box>
+                )}
+                <Button
+                  disabled={
+                    !start_date || !end_date || start_date > end_date
+                      ? true
+                      : false
+                  }
+                  variant="contained"
+                  style={{
+                    backgroundColor:
+                      !start_date || !end_date ? "#cccccc" : "",
+                    color: !start_date || !end_date ? "#000000" : "",
+                  }}
+                  onClick={filterObservations}
+                >
+                  Filter Data
+                </Button>
               </Grid>
-              <Grid item xs={12} md={12} mt={2}></Grid>
+
+              {/* Right side - Download CSV Button */}
+              <Grid item xs={12} sm="auto" sx={{ ml: "auto" }}>
+                <Button
+                  disabled={
+                    start_date && end_date && start_date > end_date ? true : false
+                  }
+                  variant="contained"
+                  endIcon={<SaveAltIcon />}
+                  style={{
+                    backgroundColor:
+                      start_date && end_date && start_date > end_date
+                        ? "#cccccc"
+                        : "",
+                    color:
+                      start_date && end_date && start_date > end_date
+                        ? "#000000"
+                        : "",
+                  }}
+                >
+                  <CSVLink
+                    filename="observation.csv"
+                    data={getCsvData()}
+                    style={{
+                      color: "#ffffff",
+                      textDecoration: "none",
+                      backgroundColor: "#1976D2",
+                    }}
+                  >
+                    Download CSV
+                  </CSVLink>
+                </Button>
+              </Grid>
             </Grid>
           </LocalizationProvider>
           <Box
