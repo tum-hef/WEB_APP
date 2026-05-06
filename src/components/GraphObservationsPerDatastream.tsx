@@ -43,7 +43,7 @@ function GraphObservationsPerDatastream({
     datasets: [
       {
         label:
-          datastreamMetadata?.ObservedProperty?.name || datastreamMetadata?.name || "Observation",
+          datastreamMetadata?.description || datastreamMetadata?.name || "Observation",
         data: result_times,
         backgroundColor: "#1976D2",
       },
@@ -66,12 +66,19 @@ function GraphObservationsPerDatastream({
     },
     plugins: {
       legend: {
+        display: true,
         position: "top" as const,
         labels: {
           font: {
             weight: 'bold',
-            size: 12
-          }
+            size: 12,
+            color:'#1976D2'
+          },
+          usePointStyle: true,
+          pointStyle: 'line',
+          borderColor: '#1976D2',
+          borderWidth: 3,
+          padding: 15
         }
       },
       title: {
@@ -87,7 +94,7 @@ function GraphObservationsPerDatastream({
       y: {
         title: {
           display: true,
-          text: unit ? `Value (${unit})` : "Value",
+          text: "values",
           font: {
             weight: 'bold',
             size: 13
