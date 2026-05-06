@@ -1,7 +1,7 @@
 import { Box, Button, Grid, TextField } from "@mui/material";
 import React, { useEffect, useState, useCallback } from "react";
 import { CSVLink } from "react-csv";
-import { DateTimePicker, LocalizationProvider } from "@mui/x-date-pickers";
+import { MobileDateTimePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -337,14 +337,15 @@ function GraphObservationsPerDatastream({
 
               {/* Center - Filter Fields */}
               <Grid item xs={12} sm="auto" sx={{ display: "flex", gap: 1, flexWrap: "wrap", alignItems: "center" }}>
-                <DateTimePicker
+                  <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", alignItems: "center", position: "relative", zIndex: 1 }}>
+                <MobileDateTimePicker
                   label="Start Datetime"
                   inputFormat="dd.MM.yyyy HH:mm"
                   value={start_date}
                   onChange={handleChangeStartDate}
                   renderInput={(params) => <TextField {...params} size="small" />}
                 />
-                <DateTimePicker
+                <MobileDateTimePicker
                   label="End Datetime"
                   value={end_date}
                   inputFormat="dd.MM.yyyy HH:mm"
@@ -383,8 +384,9 @@ function GraphObservationsPerDatastream({
                   onClick={filterObservations}
                 >
                   Filter Data
-                </Button>
-              </Grid>
+                  </Button>
+                  </Box>
+                  </Grid>
 
               {/* Right side - Download CSV Button */}
               <Grid item xs={12} sm="auto" sx={{ ml: "auto" }}>
