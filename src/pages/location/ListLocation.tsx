@@ -299,7 +299,7 @@ const ListLocations = () => {
                         },
                       }
                     )
-                    .then((response) => {
+                    .then((response:any) => {
                       if (response.status === 200) {
                         const updated = locations.map((loc: any) =>
                           loc["@iot.id"] === row["@iot.id"]

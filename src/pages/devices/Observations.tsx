@@ -21,6 +21,7 @@ const Observations = () => {
 
   const [frostServerPort, setFrostServerPort] = useState<number | null>(null);
   const [datastream, setDataStream] = useState<any[]>([]);
+  const [datastreamMetadata, setDatastreamMetadata] = useState<any>(null);
 
   const { id } = useParams<{ id: string }>();
   const { device_id } = useParams<{ device_id: string }>();
@@ -107,9 +108,35 @@ const columnDefs = [
       });
   };
 
+  const fetchDatastreamMetadata = async () => {
+    try {
+      const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
+      const isDev = process.env.REACT_APP_IS_DEVELOPMENT === 'true';
+
+      const url = isDev
+        ? `${backend_url}:${frostServerPort}/FROST-Server/v1.0/Datastreams(${id})?$expand=ObservedProperty`
+        : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Datastreams(${id})?$expand=ObservedProperty`;
+
+      const response = await axios.get(url, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.status === 200 && response.data) {
+        console.log ("Datastream metadata:", response.data);
+        setDatastreamMetadata(response.data);
+      }
+    } catch (error) {
+      console.error("Error fetching datastream metadata:", error);
+    }
+  };
+
   useEffect(() => {
     if (frostServerPort !== null) {
       fetchObservations();
+      fetchDatastreamMetadata();
     } else {
       fetchFrostPort();
     }
@@ -154,6 +181,7 @@ const columnDefs = [
           fetchFrostPort={fetchFrostPort}
           isGraphButtonSelected={isGraphButtonSelected}
           setIsGraphButtonSelected={setIsGraphButtonSelected}
+                  datastreamMetadata={datastreamMetadata}
         />
       ) : (
         
