@@ -1,5 +1,5 @@
 import { Box, Button, Grid, TextField } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { CSVLink } from "react-csv";
 import { DateTimePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import {
@@ -19,6 +19,8 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import SaveAltIcon from "@mui/icons-material/SaveAlt";
 
+// allow using process.env without installing node types
+declare const process: any;
 function GraphObservationsPerDatastream({
   token,
   frostServerPort,
@@ -34,26 +36,26 @@ function GraphObservationsPerDatastream({
   const [result_times, setResultTimes] = useState<any[]>([]);
   const [observations, setObservations] = useState<any[]>([]);
   const [isLoading, setLoading] = useState(false);
-  useEffect(() => {
-    setLoading(true);
-    if (frostServerPort !== null) {
-      fetchObservations();
-    } else {
-      fetchFrostPort();
-    }
-    setLoading(false);
-  }, [frostServerPort]);
+  
 
   const data = {
     labels: phenomenon_times,
     datasets: [
       {
-        label: "Observation",
+        label:
+          datastreamMetadata?.ObservedProperty?.name || datastreamMetadata?.name || "Observation",
         data: result_times,
         backgroundColor: "#1976D2",
       },
     ],
   };
+  // derive unit from datastream metadata (unitOfMeasurement preferred)
+  const unit =
+    datastreamMetadata?.unitOfMeasurement?.symbol ||
+    datastreamMetadata?.unitOfMeasurement?.name ||
+    datastreamMetadata?.ObservedProperty?.definition ||
+    "";
+
   const options = {
     responsive: true,
     maintainAspectRatio: false,
@@ -65,15 +67,63 @@ function GraphObservationsPerDatastream({
     plugins: {
       legend: {
         position: "top" as const,
+        labels: {
+          font: {
+            weight: 'bold',
+            size: 12
+          }
+        }
       },
       title: {
         display: true,
-        text: datastreamMetadata?.name || datastreamMetadata?.name || "Observations",
+        text: datastreamMetadata?.description || datastreamMetadata?.name || "Observations",
+        font: {
+          weight: 'bold',
+          size: 16
+        }
+      },
+    },
+    scales: {
+      y: {
+        title: {
+          display: true,
+          text: unit ? `Value (${unit})` : "Value",
+          font: {
+            weight: 'bold',
+            size: 13
+          },
+          padding: { top: 10, bottom: 10 }
+        },
+        ticks: {
+          font: {
+            size: 12
+          }
+        },
+      },
+      x: {
+        title: {
+          display: true,
+          text: "Time",
+          font: {
+            weight: 'bold',
+            size: 13
+          },
+          padding: { top: 8 }
+        },
+        ticks: {
+          font: {
+            size: 11
+          },
+          autoSkip: true,
+          maxRotation: 45,
+          minRotation: 0,
+          padding: 6,
+        },
       },
     },
   };
  
-  const fetchObservations = () => {
+  const fetchObservations = useCallback(() => {
     const backend_url = process.env.REACT_APP_FROST_URL;
     axios
       .get(
@@ -90,12 +140,10 @@ function GraphObservationsPerDatastream({
           setObservations(res.data.value); 
           setPhenomenonTimes(
             res?.data.value
-              .map(
-                (item: any) =>
-                  format(new Date(item.phenomenonTime), "dd.MM.yyyy HH:mm"),
-                {
+              .map((item: any) =>
+                format(new Date(item.phenomenonTime), "dd.MM.yyyy HH:mm", {
                   timeZone: "Europe/Rome",
-                }
+                })
               )
               .slice(0, 50)
           );
@@ -108,8 +156,17 @@ function GraphObservationsPerDatastream({
         console.log(err);
         toast.error("Error Getting Things");
       });
-  };
+  }, [frostServerPort, id, token]);
 
+  useEffect(() => {
+    setLoading(true);
+    if (frostServerPort !== null) {
+      fetchObservations();
+    } else {
+      fetchFrostPort();
+    }
+    setLoading(false);
+  }, [frostServerPort, fetchFrostPort, fetchObservations]);
 
   async function fetchAllObservations(
     baseUrl: string,
@@ -407,7 +464,7 @@ function GraphObservationsPerDatastream({
             }}
           >
             <Line
-              options={options}
+              options={options as any}
               data={data}
               style={{ width: "100%", height: "100%" }}
             />
