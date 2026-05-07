@@ -181,6 +181,11 @@ const InfiniteDataTableCard: React.FC<InfiniteDataTableCardProps> = ({
                 cellStyle: { textAlign: "left", whiteSpace: "nowrap" },
       
             }}
+            enableRangeSelection
+            enableCellTextSelection
+            suppressCopyRowsToClipboard={false}
+            copyHeadersToClipboard
+            allowContextMenuWithControlKey
           />
             </div>
         </div>
