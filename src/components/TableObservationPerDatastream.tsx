@@ -4,7 +4,7 @@ import { DateTimePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { CSVLink } from "react-csv";
 import DataTable from "react-data-table-component";
-import { format } from "date-fns-tz";
+import { format } from "date-fns";
 import axios from "axios";
 import SaveAltIcon from "@mui/icons-material/SaveAlt";
 import DataTableCard from "./DataGrid";
@@ -46,6 +46,11 @@ interface Observation {
   // Add other fields as needed
 }
 
+const DEFAULT_SORT_QUERY = "phenomenonTime desc";
+
+const formatLocalDateTime = (value: string | Date) =>
+  format(new Date(value), "dd.MM.yyyy HH:mm");
+
 function TableObservationPerDatastream({
   datastream,
   setDataStream,
@@ -67,7 +72,7 @@ function TableObservationPerDatastream({
   const [pageLinks, setPageLinks] = useState<{ [key: number]: string }>({});
   const [openModal, setOpenModal] = useState(false);
   const [filterQuery, setFilterQuery] = useState("");
-  const [sortQuery, setSortQuery] = useState("");
+  const [sortQuery, setSortQuery] = useState(DEFAULT_SORT_QUERY);
   const [clearFiltersTrigger, setClearFiltersTrigger] = useState(false);
 
   const fetchObservations = useCallback(
@@ -229,11 +234,9 @@ function TableObservationPerDatastream({
       csvData.push(["No Data"]);
     } else {
       for (const obs of filteredObservations) {
-        const romeTime = format(new Date(obs.phenomenonTime), "dd.MM.yyyy HH:mm", {
-          timeZone: "Europe/Rome",
-        });
+        const localTime = formatLocalDateTime(obs.phenomenonTime);
 
-        csvData.push([`${obs["@iot.id"]}`, `${obs.result}`, romeTime]);
+        csvData.push([`${obs["@iot.id"]}`, `${obs.result}`, localTime]);
       }
     }
 
@@ -281,10 +284,8 @@ function TableObservationPerDatastream({
       filter: false,
       flex: 2,
       minWidth: 180,
-      valueFormatter: (params: any) =>
-        format(new Date(params.value), "dd.MM.yyyy HH:mm", {
-          timeZone: "Europe/Rome",
-        }),
+      sort: "desc",
+      valueFormatter: (params: any) => formatLocalDateTime(params.value),
     },
     {
       headerName: "Result",
@@ -550,13 +551,9 @@ function TableObservationPerDatastream({
           }}
         >
           Showing data from{" "}
-          {format(start_date, "dd.MM.yyyy HH:mm", {
-            timeZone: "Europe/Rome",
-          })}{" "}
+          {formatLocalDateTime(start_date)}{" "}
           to{" "}
-          {format(end_date, "dd.MM.yyyy HH:mm", {
-            timeZone: "Europe/Rome",
-          })}
+          {formatLocalDateTime(end_date)}
         </Typography>
       )}
       <DataTableCardV2
