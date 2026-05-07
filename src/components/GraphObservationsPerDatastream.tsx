@@ -14,13 +14,17 @@ import {
 } from "chart.js";
 import { Line } from "react-chartjs-2";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
-import { format } from "date-fns-tz";
+import { format } from "date-fns";
 import axios from "axios";
 import { toast } from "react-toastify";
 import SaveAltIcon from "@mui/icons-material/SaveAlt";
 
 // allow using process.env without installing node types
 declare const process: any;
+
+const formatLocalDateTime = (value: string | Date) =>
+  format(new Date(value), "dd.MM.yyyy HH:mm");
+
 function GraphObservationsPerDatastream({
   token,
   frostServerPort,
@@ -198,11 +202,7 @@ function GraphObservationsPerDatastream({
           setObservations(res.data.value); 
           setPhenomenonTimes(
             res?.data.value
-              .map((item: any) =>
-                format(new Date(item.phenomenonTime), "dd.MM.yyyy HH:mm", {
-                  timeZone: "Europe/Rome",
-                })
-              )
+              .map((item: any) => formatLocalDateTime(item.phenomenonTime))
               .slice(0, 50)
           );
           setResultTimes(
@@ -279,11 +279,7 @@ function GraphObservationsPerDatastream({
       // Set to chart
       setObservations(sorted);
       setPhenomenonTimes(
-        sorted.map((item: any) =>
-          format(new Date(item.phenomenonTime), "dd.MM.yyyy HH:mm", {
-            timeZone: "Europe/Rome",
-          })
-        )
+        sorted.map((item: any) => formatLocalDateTime(item.phenomenonTime))
       );
       setResultTimes(sorted.map((item: any) => item.result));
     } catch (error) {
@@ -307,16 +303,12 @@ function GraphObservationsPerDatastream({
     
     if (observations.length > 0) {
       for (let i = 0; i < observations.length; i++) {
-        const romeTime = format(
-          new Date(observations[i].phenomenonTime),
-          "dd.MM.yyyy HH:mm",
-          { timeZone: "Europe/Rome" }
-        );
+        const localTime = formatLocalDateTime(observations[i].phenomenonTime);
 
         csvData.push([
           `${observations[i]["@iot.id"]}`,
           `${observations[i].result}`,
-          romeTime,
+          localTime,
         ]);
       }
     } else if (observations.length > 0) {
@@ -324,9 +316,7 @@ function GraphObservationsPerDatastream({
         csvData.push([
           `${observations[i]["@iot.id"]}`,
           `${observations[i].result}`,
-          format(new Date(observations[i].phenomenonTime), "dd.MM.yyyy HH:mm", {
-            timeZone: "Europe/Rome",
-          }),
+          formatLocalDateTime(observations[i].phenomenonTime),
         ]);
       }
     } else {
