@@ -10,6 +10,7 @@ type FrostResponse = {
 export const createObservationsDatasource = ({
   token,
   baseUrl,
+  defaultSortQuery = "",
   pageSize,
   currentPage,
   onRowCountChange,
@@ -17,6 +18,7 @@ export const createObservationsDatasource = ({
 }: {
   token: string;
   baseUrl: string;
+  defaultSortQuery?: string;
   pageSize: number;
   currentPage: number;
   onRowCountChange?: (count: number) => void;
@@ -39,7 +41,7 @@ export const createObservationsDatasource = ({
       }
       console.log("params.filterModel",params.filterModel)
       const filter = buildFilterQuery(params.filterModel);
-      const sort = buildSortQuery(params.sortModel);
+      const sort = buildSortQuery(params.sortModel) || defaultSortQuery;
       console.log("Built filter:", filter);
       const key = JSON.stringify({
         page: currentPage,

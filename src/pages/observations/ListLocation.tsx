@@ -13,10 +13,13 @@ import Swal from "sweetalert2";
 import ReactGA from "react-ga4";
 import { GAactionsObservations } from "../../utils/GA";
 import DataTableCardV2 from "../../components/DataGridServerSide";
-
-import moment from "moment";
+import { format } from "date-fns";
 import InfiniteDataTableCard from "../../components/InfiniteDataTableCard";
 import { createObservationsDatasource } from "../services/createObservationsDatasource";
+
+const formatLocalDateTime = (value: string | Date) =>
+  format(new Date(value), "dd.MM.yyyy HH:mm");
+
 const ListObservations = () => {
   const { keycloak } = useKeycloak();
   const userInfo = keycloak?.idTokenParsed;
@@ -86,9 +89,10 @@ const ListObservations = () => {
   field: "phenomenonTime",
   sortable: true,
   filter: "agDateColumnFilter",
+  sort: "desc",
 
   valueFormatter: (params: any) =>
-    params.value ? moment(params.value).format("YYYY-MM-DD HH:mm:ss") : "",
+    params.value ? formatLocalDateTime(params.value) : "",
 
   filterParams: {
     comparator: (filterLocalDateAtMidnight: Date, cellValue: string) => {
@@ -134,7 +138,7 @@ const ListObservations = () => {
         </div>
         <div>
           <b>Pheonomenon Time: </b>
-          {data?.phenomenonTime}
+          {data?.phenomenonTime ? formatLocalDateTime(data.phenomenonTime) : ""}
         </div>
       </div>
     );
@@ -166,6 +170,7 @@ title="Observations"
   return createObservationsDatasource({
     token,
     baseUrl,
+    defaultSortQuery: "phenomenonTime desc",
     ...args, // pageSize, currentPage, callbacks, etc.
   });
 }}
