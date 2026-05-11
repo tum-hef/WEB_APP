@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import DataTable, { ExpanderComponentProps } from "react-data-table-component";
+import { useFormik } from "formik";
 import { Breadcrumbs, Button, Typography } from "@mui/material";
 import LinkCustom from "../../components/LinkCustom";
 
@@ -15,6 +15,8 @@ import ReactGA from "react-ga4";
 import { GAactionsObservationProperties } from "../../utils/GA";
 import { useAppSelector, useIsOwner } from "../../hooks/hooks";
 import DataTableCardV2 from "../../components/DataGridServerSide";
+import EntityFormModal from "../../components/EntityFormModal";
+import { editObservationPropertyValidationSchema } from "../../formik/validation_schema";
 
 const ListObservationProperty = () => {
   const { keycloak } = useKeycloak();
@@ -32,11 +34,88 @@ const [loading, setLoading] = useState(false);
 
 const [filterQuery, setFilterQuery] = useState("");
 const [sortQuery, setSortQuery] = useState("");
+  const [editOpen, setEditOpen] = useState(false);
+  const [editingObservedPropertyId, setEditingObservedPropertyId] = useState<number | null>(null);
+  const [saving, setSaving] = useState(false);
   const selectedGroupId = useAppSelector(state => state.roles.selectedGroupId);
   const group = useAppSelector(state =>
     state.roles.groups.find(g => g?.group_name_id === selectedGroupId)
   );
   const isOwner = useIsOwner();
+  const primaryButtonSx = {
+    backgroundColor: "rgb(35, 48, 68)",
+    "&:hover": { backgroundColor: "rgb(26, 36, 51)" },
+  };
+  const cancelButtonSx = {
+    backgroundColor: "#6e7881",
+    color: "#ffffff",
+    borderColor: "#6e7881",
+    "&:hover": { backgroundColor: "#5f6870", borderColor: "#5f6870" },
+  };
+
+  const editFormik = useFormik({
+    initialValues: { name: "", description: "", definition: "" },
+    validationSchema: editObservationPropertyValidationSchema,
+    onSubmit: async (values) => {
+      if (!editingObservedPropertyId) return;
+      try {
+        setSaving(true);
+        const response = await axios.post(
+          `${process.env.REACT_APP_BACKEND_URL}/update`,
+          {
+            url: `ObservedProperties(${editingObservedPropertyId})`,
+            FROST_PORT: frostServerPort,
+            body: {
+              name: values.name,
+              description: values.description,
+              definition: values.definition,
+            },
+            keycloak_id: userInfo?.sub,
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${keycloak?.token}`,
+            },
+          }
+        );
+        if (response.status === 200) {
+          const observedProperties = observationProperty.map((observed_property) =>
+            observed_property["@iot.id"] === editingObservedPropertyId
+              ? {
+                ...observed_property,
+                name: values.name,
+                description: values.description,
+                definition: values.definition,
+              }
+              : observed_property
+          );
+          setObservationProperty(observedProperties);
+          setEditOpen(false);
+          setEditingObservedPropertyId(null);
+          Swal.fire({
+            icon: "success",
+            title: "Success",
+            text: "Measurement Property edited successfully!",
+          });
+        } else {
+          Swal.fire({
+            icon: "error",
+            title: "Oops...",
+            text: "Something went wrong! Measurement Property not edited!",
+          });
+        }
+      } catch {
+        Swal.fire({
+          icon: "error",
+          title: "Oops...",
+          text: "Something went wrong! Measurement Property not edited!",
+        });
+      } finally {
+        setSaving(false);
+      }
+    },
+  });
 
 
   const fetchObservationProperty = async (
@@ -180,126 +259,13 @@ const [sortQuery, setSortQuery] = useState("");
           onClick={() => {
             const row = params?.data;
             if (!isOwner) return;
-            Swal.fire({
-              title: "Edit Measurement Property",
-              html:
-                `<div class="swal-input-row-with-label">` +
-                `<label for="name">New Name</label>` +
-                `<div class="swal-input-field">` +
-                `<input id="name" class="swal2-input" placeholder="Enter the new Measurement Property name" value="${row.name || ""
-                }">` +
-                `</div>` +
-                `</div>` +
-                `<div class="swal-input-row">` +
-                `<label for="description">New Description</label>` +
-                `<input id="description" class="swal2-input" placeholder="Enter the new Measurement Property description" value="${row.description || ""
-                }">` +
-                `</div>` +
-                `</div>` +
-                `<div class="swal-input-row">` +
-                `<label for="definition">New definition</label>` +
-                `<input id="definition" class="swal2-input" placeholder="Enter the new Measurement Property definition" value="${row.definition || ""
-                }">` +
-                `</div>`,
-              showCancelButton: true,
-              confirmButtonText: "Save",
-              showLoaderOnConfirm: true,
-              preConfirm: () => {
-                const name = (
-                  document.getElementById("name") as HTMLInputElement
-                ).value;
-                const description = (
-                  document.getElementById("description") as HTMLInputElement
-                ).value;
-                const definition = (
-                  document.getElementById("definition") as HTMLInputElement
-                ).value;
-                if (!name) {
-                  Swal.showValidationMessage(
-                    "Please enter a Measurement Property name"
-                  );
-                } else {
-                  return { name, description, definition };
-                }
-              },
-            }).then((result) => {
-              if (result.isConfirmed) {
-                const { name, description, definition } = result.value as {
-                  name: string;
-                  description: string;
-                  definition: string;
-                };
-                axios
-                  .post(
-                    `${process.env.REACT_APP_BACKEND_URL}/update`,
-                    {
-                      url: `ObservedProperties(${row["@iot.id"]})`,
-                      FROST_PORT: frostServerPort,
-                      body: {
-                        name,
-                        description,
-                        definition,
-                      },
-                      keycloak_id: userInfo?.sub,
-                    },
-                    {
-                      headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${keycloak?.token}`,
-                      },
-                    }
-                  )
-                  .then((response) => {
-                    if (response.status === 200) {
-                      const observedProperties = observationProperty.map(
-                        (observed_property) => {
-                          if (observed_property["@iot.id"] === row["@iot.id"]) {
-                            observed_property.name = name;
-                            observed_property.description = description;
-                            observed_property.definition = definition;
-                          }
-                          return observed_property;
-                        }
-                      );
-                      setObservationProperty(observedProperties);
-                      Swal.fire({
-                        icon: "success",
-                        title: "Success",
-                        text: "Measurement Property edited successfully!",
-                      });
-                    } else {
-                      Swal.fire({
-                        icon: "error",
-                        title: "Oops...",
-                        text: "Something went wrong! Measurement Property not edited!",
-                      });
-                    }
-                  })
-                  .catch((error) => {
-                    axios.post(
-                      `http://localhost:4500/mutation_error_logs`,
-                      {
-                        keycloak_id: userInfo?.sub,
-                        method: "UPDATE",
-                        attribute: "Measurement Property",
-                        attribute_id: row["@iot.id"],
-                        frost_port: frostServerPort,
-                      },
-                      {
-                        headers: {
-                          "Content-Type": "application/json",
-                          Authorization: `Bearer ${keycloak?.token}`,
-                        },
-                      }
-                    );
-                    Swal.fire({
-                      icon: "error",
-                      title: "Oops...",
-                      text: "Something went wrong! Measurement Property not edited!",
-                    });
-                  });
-              }
+            setEditingObservedPropertyId(row?.["@iot.id"]);
+            editFormik.setValues({
+              name: row?.name || "",
+              description: row?.description || "",
+              definition: row?.definition || "",
             });
+            setEditOpen(true);
           }}
         />
       ),
@@ -396,27 +362,6 @@ const [sortQuery, setSortQuery] = useState("");
     },
   ];
 
-  const ExpandedComponent: React.FC<ExpanderComponentProps<any>> = ({
-    data,
-  }) => {
-    return (
-      <div
-        style={{
-          margin: "10px",
-        }}
-      >
-        <div>
-          <b>Name: </b>
-          {data.name}
-        </div>
-        <div>
-          <b>Description: </b>
-          {data.description}
-        </div>
-      </div>
-    );
-  };
-
   const handlePageChange = (newPage: number) => {
   setPage(newPage);
   fetchObservationProperty(newPage, pageSize, filterQuery, sortQuery);
@@ -495,6 +440,32 @@ and may include a definition or reference for clarity and standardization."
     fetchObservationProperty(0, pageSize, filterQuery, sq);
   }}
 />
+      <EntityFormModal
+        open={editOpen}
+        onClose={() => {
+          setEditOpen(false);
+          setEditingObservedPropertyId(null);
+        }}
+        title="Edit Measurement Property"
+        sectionTitle="Measurement Property Details"
+        formik={editFormik}
+        fields={[
+          { name: "name", label: "Name", xs: 12, sm: 12 },
+          {
+            name: "description",
+            label: "Description",
+            multiline: true,
+            minRows: 3,
+            xs: 12,
+            sm: 12,
+          },
+          { name: "definition", label: "Definition", xs: 12, sm: 12 },
+        ]}
+        submitting={saving}
+        submitLabel="Save"
+        primaryButtonSx={primaryButtonSx}
+        cancelButtonSx={cancelButtonSx}
+      />
 
     </Dashboard>
   );

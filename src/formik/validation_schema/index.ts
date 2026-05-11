@@ -182,3 +182,27 @@ export const editLocationValidationSchema = yup.object().shape({
       .required("Longitude is required")
       .matches(/^-?\d+(\.\d+)?$/, "Longitude must be a valid number"),
   });
+
+export const editDeviceValidationSchema = yup.object().shape({
+  name: yup.string().required("Name is required"),
+  description: yup.string().required("Description is required"),
+});
+
+export const editSensorValidationSchema = yup.object().shape({
+  name: yup.string().required("Sensor name is required"),
+  description: yup.string().required("Description is required"),
+  metadata: yup.string().required("Metadata is required"),
+});
+
+export const editObservationPropertyValidationSchema = yup.object().shape({
+  name: yup.string().required("Measurement property name is required"),
+  description: yup.string().required("Description is required"),
+  definition: yup.string().required("Definition is required"),
+});
+
+export const editDatastreamValidationSchema = yup.object().shape({
+  description: yup.string().required("Description is required"),
+  unit_name: yup.string().required("Unit name is required"),
+  unit_symbol: yup.string().required("Unit symbol is required"),
+  unit_definition: yup.string().required("Unit definition is required"),
+});

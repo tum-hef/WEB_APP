@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { useFormik } from "formik";
 import {
   Breadcrumbs,
   Button,
@@ -19,6 +20,8 @@ import FolderSpecialIcon from "@mui/icons-material/FolderSpecial";
 import MapIcon from "@mui/icons-material/Map";
 import { useAppSelector, useIsOwner } from "../../hooks/hooks";
 import DataTableCardV2 from "../../components/DataGridServerSide";
+import EntityFormModal from "../../components/EntityFormModal";
+import { editDeviceValidationSchema } from "../../formik/validation_schema";
 
 const Devices = () => {
   const { keycloak } = useKeycloak();
@@ -34,7 +37,63 @@ const Devices = () => {
   const [sortQuery, setSortQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [pageLinks, setPageLinks] = useState<{ [key: number]: string }>({});
+  const [editOpen, setEditOpen] = useState(false);
+  const [editingDeviceId, setEditingDeviceId] = useState<number | null>(null);
+  const [saving, setSaving] = useState(false);
   const isOwner = useIsOwner();
+  const primaryButtonSx = {
+    backgroundColor: "rgb(35, 48, 68)",
+    "&:hover": { backgroundColor: "rgb(26, 36, 51)" },
+  };
+  const cancelButtonSx = {
+    backgroundColor: "#6e7881",
+    color: "#ffffff",
+    borderColor: "#6e7881",
+    "&:hover": { backgroundColor: "#5f6870", borderColor: "#5f6870" },
+  };
+
+  const editFormik = useFormik({
+    initialValues: { name: "", description: "" },
+    validationSchema: editDeviceValidationSchema,
+    onSubmit: async (values) => {
+      if (!editingDeviceId) return;
+      try {
+        setSaving(true);
+        const response = await axios.post(
+          `${process.env.REACT_APP_BACKEND_URL}/update`,
+          {
+            url: `Things(${editingDeviceId})`,
+            FROST_PORT: frostServerPort,
+            body: { name: values.name, description: values.description },
+            keycloak_id: userInfo?.sub,
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${keycloak?.token}`,
+            },
+          }
+        );
+        if (response.status === 200) {
+          const newDevices = devices.map((device) =>
+            device["@iot.id"] === editingDeviceId
+              ? { ...device, name: values.name, description: values.description }
+              : device
+          );
+          setDevices(newDevices);
+          setEditOpen(false);
+          setEditingDeviceId(null);
+          Swal.fire({ icon: "success", title: "Success", text: "Device edited successfully!" });
+        } else {
+          Swal.fire({ icon: "error", title: "Oops...", text: "Something went wrong! Device not edited!" });
+        }
+      } catch {
+        Swal.fire({ icon: "error", title: "Oops...", text: "Something went wrong! Device not edited!" });
+      } finally {
+        setSaving(false);
+      }
+    },
+  });
 
   const fetchThings = async (
     newPage = 0,
@@ -172,112 +231,12 @@ const Devices = () => {
             }}
             onClick={() => {
               if (!isOwner) return;
-
-              Swal.fire({
-                title: "Edit Device",
-                html:
-                  `<div class="swal-input-row-with-label">` +
-                  `<label for="name">New Name</label>` +
-                  `<div class="swal-input-field">` +
-                  `<input id="name" class="swal2-input" placeholder="Enter the new device name" value="${
-                    row.name || ""
-                  }">` +
-                  `</div>` +
-                  `</div>` +
-                  `<div class="swal-input-row">` +
-                  `<label for="description">New Description</label>` +
-                  `<input id="description" class="swal2-input" placeholder="Enter the new device description" value="${
-                    row.description || ""
-                  }">` +
-                  `</div>`,
-                showCancelButton: true,
-                confirmButtonText: "Save",
-                showLoaderOnConfirm: true,
-                preConfirm: () => {
-                  const name = (
-                    document.getElementById("name") as HTMLInputElement
-                  ).value;
-                  const description = (
-                    document.getElementById("description") as HTMLInputElement
-                  ).value;
-                  if (!name) {
-                    Swal.showValidationMessage("Please enter a device name");
-                  } else {
-                    return { name, description };
-                  }
-                },
-              }).then((result) => {
-                if (result.isConfirmed) {
-                  const { name, description } = result.value as {
-                    name: string;
-                    description: string;
-                  };
-
-                  axios
-                    .post(
-                      `${process.env.REACT_APP_BACKEND_URL}/update`,
-                      {
-                        url: `Things(${row["@iot.id"]})`,
-                        FROST_PORT: frostServerPort,
-                        body: { name, description },
-                        keycloak_id: userInfo?.sub,
-                      },
-                      {
-                        headers: {
-                          "Content-Type": "application/json",
-                          Authorization: `Bearer ${keycloak?.token}`,
-                        },
-                      }
-                    )
-                    .then((response) => {
-                      if (response.status === 200) {
-                        const newDevices = devices.map((device) => {
-                          if (device["@iot.id"] === row["@iot.id"]) {
-                            device.name = name;
-                            device.description = description;
-                          }
-                          return device;
-                        });
-                        setDevices(newDevices);
-
-                        Swal.fire({
-                          icon: "success",
-                          title: "Success",
-                          text: "Device edited successfully!",
-                        });
-                      } else {
-                        Swal.fire({
-                          icon: "error",
-                          title: "Oops...",
-                          text: "Something went wrong! Device not edited!",
-                        });
-                      }
-                    })
-                    .catch((error) => {
-                      axios.post(
-                        `http://localhost:4500/mutation_error_logs`,
-                        {
-                          keycloak_id: userInfo?.sub,
-                          method: "UPDATE",
-                          attribute: "Devices",
-                          attribute_id: row["@iot.id"],
-                          frost_port: frostServerPort,
-                        },
-                        {
-                          headers: {
-                            "Content-Type": "application/json",
-                            Authorization: `Bearer ${keycloak?.token}`,
-                          },
-                        }
-                      );
-                      Swal.fire({
-                        icon: "error",
-                        title: "Oops...",
-                        text: "Something went wrong! Device not edited!",
-                      });
-                    });
-                }
+              setEditingDeviceId(row?.["@iot.id"]);
+              editFormik.setValues({
+                name: row?.name || "",
+                description: row?.description || "",
               });
+              setEditOpen(true);
             }}
           />
         );
@@ -477,6 +436,31 @@ Each device can have one or more datastreams (e.g., temperature, humidity) that 
           setPageLinks({});
           fetchThings(0, pageSize, filterQuery, sq);
         }}
+      />
+      <EntityFormModal
+        open={editOpen}
+        onClose={() => {
+          setEditOpen(false);
+          setEditingDeviceId(null);
+        }}
+        title="Edit Device"
+        sectionTitle="Device Details"
+        formik={editFormik}
+        fields={[
+          { name: "name", label: "Device Name", xs: 12, sm: 12 },
+          {
+            name: "description",
+            label: "Description",
+            multiline: true,
+            minRows: 3,
+            xs: 12,
+            sm: 12,
+          },
+        ]}
+        submitting={saving}
+        submitLabel="Save"
+        primaryButtonSx={primaryButtonSx}
+        cancelButtonSx={cancelButtonSx}
       />
     </Dashboard>
   );
