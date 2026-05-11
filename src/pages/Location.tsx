@@ -6,10 +6,8 @@ import {
   Grid,
   Typography,
   Box,
-  Modal,
   TextField,
   MenuItem,
-  Divider,
 } from "@mui/material";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import { useKeycloak } from "@react-keycloak/web";
@@ -21,6 +19,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import LinkCustom from "../components/LinkCustom";
 import { editLocationValidationSchema } from "../formik/validation_schema";
+import EntityFormModal from "../components/EntityFormModal";
 interface ApiResponse {
   success: boolean;
   PORT?: number;
@@ -350,6 +349,37 @@ const Location = () => {
     setCreateOpen(true);
   };
 
+  const modalFields = [
+    { name: "name", label: "Location Name", xs: 12, sm: 12 },
+    { name: "description", label: "Description", multiline: true, minRows: 3, xs: 12, sm: 12 },
+    { name: "latitude", label: "Latitude", type: "number", xs: 12, sm: 6 },
+    { name: "longitude", label: "Longitude", type: "number", xs: 12, sm: 6 },
+  ];
+
+  const deviceReferenceBlock = (
+    <>
+      <Typography variant="subtitle2" color="text.secondary">
+        Device Reference
+      </Typography>
+      <TextField
+        select
+        label="Device"
+        value={linkedThing.id !== null ? String(linkedThing.id) : ""}
+        fullWidth
+        disabled
+        helperText={
+          isHistoricalLocation
+            ? "No active linked device (historical location)"
+            : "Linked device is read-only"
+        }
+      >
+        <MenuItem value={linkedThing.id !== null ? String(linkedThing.id) : ""}>
+          {linkedThing.name || "Historical location (no active linked device)"}
+        </MenuItem>
+      </TextField>
+    </>
+  );
+
   useEffect(() => {
     if (frostServerPort !== null) {
       getLocation();
@@ -441,284 +471,32 @@ const Location = () => {
           </Typography>
         </Box>
       )}
-      <Modal open={createOpen} onClose={() => setCreateOpen(false)}>
-        <Box
-          sx={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            width: { xs: "94%", sm: 640 },
-            maxHeight: "88vh",
-            overflowY: "auto",
-            bgcolor: "background.paper",
-            borderRadius: 2,
-            boxShadow: "0 16px 40px rgba(0,0,0,0.25)",
-            p: { xs: 2, sm: 3 },
-            display: "flex",
-            flexDirection: "column",
-            gap: 2.5,
-          }}
-        >
-          <Box>
-            <Typography variant="h5" fontWeight={700}>
-              Create New Location
-            </Typography>
-          </Box>
-          <Divider />
-
-          <Typography variant="subtitle2" color="text.secondary">
-            Device Reference
-          </Typography>
-          <TextField
-            select
-            label="Device"
-            value={linkedThing.id !== null ? String(linkedThing.id) : ""}
-            fullWidth
-            disabled
-            helperText={
-              isHistoricalLocation
-                ? "No active linked device (historical location)"
-                : "Linked device is read-only"
-            }
-          >
-            <MenuItem value={linkedThing.id !== null ? String(linkedThing.id) : ""}>
-              {linkedThing.name || "Historical location (no active linked device)"}
-            </MenuItem>
-          </TextField>
-
-          <Typography variant="subtitle2" color="text.secondary">
-            New Location Details
-          </Typography>
-          <Grid container spacing={2}>
-            <Grid item xs={12}>
-              <TextField
-                label="Location Name"
-                name="name"
-                value={createFormik.values.name}
-                onChange={createFormik.handleChange}
-                onBlur={createFormik.handleBlur}
-                error={createFormik.touched.name && Boolean(createFormik.errors.name)}
-                helperText={createFormik.touched.name && createFormik.errors.name}
-                fullWidth
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                label="Description"
-                name="description"
-                value={createFormik.values.description}
-                onChange={createFormik.handleChange}
-                onBlur={createFormik.handleBlur}
-                error={
-                  createFormik.touched.description &&
-                  Boolean(createFormik.errors.description)
-                }
-                helperText={
-                  createFormik.touched.description && createFormik.errors.description
-                }
-                fullWidth
-                multiline
-                minRows={3}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Latitude"
-                type="number"
-                name="latitude"
-                value={createFormik.values.latitude}
-                onChange={createFormik.handleChange}
-                onBlur={createFormik.handleBlur}
-                error={
-                  createFormik.touched.latitude &&
-                  Boolean(createFormik.errors.latitude)
-                }
-                helperText={
-                  createFormik.touched.latitude && createFormik.errors.latitude
-                }
-                fullWidth
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Longitude"
-                type="number"
-                name="longitude"
-                value={createFormik.values.longitude}
-                onChange={createFormik.handleChange}
-                onBlur={createFormik.handleBlur}
-                error={
-                  createFormik.touched.longitude &&
-                  Boolean(createFormik.errors.longitude)
-                }
-                helperText={
-                  createFormik.touched.longitude && createFormik.errors.longitude
-                }
-                fullWidth
-              />
-            </Grid>
-          </Grid>
-
-          <Divider />
-          <Box display="flex" justifyContent="flex-end" gap={1.25}>
-            <Button
-              variant="contained"
-              onClick={() => createFormik.submitForm()}
-              disabled={creating || !createFormik.isValid}
-              sx={primaryButtonSx}
-            >
-              {creating ? "Creating..." : "Create"}
-            </Button>
-            <Button
-              variant="outlined"
-              onClick={() => setCreateOpen(false)}
-              disabled={creating}
-              sx={cancelButtonSx}
-            >
-              Cancel
-            </Button>
-          </Box>
-        </Box>
-      </Modal>
-      <Modal open={editOpen} onClose={() => setEditOpen(false)}>
-        <Box
-          sx={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            width: { xs: "94%", sm: 640 },
-            maxHeight: "88vh",
-            overflowY: "auto",
-            bgcolor: "background.paper",
-            borderRadius: 2,
-            boxShadow: "0 16px 40px rgba(0,0,0,0.25)",
-            p: { xs: 2, sm: 3 },
-            display: "flex",
-            flexDirection: "column",
-            gap: 2.5,
-          }}
-        >
-          <Box>
-            <Typography variant="h5" fontWeight={700}>
-              Edit Location
-            </Typography>
-          </Box>
-          <Divider />
-
-          <Typography variant="subtitle2" color="text.secondary">
-            Device Reference
-          </Typography>
-          <TextField
-            select
-            label="Device"
-            value={linkedThing.id !== null ? String(linkedThing.id) : ""}
-            fullWidth
-            disabled
-            helperText={
-              isHistoricalLocation
-                ? "No active linked device (historical location)"
-                : "Linked device is read-only"
-            }
-          >
-            <MenuItem value={linkedThing.id !== null ? String(linkedThing.id) : ""}>
-              {linkedThing.name || "Historical location (no active linked device)"}
-            </MenuItem>
-          </TextField>
-
-          <Typography variant="subtitle2" color="text.secondary">
-            Location Details
-          </Typography>
-          <Grid container spacing={2}>
-            <Grid item xs={12}>
-              <TextField
-                label="Location Name"
-                name="name"
-                value={editFormik.values.name}
-                onChange={editFormik.handleChange}
-                onBlur={editFormik.handleBlur}
-                error={editFormik.touched.name && Boolean(editFormik.errors.name)}
-                helperText={editFormik.touched.name && editFormik.errors.name}
-                fullWidth
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                label="Description"
-                name="description"
-                value={editFormik.values.description}
-                onChange={editFormik.handleChange}
-                onBlur={editFormik.handleBlur}
-                error={
-                  editFormik.touched.description &&
-                  Boolean(editFormik.errors.description)
-                }
-                helperText={
-                  editFormik.touched.description && editFormik.errors.description
-                }
-                fullWidth
-                multiline
-                minRows={3}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Latitude"
-                type="number"
-                name="latitude"
-                value={editFormik.values.latitude}
-                onChange={editFormik.handleChange}
-                onBlur={editFormik.handleBlur}
-                error={
-                  editFormik.touched.latitude &&
-                  Boolean(editFormik.errors.latitude)
-                }
-                helperText={editFormik.touched.latitude && editFormik.errors.latitude}
-                fullWidth
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Longitude"
-                type="number"
-                name="longitude"
-                value={editFormik.values.longitude}
-                onChange={editFormik.handleChange}
-                onBlur={editFormik.handleBlur}
-                error={
-                  editFormik.touched.longitude &&
-                  Boolean(editFormik.errors.longitude)
-                }
-                helperText={
-                  editFormik.touched.longitude && editFormik.errors.longitude
-                }
-                fullWidth
-              />
-            </Grid>
-          </Grid>
-
-          <Divider />
-          <Box display="flex" justifyContent="flex-end" gap={1.25}>
-            <Button
-              variant="contained"
-              onClick={() => editFormik.submitForm()}
-              disabled={saving || !editFormik.isValid}
-              sx={primaryButtonSx}
-            >
-              {saving ? "Saving..." : "Save"}
-            </Button>
-            <Button
-              variant="outlined"
-              onClick={() => setEditOpen(false)}
-              disabled={saving}
-              sx={cancelButtonSx}
-            >
-              Cancel
-            </Button>
-          </Box>
-        </Box>
-      </Modal>
+      <EntityFormModal
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        title="Create New Location"
+        sectionTitle="New Location Details"
+        formik={createFormik}
+        fields={modalFields}
+        submitting={creating}
+        submitLabel="Create"
+        primaryButtonSx={primaryButtonSx}
+        cancelButtonSx={cancelButtonSx}
+        topContent={deviceReferenceBlock}
+      />
+      <EntityFormModal
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+        title="Edit Location"
+        sectionTitle="Location Details"
+        formik={editFormik}
+        fields={modalFields}
+        submitting={saving}
+        submitLabel="Save"
+        primaryButtonSx={primaryButtonSx}
+        cancelButtonSx={cancelButtonSx}
+        topContent={deviceReferenceBlock}
+      />
 
       {(displayName && sensorThingDesc?.name && sensorThingDesc?.description) && ( 
         <>
