@@ -1,6 +1,13 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { Button, Grid, Typography, Box } from "@mui/material";
+import {
+  Button,
+  Grid,
+  Typography,
+  Box,
+  Modal,
+  TextField,
+} from "@mui/material";
 import { useKeycloak } from "@react-keycloak/web";
 import { useParams } from "react-router-dom";
 import Dashboard from "../components/DashboardComponent";
@@ -33,6 +40,12 @@ const Location = () => {
   description: "",
 });
   const [frostServerPort, setFrostServerPort] = useState<number | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editLatitude, setEditLatitude] = useState("");
+  const [editLongitude, setEditLongitude] = useState("");
+  const [saving, setSaving] = useState(false);
   const { id } = useParams<{ id: string }>();
 
   const customMarkerIcon = new L.Icon({
@@ -124,6 +137,77 @@ const Location = () => {
     } catch (error) {}
   };
 
+  const openEditModal = () => {
+    setEditName(sensorThingDesc?.name || "");
+    setEditDescription(sensorThingDesc?.description || "");
+    setEditLatitude(latitude !== null ? String(latitude) : "");
+    setEditLongitude(longitude !== null ? String(longitude) : "");
+    setEditOpen(true);
+  };
+
+  const handleEditSave = async () => {
+    const parsedLat = parseFloat(editLatitude);
+    const parsedLng = parseFloat(editLongitude);
+
+    if (!editName || Number.isNaN(parsedLat) || Number.isNaN(parsedLng)) {
+      toast.error("Please enter valid name, latitude, and longitude.");
+      return;
+    }
+
+    try {
+      setSaving(true);
+      const response = await axios.post(
+        `${process.env.REACT_APP_BACKEND_URL}/update`,
+        {
+          url: `Locations(${id})`,
+          FROST_PORT: frostServerPort,
+          keycloak_id: userInfo?.sub,
+          body: {
+            name: editName,
+            description: editDescription,
+            encodingType: "application/vnd.geo+json",
+            location: {
+              type: "Point",
+              coordinates: [parsedLng, parsedLat],
+            },
+          },
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${keycloak?.token}`,
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        setSensorThingDesc({ name: editName, description: editDescription });
+        setLatitude(parsedLat);
+        setLongitude(parsedLng);
+        setEditOpen(false);
+
+        try {
+          const reverseRes = await axios.get(
+            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${parsedLat}&lon=${parsedLng}`
+          );
+          if (reverseRes.data?.display_name) {
+            setDisplayName(reverseRes.data.display_name);
+          }
+        } catch {
+          // Keep existing title if reverse geocoding fails.
+        }
+
+        toast.success("Location updated successfully!");
+      } else {
+        toast.error("Failed to update location.");
+      }
+    } catch {
+      toast.error("Failed to update location.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   useEffect(() => {
     if (frostServerPort !== null) {
       getLocation();
@@ -170,13 +254,75 @@ const Location = () => {
               Create New Location
             </Button>
           </LinkCustom>
-          <LinkCustom to={`/locations`}>
-            <Button variant="outlined" color="primary">
-              Edit Location
-            </Button>
-          </LinkCustom>
+          <Button variant="outlined" color="primary" onClick={openEditModal}>
+            Edit Location
+          </Button>
         </Box>
       </Box>
+      <Modal open={editOpen} onClose={() => setEditOpen(false)}>
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: { xs: "92%", sm: 520 },
+            bgcolor: "background.paper",
+            borderRadius: 1.5,
+            boxShadow: 24,
+            p: 3,
+            display: "flex",
+            flexDirection: "column",
+            gap: 2,
+          }}
+        >
+          <Typography variant="h6">Edit Location</Typography>
+          <TextField
+            label="Name"
+            value={editName}
+            onChange={(e) => setEditName(e.target.value)}
+            fullWidth
+          />
+          <TextField
+            label="Description"
+            value={editDescription}
+            onChange={(e) => setEditDescription(e.target.value)}
+            fullWidth
+            multiline
+            minRows={3}
+          />
+          <TextField
+            label="Latitude"
+            type="number"
+            value={editLatitude}
+            onChange={(e) => setEditLatitude(e.target.value)}
+            fullWidth
+          />
+          <TextField
+            label="Longitude"
+            type="number"
+            value={editLongitude}
+            onChange={(e) => setEditLongitude(e.target.value)}
+            fullWidth
+          />
+          <Box display="flex" justifyContent="flex-end" gap={1}>
+            <Button
+              variant="outlined"
+              onClick={() => setEditOpen(false)}
+              disabled={saving}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              onClick={handleEditSave}
+              disabled={saving}
+            >
+              {saving ? "Saving..." : "Save"}
+            </Button>
+          </Box>
+        </Box>
+      </Modal>
 
       {(displayName && sensorThingDesc?.name && sensorThingDesc?.description) && ( 
         <>
