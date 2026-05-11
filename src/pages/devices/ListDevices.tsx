@@ -49,7 +49,7 @@ const Devices = () => {
     const isDev = process.env.REACT_APP_IS_DEVELOPMENT === "true";
 
     let url = isDev
-      ? `${backend_url}:${frostServerPort}/FROST-Server/v1.0/Things`
+      ? `${backend_url}:${frostServerPort}/FROST-Server/v1.0/Things?$expand=Locations&$count=true`
       : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Things?$expand=Locations&$count=true`;
 
     if (pageLinks[newPage]) {
@@ -382,7 +382,11 @@ const Devices = () => {
       minWidth: 120,
       cellClass: "ag-center-cell",
       cellRenderer: (params: any) => {
-        const locationId = params.data?.Locations?.[0]?.["@iot.id"];
+        const locations = Array.isArray(params.data?.Locations)
+          ? params.data.Locations
+          : [];
+        const latestLocation = locations[locations.length - 1];
+        const locationId = latestLocation?.["@iot.id"];
 
         if (!locationId) {
           return <MapIcon style={{ opacity: 0.35 }} />;
