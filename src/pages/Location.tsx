@@ -10,6 +10,7 @@ import {
   Modal,
   TextField,
   MenuItem,
+  Divider,
 } from "@mui/material";
 import { useKeycloak } from "@react-keycloak/web";
 import { useParams } from "react-router-dom";
@@ -281,87 +282,114 @@ const Location = () => {
             top: "50%",
             left: "50%",
             transform: "translate(-50%, -50%)",
-            width: { xs: "92%", sm: 520 },
+            width: { xs: "94%", sm: 640 },
+            maxHeight: "88vh",
+            overflowY: "auto",
             bgcolor: "background.paper",
-            borderRadius: 1.5,
-            boxShadow: 24,
-            p: 3,
+            borderRadius: 2,
+            boxShadow: "0 16px 40px rgba(0,0,0,0.25)",
+            p: { xs: 2, sm: 3 },
             display: "flex",
             flexDirection: "column",
-            gap: 2,
+            gap: 2.5,
           }}
         >
-          <Typography variant="h6">Edit Location</Typography>
+          <Box>
+            <Typography variant="h5" fontWeight={700}>
+              Edit Location
+            </Typography>
+          </Box>
+          <Divider />
+
+          <Typography variant="subtitle2" color="text.secondary">
+            Device Reference
+          </Typography>
           <TextField
             select
             label="Device"
             value={linkedThing.id !== null ? String(linkedThing.id) : ""}
             fullWidth
             disabled
-            helperText="Linked device (read-only)"
+            helperText="Linked device is read-only"
           >
             <MenuItem value={linkedThing.id !== null ? String(linkedThing.id) : ""}>
               {linkedThing.name || "No linked device"}
             </MenuItem>
           </TextField>
-          <TextField
-            label="Name"
-            name="name"
-            value={editFormik.values.name}
-            onChange={editFormik.handleChange}
-            onBlur={editFormik.handleBlur}
-            error={editFormik.touched.name && Boolean(editFormik.errors.name)}
-            helperText={editFormik.touched.name && editFormik.errors.name}
-            fullWidth
-          />
-          <TextField
-            label="Description"
-            name="description"
-            value={editFormik.values.description}
-            onChange={editFormik.handleChange}
-            onBlur={editFormik.handleBlur}
-            error={
-              editFormik.touched.description &&
-              Boolean(editFormik.errors.description)
-            }
-            helperText={
-              editFormik.touched.description && editFormik.errors.description
-            }
-            fullWidth
-            multiline
-            minRows={3}
-          />
-          <TextField
-            label="Latitude"
-            type="number"
-            name="latitude"
-            value={editFormik.values.latitude}
-            onChange={editFormik.handleChange}
-            onBlur={editFormik.handleBlur}
-            error={
-              editFormik.touched.latitude &&
-              Boolean(editFormik.errors.latitude)
-            }
-            helperText={editFormik.touched.latitude && editFormik.errors.latitude}
-            fullWidth
-          />
-          <TextField
-            label="Longitude"
-            type="number"
-            name="longitude"
-            value={editFormik.values.longitude}
-            onChange={editFormik.handleChange}
-            onBlur={editFormik.handleBlur}
-            error={
-              editFormik.touched.longitude &&
-              Boolean(editFormik.errors.longitude)
-            }
-            helperText={
-              editFormik.touched.longitude && editFormik.errors.longitude
-            }
-            fullWidth
-          />
-          <Box display="flex" justifyContent="flex-end" gap={1}>
+
+          <Typography variant="subtitle2" color="text.secondary">
+            Location Details
+          </Typography>
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <TextField
+                label="Location Name"
+                name="name"
+                value={editFormik.values.name}
+                onChange={editFormik.handleChange}
+                onBlur={editFormik.handleBlur}
+                error={editFormik.touched.name && Boolean(editFormik.errors.name)}
+                helperText={editFormik.touched.name && editFormik.errors.name}
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                label="Description"
+                name="description"
+                value={editFormik.values.description}
+                onChange={editFormik.handleChange}
+                onBlur={editFormik.handleBlur}
+                error={
+                  editFormik.touched.description &&
+                  Boolean(editFormik.errors.description)
+                }
+                helperText={
+                  editFormik.touched.description && editFormik.errors.description
+                }
+                fullWidth
+                multiline
+                minRows={3}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label="Latitude"
+                type="number"
+                name="latitude"
+                value={editFormik.values.latitude}
+                onChange={editFormik.handleChange}
+                onBlur={editFormik.handleBlur}
+                error={
+                  editFormik.touched.latitude &&
+                  Boolean(editFormik.errors.latitude)
+                }
+                helperText={editFormik.touched.latitude && editFormik.errors.latitude}
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label="Longitude"
+                type="number"
+                name="longitude"
+                value={editFormik.values.longitude}
+                onChange={editFormik.handleChange}
+                onBlur={editFormik.handleBlur}
+                error={
+                  editFormik.touched.longitude &&
+                  Boolean(editFormik.errors.longitude)
+                }
+                helperText={
+                  editFormik.touched.longitude && editFormik.errors.longitude
+                }
+                fullWidth
+              />
+            </Grid>
+          </Grid>
+
+          <Divider />
+          <Box display="flex" justifyContent="flex-end" gap={1.25}>
             <Button
               variant="outlined"
               onClick={() => setEditOpen(false)}
