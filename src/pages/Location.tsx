@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { useFormik } from "formik";
 import {
@@ -48,6 +48,7 @@ const Location = () => {
   };
 
   const history = useHistory();
+  const activeLocationRequestRef = useRef(0);
   const { keycloak } = useKeycloak();
   const userInfo = keycloak?.idTokenParsed;
   const token = keycloak?.token;
@@ -275,13 +276,19 @@ const Location = () => {
 
   const getLocation = async () => {
     try {
+      const requestId = activeLocationRequestRef.current + 1;
+      activeLocationRequestRef.current = requestId;
       const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT; 
       const isDev = process.env.REACT_APP_IS_DEVELOPMENT === 'true';  
      const url = isDev
        ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Locations(${id})?$expand=Things`
        : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Locations(${id})?$expand=Things`;
-      setLocationLoaded(false);
+      setLatitude(null);
+      setLongitude(null);
       setDisplayName("");
+      setSensorThingDesc({ name: "", description: "" });
+      setLinkedThing({ id: null, name: "" });
+      setLocationLoaded(false);
       axios
         .get(
           url,
@@ -293,6 +300,7 @@ const Location = () => {
           }
         )
         .then((response) => {
+          if (requestId !== activeLocationRequestRef.current) return;
           if (response.status === 200 && response.data.location.coordinates) {
             const currentLat = response.data.location.coordinates[1];
             const currentLng = response.data.location.coordinates[0];
@@ -305,11 +313,13 @@ const Location = () => {
                 `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${currentLat}&lon=${currentLng}`
               )
               .then((response) => {
+                if (requestId !== activeLocationRequestRef.current) return;
                 if (response.data.display_name) {
                   setDisplayName(response.data.display_name); 
                 }
               })
               .catch(() => {
+                if (requestId !== activeLocationRequestRef.current) return;
                 setDisplayName(getCoordinateTitle(currentLat, currentLng));
               });
               setSensorThingDesc({name:response?.data?.name , description:response?.data?.description})
@@ -322,6 +332,7 @@ const Location = () => {
           }
         })
         .catch((err) => {
+          if (requestId !== activeLocationRequestRef.current) return;
           toast.error("Error Getting Location");
           setLocationLoaded(true);
         });
