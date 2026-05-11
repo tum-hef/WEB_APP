@@ -429,12 +429,29 @@ const ListLocations = () => {
       {/* Create Button */}
       {isOwner ? (
         <LinkCustom to="/locations/store">
-          <Button variant="contained" color="primary" style={{ marginBottom: "10px" }}>
+          <Button
+            variant="contained"
+            color="primary"
+            sx={{
+              mb: "10px",
+              backgroundColor: "rgb(35, 48, 68)",
+              "&:hover": { backgroundColor: "rgb(26, 36, 51)" },
+            }}
+          >
             Create
           </Button>
         </LinkCustom>
       ) : (
-        <Button variant="contained" color="primary" disabled style={{ marginBottom: "10px" }}>
+        <Button
+          variant="contained"
+          color="primary"
+          disabled
+          sx={{
+            mb: "10px",
+            backgroundColor: "rgb(35, 48, 68)",
+            "&:hover": { backgroundColor: "rgb(26, 36, 51)" },
+          }}
+        >
           Create
         </Button>
       )}

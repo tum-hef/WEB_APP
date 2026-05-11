@@ -11,6 +11,7 @@ import {
   MenuItem,
   Divider,
 } from "@mui/material";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import { useKeycloak } from "@react-keycloak/web";
 import { useHistory, useParams } from "react-router-dom";
 import Dashboard from "../components/DashboardComponent";
@@ -27,6 +28,22 @@ interface ApiResponse {
   error_code?: number;
 }
 const Location = () => {
+  const primaryButtonSx = {
+    backgroundColor: "rgb(35, 48, 68)",
+    "&:hover": {
+      backgroundColor: "rgb(26, 36, 51)",
+    },
+  };
+  const cancelButtonSx = {
+    backgroundColor: "#6e7881",
+    color: "#ffffff",
+    borderColor: "#6e7881",
+    "&:hover": {
+      backgroundColor: "#5f6870",
+      borderColor: "#5f6870",
+    },
+  };
+
   const history = useHistory();
   const { keycloak } = useKeycloak();
   const userInfo = keycloak?.idTokenParsed;
@@ -54,6 +71,7 @@ const Location = () => {
     name: "",
   });
   const { id } = useParams<{ id: string }>();
+  const isHistoricalLocation = linkedThing.id === null;
 
   
 
@@ -295,6 +313,7 @@ const Location = () => {
   };
 
   const openEditModal = () => {
+    if (isHistoricalLocation) return;
     editFormik.resetForm();
     setEditOpen(true);
   };
@@ -332,27 +351,69 @@ const Location = () => {
       <Box
         display="flex"
         justifyContent="space-between"
-        alignItems="center"
+        alignItems={{ xs: "stretch", md: "center" }}
+        flexDirection={{ xs: "column", md: "row" }}
+        gap={{ xs: 1.5, md: 0 }}
         mb={1.25}
       >
         <LinkCustom to="/devices">
           <Button
-            variant="outlined"
-            color="inherit"
+            variant="contained"
+            color="primary"
+            sx={primaryButtonSx}
+            fullWidth
           >
             Devices
           </Button>
         </LinkCustom>
 
-        <Box display="flex" gap={1}>
-          <Button variant="contained" color="primary" onClick={openCreateModal}>
+        <Box
+          display="flex"
+          gap={1}
+          flexDirection={{ xs: "column", sm: "row" }}
+          width={{ xs: "100%", md: "auto" }}
+        >
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={openCreateModal}
+            disabled={isHistoricalLocation}
+            sx={primaryButtonSx}
+          >
             Create New Location
           </Button>
-          <Button variant="outlined" color="primary" onClick={openEditModal}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={openEditModal}
+            disabled={isHistoricalLocation}
+            startIcon={<EditOutlinedIcon />}
+            sx={primaryButtonSx}
+          >
             Edit Location
           </Button>
         </Box>
       </Box>
+      {isHistoricalLocation && (
+        <Box
+          sx={{
+            mb: 2.5,
+            px: 2,
+            py: 1.5,
+            borderRadius: 1,
+            backgroundColor: "#eef2f7",
+            border: "1px solid #c7d1dc",
+            borderLeft: "6px solid rgb(35, 48, 68)",
+          }}
+        >
+          <Typography sx={{ color: "rgb(35, 48, 68)", fontWeight: 700, fontSize: 15 }}>
+            Historical Location
+          </Typography>
+          <Typography variant="body2" sx={{ color: "#3f4b59", mt: 0.25 }}>
+            This location has no active linked device and is read-only.
+          </Typography>
+        </Box>
+      )}
       <Modal open={createOpen} onClose={() => setCreateOpen(false)}>
         <Box
           sx={{
@@ -388,10 +449,14 @@ const Location = () => {
             value={linkedThing.id !== null ? String(linkedThing.id) : ""}
             fullWidth
             disabled
-            helperText="Linked device is read-only"
+            helperText={
+              isHistoricalLocation
+                ? "No active linked device (historical location)"
+                : "Linked device is read-only"
+            }
           >
             <MenuItem value={linkedThing.id !== null ? String(linkedThing.id) : ""}>
-              {linkedThing.name || "No linked device"}
+              {linkedThing.name || "Historical location (no active linked device)"}
             </MenuItem>
           </TextField>
 
@@ -471,18 +536,20 @@ const Location = () => {
           <Divider />
           <Box display="flex" justifyContent="flex-end" gap={1.25}>
             <Button
-              variant="outlined"
-              onClick={() => setCreateOpen(false)}
-              disabled={creating}
-            >
-              Cancel
-            </Button>
-            <Button
               variant="contained"
               onClick={() => createFormik.submitForm()}
               disabled={creating || !createFormik.isValid}
+              sx={primaryButtonSx}
             >
               {creating ? "Creating..." : "Create"}
+            </Button>
+            <Button
+              variant="outlined"
+              onClick={() => setCreateOpen(false)}
+              disabled={creating}
+              sx={cancelButtonSx}
+            >
+              Cancel
             </Button>
           </Box>
         </Box>
@@ -522,10 +589,14 @@ const Location = () => {
             value={linkedThing.id !== null ? String(linkedThing.id) : ""}
             fullWidth
             disabled
-            helperText="Linked device is read-only"
+            helperText={
+              isHistoricalLocation
+                ? "No active linked device (historical location)"
+                : "Linked device is read-only"
+            }
           >
             <MenuItem value={linkedThing.id !== null ? String(linkedThing.id) : ""}>
-              {linkedThing.name || "No linked device"}
+              {linkedThing.name || "Historical location (no active linked device)"}
             </MenuItem>
           </TextField>
 
@@ -603,18 +674,20 @@ const Location = () => {
           <Divider />
           <Box display="flex" justifyContent="flex-end" gap={1.25}>
             <Button
-              variant="outlined"
-              onClick={() => setEditOpen(false)}
-              disabled={saving}
-            >
-              Cancel
-            </Button>
-            <Button
               variant="contained"
               onClick={() => editFormik.submitForm()}
               disabled={saving || !editFormik.isValid}
+              sx={primaryButtonSx}
             >
               {saving ? "Saving..." : "Save"}
+            </Button>
+            <Button
+              variant="outlined"
+              onClick={() => setEditOpen(false)}
+              disabled={saving}
+              sx={cancelButtonSx}
+            >
+              Cancel
             </Button>
           </Box>
         </Box>

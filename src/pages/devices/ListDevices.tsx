@@ -425,7 +425,11 @@ const Devices = () => {
           <Button
             variant="contained"
             color="primary"
-            style={{ marginBottom: "12px" }}
+            sx={{
+              mb: "12px",
+              backgroundColor: "rgb(35, 48, 68)",
+              "&:hover": { backgroundColor: "rgb(26, 36, 51)" },
+            }}
           >
             Create
           </Button>
@@ -435,7 +439,11 @@ const Devices = () => {
           disabled
           variant="contained"
           color="primary"
-          style={{ marginBottom: "12px" }}
+          sx={{
+            mb: "12px",
+            backgroundColor: "rgb(35, 48, 68)",
+            "&:hover": { backgroundColor: "rgb(26, 36, 51)" },
+          }}
         >
           Create
         </Button>

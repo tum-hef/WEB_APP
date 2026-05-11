@@ -593,12 +593,29 @@ const handlePageSizeChange = (newPageSize: number) => {
       {/* Create Button */}
       {isOwner ? (
         <LinkCustom to="/datastreams/store">
-          <Button variant="contained" color="primary" sx={{ mb: 2 }}>
+          <Button
+            variant="contained"
+            color="primary"
+            sx={{
+              mb: 2,
+              backgroundColor: "rgb(35, 48, 68)",
+              "&:hover": { backgroundColor: "rgb(26, 36, 51)" },
+            }}
+          >
             Create
           </Button>
         </LinkCustom>
       ) : (
-        <Button variant="contained" color="primary" disabled sx={{ mb: 2 }}>
+        <Button
+          variant="contained"
+          color="primary"
+          disabled
+          sx={{
+            mb: 2,
+            backgroundColor: "rgb(35, 48, 68)",
+            "&:hover": { backgroundColor: "rgb(26, 36, 51)" },
+          }}
+        >
           Create
         </Button>
       )}
