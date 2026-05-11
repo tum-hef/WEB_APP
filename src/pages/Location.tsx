@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { Button, Grid, Typography } from "@mui/material";
+import { Button, Grid, Typography, Box } from "@mui/material";
 import { useKeycloak } from "@react-keycloak/web";
 import { useParams } from "react-router-dom";
 import Dashboard from "../components/DashboardComponent";
@@ -149,17 +149,34 @@ const Location = () => {
         pauseOnHover
         theme="dark"
       />
-      <LinkCustom to="/devices">
-        <Button
-          variant="contained"
-          color="primary"
-          style={{
-            marginBottom: "10px",
-          }}
-        >
-          Devices
-        </Button>
-      </LinkCustom>
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        mb={1.25}
+      >
+        <LinkCustom to="/devices">
+          <Button
+            variant="outlined"
+            color="inherit"
+          >
+            Devices
+          </Button>
+        </LinkCustom>
+
+        <Box display="flex" gap={1}>
+          <LinkCustom to="/locations/store">
+            <Button variant="contained" color="primary">
+              Create New Location
+            </Button>
+          </LinkCustom>
+          <LinkCustom to={`/locations`}>
+            <Button variant="outlined" color="primary">
+              Edit Location
+            </Button>
+          </LinkCustom>
+        </Box>
+      </Box>
 
       {(displayName && sensorThingDesc?.name && sensorThingDesc?.description) && ( 
         <>
@@ -183,12 +200,7 @@ const Location = () => {
       )}
       {latitude && longitude && (
         <>
-          <Grid container justifyContent="left" alignItems="left">
-            <Typography variant="h6" component="h6" m={2}>
-              <b>Location on map: </b>
-            </Typography>
-          </Grid>
-
+        
           {/* add text left */}
           <Grid item xs={12} sm={12}>
             <MapContainer
