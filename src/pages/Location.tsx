@@ -7,6 +7,7 @@ import {
   Box,
   Modal,
   TextField,
+  MenuItem,
 } from "@mui/material";
 import { useKeycloak } from "@react-keycloak/web";
 import { useParams } from "react-router-dom";
@@ -46,6 +47,10 @@ const Location = () => {
   const [editLatitude, setEditLatitude] = useState("");
   const [editLongitude, setEditLongitude] = useState("");
   const [saving, setSaving] = useState(false);
+  const [linkedThing, setLinkedThing] = useState<{ id: number | null; name: string }>({
+    id: null,
+    name: "",
+  });
   const { id } = useParams<{ id: string }>();
 
   const customMarkerIcon = new L.Icon({
@@ -103,7 +108,9 @@ const Location = () => {
     try {
       const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT; 
       const isDev = process.env.REACT_APP_IS_DEVELOPMENT === 'true';  
-     const url = isDev ?  `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Locations(${id})` : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Locations(${id})`
+     const url = isDev
+       ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Locations(${id})?$expand=Things`
+       : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Locations(${id})?$expand=Things`;
       axios
         .get(
           url,
@@ -129,6 +136,11 @@ const Location = () => {
                 }
               }); 
               setSensorThingDesc({name:response?.data?.name , description:response?.data?.description})
+              const firstThing = response?.data?.Things?.[0];
+              setLinkedThing({
+                id: firstThing?.["@iot.id"] ?? null,
+                name: firstThing?.name ?? "",
+              });
           }
         })
         .catch((err) => {
@@ -277,6 +289,20 @@ const Location = () => {
           }}
         >
           <Typography variant="h6">Edit Location</Typography>
+          <TextField
+            select
+            label="Device"
+            value={linkedThing.id !== null ? String(linkedThing.id) : ""}
+            fullWidth
+            disabled
+            helperText="Linked device (read-only)"
+          >
+            <MenuItem value={linkedThing.id !== null ? String(linkedThing.id) : ""}>
+              {linkedThing.name
+                ? `${linkedThing.name} (${linkedThing.id})`
+                : "No linked device"}
+            </MenuItem>
+          </TextField>
           <TextField
             label="Name"
             value={editName}
