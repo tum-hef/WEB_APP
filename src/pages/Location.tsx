@@ -19,6 +19,7 @@ import { MapContainer, Marker, TileLayer } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import LinkCustom from "../components/LinkCustom";
+import { editLocationValidationSchema } from "../formik/validation_schema";
 interface ApiResponse {
   success: boolean;
   PORT?: number;
@@ -51,21 +52,7 @@ const Location = () => {
   });
   const { id } = useParams<{ id: string }>();
 
-  const editLocationValidationSchema = yup.object().shape({
-    name: yup.string().required("Name is required").min(3, "Name must be at least 3 characters"),
-    description: yup
-      .string()
-      .required("Description is required")
-      .min(3, "Description must be at least 3 characters"),
-    latitude: yup
-      .string()
-      .required("Latitude is required")
-      .matches(/^-?\d+(\.\d+)?$/, "Latitude must be a valid number"),
-    longitude: yup
-      .string()
-      .required("Longitude is required")
-      .matches(/^-?\d+(\.\d+)?$/, "Longitude must be a valid number"),
-  });
+  
 
   const editFormik = useFormik({
     enableReinitialize: true,
