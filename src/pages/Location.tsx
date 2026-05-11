@@ -130,8 +130,8 @@ const Location = () => {
     initialValues: {
       name: "",
       description: "",
-      latitude: latitude !== null ? String(latitude) : "",
-      longitude: longitude !== null ? String(longitude) : "",
+      latitude: "",
+      longitude: "",
     },
     validationSchema: editLocationValidationSchema,
     onSubmit: async (values) => {
@@ -312,7 +312,7 @@ const Location = () => {
     }
     setLoading(true);
     setLoading(false);
-  }, [frostServerPort]);
+  }, [frostServerPort, id]);
 
   loading && <div>Loading...</div>;
   return (
