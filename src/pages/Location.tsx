@@ -20,6 +20,7 @@ import "leaflet/dist/leaflet.css";
 import LinkCustom from "../components/LinkCustom";
 import { editLocationValidationSchema } from "../formik/validation_schema";
 import EntityFormModal from "../components/EntityFormModal";
+import { useIsOwner } from "../hooks/hooks";
 interface ApiResponse {
   success: boolean;
   PORT?: number;
@@ -51,6 +52,7 @@ const Location = () => {
   const { keycloak } = useKeycloak();
   const userInfo = keycloak?.idTokenParsed;
   const token = keycloak?.token;
+  const isOwner = useIsOwner();
   const [longitude, setLongitude] = useState<number | null>(null);
   const [latitude, setLatitude] = useState<number | null>(null);
 
@@ -339,12 +341,14 @@ const Location = () => {
   };
 
   const openEditModal = () => {
+    if (!isOwner) return;
     if (isHistoricalLocation) return;
     editFormik.resetForm();
     setEditOpen(true);
   };
 
   const openCreateModal = () => {
+    if (!isOwner) return;
     createFormik.resetForm();
     setCreateOpen(true);
   };
@@ -434,7 +438,7 @@ const Location = () => {
             variant="contained"
             color="primary"
             onClick={openCreateModal}
-            disabled={isHistoricalLocation}
+            disabled={!isOwner || isHistoricalLocation}
             sx={primaryButtonSx}
           >
             Create New Location
@@ -443,7 +447,7 @@ const Location = () => {
             variant="contained"
             color="primary"
             onClick={openEditModal}
-            disabled={isHistoricalLocation}
+            disabled={!isOwner || isHistoricalLocation}
             startIcon={<EditOutlinedIcon />}
             sx={primaryButtonSx}
           >
