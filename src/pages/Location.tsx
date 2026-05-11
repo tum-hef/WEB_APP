@@ -298,9 +298,7 @@ const Location = () => {
             helperText="Linked device (read-only)"
           >
             <MenuItem value={linkedThing.id !== null ? String(linkedThing.id) : ""}>
-              {linkedThing.name
-                ? `${linkedThing.name} (${linkedThing.id})`
-                : "No linked device"}
+              {linkedThing.name || "No linked device"}
             </MenuItem>
           </TextField>
           <TextField
