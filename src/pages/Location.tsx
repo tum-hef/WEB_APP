@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
+import { useFormik } from "formik";
+import * as yup from "yup";
 import {
   Button,
   Grid,
@@ -42,16 +44,96 @@ const Location = () => {
 });
   const [frostServerPort, setFrostServerPort] = useState<number | null>(null);
   const [editOpen, setEditOpen] = useState(false);
-  const [editName, setEditName] = useState("");
-  const [editDescription, setEditDescription] = useState("");
-  const [editLatitude, setEditLatitude] = useState("");
-  const [editLongitude, setEditLongitude] = useState("");
   const [saving, setSaving] = useState(false);
   const [linkedThing, setLinkedThing] = useState<{ id: number | null; name: string }>({
     id: null,
     name: "",
   });
   const { id } = useParams<{ id: string }>();
+
+  const editLocationValidationSchema = yup.object().shape({
+    name: yup.string().required("Name is required").min(3, "Name must be at least 3 characters"),
+    description: yup
+      .string()
+      .required("Description is required")
+      .min(3, "Description must be at least 3 characters"),
+    latitude: yup
+      .string()
+      .required("Latitude is required")
+      .matches(/^-?\d+(\.\d+)?$/, "Latitude must be a valid number"),
+    longitude: yup
+      .string()
+      .required("Longitude is required")
+      .matches(/^-?\d+(\.\d+)?$/, "Longitude must be a valid number"),
+  });
+
+  const editFormik = useFormik({
+    enableReinitialize: true,
+    initialValues: {
+      name: sensorThingDesc?.name || "",
+      description: sensorThingDesc?.description || "",
+      latitude: latitude !== null ? String(latitude) : "",
+      longitude: longitude !== null ? String(longitude) : "",
+    },
+    validationSchema: editLocationValidationSchema,
+    onSubmit: async (values) => {
+      const parsedLat = parseFloat(values.latitude);
+      const parsedLng = parseFloat(values.longitude);
+
+      try {
+        setSaving(true);
+        const response = await axios.post(
+          `${process.env.REACT_APP_BACKEND_URL}/update`,
+          {
+            url: `Locations(${id})`,
+            FROST_PORT: frostServerPort,
+            keycloak_id: userInfo?.sub,
+            body: {
+              name: values.name,
+              description: values.description,
+              encodingType: "application/vnd.geo+json",
+              location: {
+                type: "Point",
+                coordinates: [parsedLng, parsedLat],
+              },
+            },
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${keycloak?.token}`,
+            },
+          }
+        );
+
+        if (response.status === 200) {
+          setSensorThingDesc({ name: values.name, description: values.description });
+          setLatitude(parsedLat);
+          setLongitude(parsedLng);
+          setEditOpen(false);
+
+          try {
+            const reverseRes = await axios.get(
+              `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${parsedLat}&lon=${parsedLng}`
+            );
+            if (reverseRes.data?.display_name) {
+              setDisplayName(reverseRes.data.display_name);
+            }
+          } catch {
+            // Keep existing title if reverse geocoding fails.
+          }
+
+          toast.success("Location updated successfully!");
+        } else {
+          toast.error("Failed to update location.");
+        }
+      } catch {
+        toast.error("Failed to update location.");
+      } finally {
+        setSaving(false);
+      }
+    },
+  });
 
   const customMarkerIcon = new L.Icon({
     iconUrl: require("../assets/pinpoint.png"), // Specify the correct path to your custom icon
@@ -150,74 +232,8 @@ const Location = () => {
   };
 
   const openEditModal = () => {
-    setEditName(sensorThingDesc?.name || "");
-    setEditDescription(sensorThingDesc?.description || "");
-    setEditLatitude(latitude !== null ? String(latitude) : "");
-    setEditLongitude(longitude !== null ? String(longitude) : "");
+    editFormik.resetForm();
     setEditOpen(true);
-  };
-
-  const handleEditSave = async () => {
-    const parsedLat = parseFloat(editLatitude);
-    const parsedLng = parseFloat(editLongitude);
-
-    if (!editName || Number.isNaN(parsedLat) || Number.isNaN(parsedLng)) {
-      toast.error("Please enter valid name, latitude, and longitude.");
-      return;
-    }
-
-    try {
-      setSaving(true);
-      const response = await axios.post(
-        `${process.env.REACT_APP_BACKEND_URL}/update`,
-        {
-          url: `Locations(${id})`,
-          FROST_PORT: frostServerPort,
-          keycloak_id: userInfo?.sub,
-          body: {
-            name: editName,
-            description: editDescription,
-            encodingType: "application/vnd.geo+json",
-            location: {
-              type: "Point",
-              coordinates: [parsedLng, parsedLat],
-            },
-          },
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${keycloak?.token}`,
-          },
-        }
-      );
-
-      if (response.status === 200) {
-        setSensorThingDesc({ name: editName, description: editDescription });
-        setLatitude(parsedLat);
-        setLongitude(parsedLng);
-        setEditOpen(false);
-
-        try {
-          const reverseRes = await axios.get(
-            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${parsedLat}&lon=${parsedLng}`
-          );
-          if (reverseRes.data?.display_name) {
-            setDisplayName(reverseRes.data.display_name);
-          }
-        } catch {
-          // Keep existing title if reverse geocoding fails.
-        }
-
-        toast.success("Location updated successfully!");
-      } else {
-        toast.error("Failed to update location.");
-      }
-    } catch {
-      toast.error("Failed to update location.");
-    } finally {
-      setSaving(false);
-    }
   };
 
   useEffect(() => {
@@ -303,14 +319,27 @@ const Location = () => {
           </TextField>
           <TextField
             label="Name"
-            value={editName}
-            onChange={(e) => setEditName(e.target.value)}
+            name="name"
+            value={editFormik.values.name}
+            onChange={editFormik.handleChange}
+            onBlur={editFormik.handleBlur}
+            error={editFormik.touched.name && Boolean(editFormik.errors.name)}
+            helperText={editFormik.touched.name && editFormik.errors.name}
             fullWidth
           />
           <TextField
             label="Description"
-            value={editDescription}
-            onChange={(e) => setEditDescription(e.target.value)}
+            name="description"
+            value={editFormik.values.description}
+            onChange={editFormik.handleChange}
+            onBlur={editFormik.handleBlur}
+            error={
+              editFormik.touched.description &&
+              Boolean(editFormik.errors.description)
+            }
+            helperText={
+              editFormik.touched.description && editFormik.errors.description
+            }
             fullWidth
             multiline
             minRows={3}
@@ -318,15 +347,31 @@ const Location = () => {
           <TextField
             label="Latitude"
             type="number"
-            value={editLatitude}
-            onChange={(e) => setEditLatitude(e.target.value)}
+            name="latitude"
+            value={editFormik.values.latitude}
+            onChange={editFormik.handleChange}
+            onBlur={editFormik.handleBlur}
+            error={
+              editFormik.touched.latitude &&
+              Boolean(editFormik.errors.latitude)
+            }
+            helperText={editFormik.touched.latitude && editFormik.errors.latitude}
             fullWidth
           />
           <TextField
             label="Longitude"
             type="number"
-            value={editLongitude}
-            onChange={(e) => setEditLongitude(e.target.value)}
+            name="longitude"
+            value={editFormik.values.longitude}
+            onChange={editFormik.handleChange}
+            onBlur={editFormik.handleBlur}
+            error={
+              editFormik.touched.longitude &&
+              Boolean(editFormik.errors.longitude)
+            }
+            helperText={
+              editFormik.touched.longitude && editFormik.errors.longitude
+            }
             fullWidth
           />
           <Box display="flex" justifyContent="flex-end" gap={1}>
@@ -339,8 +384,8 @@ const Location = () => {
             </Button>
             <Button
               variant="contained"
-              onClick={handleEditSave}
-              disabled={saving}
+              onClick={() => editFormik.submitForm()}
+              disabled={saving || !editFormik.isValid}
             >
               {saving ? "Saving..." : "Save"}
             </Button>
