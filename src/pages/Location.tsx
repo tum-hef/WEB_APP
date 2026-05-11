@@ -28,6 +28,9 @@ interface ApiResponse {
   error_code?: number;
 }
 const Location = () => {
+  const getCoordinateTitle = (lat: number, lng: number) =>
+    `Lat ${lat.toFixed(6)}, Lng ${lng.toFixed(6)}`;
+
   const primaryButtonSx = {
     backgroundColor: "rgb(35, 48, 68)",
     "&:hover": {
@@ -66,12 +69,13 @@ const Location = () => {
   const [createOpen, setCreateOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [locationLoaded, setLocationLoaded] = useState(false);
   const [linkedThing, setLinkedThing] = useState<{ id: number | null; name: string }>({
     id: null,
     name: "",
   });
   const { id } = useParams<{ id: string }>();
-  const isHistoricalLocation = linkedThing.id === null;
+  const isHistoricalLocation = locationLoaded && linkedThing.id === null;
 
   
 
@@ -126,9 +130,11 @@ const Location = () => {
             );
             if (reverseRes.data?.display_name) {
               setDisplayName(reverseRes.data.display_name);
+            } else {
+              setDisplayName(getCoordinateTitle(parsedLat, parsedLng));
             }
           } catch {
-            // Keep existing title if reverse geocoding fails.
+            setDisplayName(getCoordinateTitle(parsedLat, parsedLng));
           }
 
           toast.success("Location updated successfully!");
@@ -274,6 +280,8 @@ const Location = () => {
      const url = isDev
        ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Locations(${id})?$expand=Things`
        : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Locations(${id})?$expand=Things`;
+      setLocationLoaded(false);
+      setDisplayName("");
       axios
         .get(
           url,
@@ -286,28 +294,36 @@ const Location = () => {
         )
         .then((response) => {
           if (response.status === 200 && response.data.location.coordinates) {
-            setLatitude(response.data.location.coordinates[1]);
-            setLongitude(response.data.location.coordinates[0]);
+            const currentLat = response.data.location.coordinates[1];
+            const currentLng = response.data.location.coordinates[0];
+            setLatitude(currentLat);
+            setLongitude(currentLng);
+            setDisplayName(getCoordinateTitle(currentLat, currentLng));
 
             axios
               .get(
-                `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${response.data.location.coordinates[1]}&lon=${response.data.location.coordinates[0]}`
+                `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${currentLat}&lon=${currentLng}`
               )
               .then((response) => {
                 if (response.data.display_name) {
                   setDisplayName(response.data.display_name); 
                 }
-              }); 
+              })
+              .catch(() => {
+                setDisplayName(getCoordinateTitle(currentLat, currentLng));
+              });
               setSensorThingDesc({name:response?.data?.name , description:response?.data?.description})
               const firstThing = response?.data?.Things?.[0];
               setLinkedThing({
                 id: firstThing?.["@iot.id"] ?? null,
                 name: firstThing?.name ?? "",
               });
+              setLocationLoaded(true);
           }
         })
         .catch((err) => {
           toast.error("Error Getting Location");
+          setLocationLoaded(true);
         });
     } catch (error) {}
   };
