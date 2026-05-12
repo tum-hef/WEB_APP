@@ -214,7 +214,7 @@ function GraphObservationsPerDatastream({
     const backend_url = process.env.REACT_APP_FROST_URL;
     axios
       .get(
-        `https://${frostServerPort}-${backend_url}/FROST-Server/v1.0/Datastreams(${id})/Observations?$orderby=phenomenonTime`,
+        `https://${frostServerPort}-${backend_url}/FROST-Server/v1.0/Datastreams(${id})/Observations?$orderby=phenomenonTime desc&$top=50`,
         {
           headers: {
             "Content-Type": "application/json",
@@ -224,15 +224,19 @@ function GraphObservationsPerDatastream({
       )
       .then((res) => {
         if (res.status === 200 && res.data.value) {
-          setObservations(res.data.value); 
+          const latestSorted = [...res.data.value].sort(
+            (a: any, b: any) =>
+              new Date(a.phenomenonTime).getTime() -
+              new Date(b.phenomenonTime).getTime()
+          );
+
+          setObservations(latestSorted);
           setPhenomenonTimes(
-            res?.data.value
-              .map((item: any) => formatLocalDateTime(item.phenomenonTime))
-              .slice(0, 50)
+            latestSorted.map((item: any) =>
+              formatLocalDateTime(item.phenomenonTime)
+            )
           );
-          setResultTimes(
-            res?.data.value.map((item: any) => item.result).slice(0, 50)
-          );
+          setResultTimes(latestSorted.map((item: any) => item.result));
         }
       })
       .catch((err) => {
