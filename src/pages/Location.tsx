@@ -1,14 +1,26 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import axios from "axios";
-import { Button, Grid, Typography } from "@mui/material";
+import { useFormik } from "formik";
+import {
+  Button,
+  Grid,
+  Typography,
+  Box,
+  TextField,
+  MenuItem,
+} from "@mui/material";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import { useKeycloak } from "@react-keycloak/web";
-import { useParams } from "react-router-dom";
+import { useHistory, useParams } from "react-router-dom";
 import Dashboard from "../components/DashboardComponent";
 import { ToastContainer, toast } from "react-toastify";
 import { MapContainer, Marker, TileLayer } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import LinkCustom from "../components/LinkCustom";
+import { editLocationValidationSchema } from "../formik/validation_schema";
+import EntityFormModal from "../components/EntityFormModal";
+import { useIsOwner } from "../hooks/hooks";
 interface ApiResponse {
   success: boolean;
   PORT?: number;
@@ -16,9 +28,31 @@ interface ApiResponse {
   error_code?: number;
 }
 const Location = () => {
+  const getCoordinateTitle = (lat: number, lng: number) =>
+    `Lat ${lat.toFixed(6)}, Lng ${lng.toFixed(6)}`;
+
+  const primaryButtonSx = {
+    backgroundColor: "rgb(35, 48, 68)",
+    "&:hover": {
+      backgroundColor: "rgb(26, 36, 51)",
+    },
+  };
+  const cancelButtonSx = {
+    backgroundColor: "#6e7881",
+    color: "#ffffff",
+    borderColor: "#6e7881",
+    "&:hover": {
+      backgroundColor: "#5f6870",
+      borderColor: "#5f6870",
+    },
+  };
+
+  const history = useHistory();
+  const activeLocationRequestRef = useRef(0);
   const { keycloak } = useKeycloak();
   const userInfo = keycloak?.idTokenParsed;
   const token = keycloak?.token;
+  const isOwner = useIsOwner();
   const [longitude, setLongitude] = useState<number | null>(null);
   const [latitude, setLatitude] = useState<number | null>(null);
 
@@ -33,7 +67,162 @@ const Location = () => {
   description: "",
 });
   const [frostServerPort, setFrostServerPort] = useState<number | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [locationLoaded, setLocationLoaded] = useState(false);
+  const [linkedThing, setLinkedThing] = useState<{ id: number | null; name: string }>({
+    id: null,
+    name: "",
+  });
   const { id } = useParams<{ id: string }>();
+  const isHistoricalLocation = locationLoaded && linkedThing.id === null;
+
+  
+
+  const editFormik = useFormik({
+    enableReinitialize: true,
+    initialValues: {
+      name: sensorThingDesc?.name || "",
+      description: sensorThingDesc?.description || "",
+      latitude: latitude !== null ? String(latitude) : "",
+      longitude: longitude !== null ? String(longitude) : "",
+    },
+    validationSchema: editLocationValidationSchema,
+    onSubmit: async (values) => {
+      const parsedLat = parseFloat(values.latitude);
+      const parsedLng = parseFloat(values.longitude);
+
+      try {
+        setSaving(true);
+        const response = await axios.post(
+          `${process.env.REACT_APP_BACKEND_URL}/update`,
+          {
+            url: `Locations(${id})`,
+            FROST_PORT: frostServerPort,
+            keycloak_id: userInfo?.sub,
+            body: {
+              name: values.name,
+              description: values.description,
+              encodingType: "application/vnd.geo+json",
+              location: {
+                type: "Point",
+                coordinates: [parsedLng, parsedLat],
+              },
+            },
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${keycloak?.token}`,
+            },
+          }
+        );
+
+        if (response.status === 200) {
+          setSensorThingDesc({ name: values.name, description: values.description });
+          setLatitude(parsedLat);
+          setLongitude(parsedLng);
+          setEditOpen(false);
+
+          try {
+            const reverseRes = await axios.get(
+              `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${parsedLat}&lon=${parsedLng}`
+            );
+            if (reverseRes.data?.display_name) {
+              setDisplayName(reverseRes.data.display_name);
+            } else {
+              setDisplayName(getCoordinateTitle(parsedLat, parsedLng));
+            }
+          } catch {
+            setDisplayName(getCoordinateTitle(parsedLat, parsedLng));
+          }
+
+          toast.success("Location updated successfully!");
+        } else {
+          toast.error("Failed to update location.");
+        }
+      } catch {
+        toast.error("Failed to update location.");
+      } finally {
+        setSaving(false);
+      }
+    },
+  });
+
+  const createFormik = useFormik({
+    enableReinitialize: true,
+    initialValues: {
+      name: "",
+      description: "",
+      latitude: "",
+      longitude: "",
+    },
+    validationSchema: editLocationValidationSchema,
+    onSubmit: async (values) => {
+      if (!linkedThing.id) {
+        toast.error("Linked device not found. Cannot create location.");
+        return;
+      }
+      if (!frostServerPort) {
+        toast.error("FROST server port not available.");
+        return;
+      }
+
+      const parsedLat = parseFloat(values.latitude);
+      const parsedLng = parseFloat(values.longitude);
+      const isDev = process.env.REACT_APP_IS_DEVELOPMENT === "true";
+      const apiUrl = isDev
+        ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Locations`
+        : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Locations`;
+
+      try {
+        setCreating(true);
+        const response = await axios.post(
+          apiUrl,
+          {
+            name: values.name,
+            description: values.description,
+            encodingType: "application/vnd.geo+json",
+            location: {
+              type: "Point",
+              coordinates: [parsedLng, parsedLat],
+            },
+            Things: [{ "@iot.id": linkedThing.id }],
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${keycloak?.token}`,
+            },
+          }
+        );
+
+        if (response.status === 201) {
+          const locationHeader = response.headers?.location as string | undefined;
+          const idMatch = locationHeader?.match(/Locations\((\d+)\)/);
+          const newLocationId = idMatch?.[1];
+
+          if (newLocationId) {
+            toast.success("Location created successfully!");
+            setCreateOpen(false);
+            history.push(`/locations/${newLocationId}`);
+          } else {
+            toast.success("Location created. Reloading locations page.");
+            setCreateOpen(false);
+            history.push("/locations");
+          }
+        } else {
+          toast.error("Failed to create location.");
+        }
+      } catch {
+        toast.error("Failed to create location.");
+      } finally {
+        setCreating(false);
+      }
+    },
+  });
 
   const customMarkerIcon = new L.Icon({
     iconUrl: require("../assets/pinpoint.png"), // Specify the correct path to your custom icon
@@ -88,9 +277,19 @@ const Location = () => {
 
   const getLocation = async () => {
     try {
+      const requestId = activeLocationRequestRef.current + 1;
+      activeLocationRequestRef.current = requestId;
       const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT; 
       const isDev = process.env.REACT_APP_IS_DEVELOPMENT === 'true';  
-     const url = isDev ?  `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Locations(${id})` : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Locations(${id})`
+     const url = isDev
+       ? `${process.env.REACT_APP_BACKEND_URL_ROOT}:${frostServerPort}/FROST-Server/v1.0/Locations(${id})?$expand=Things`
+       : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Locations(${id})?$expand=Things`;
+      setLatitude(null);
+      setLongitude(null);
+      setDisplayName("");
+      setSensorThingDesc({ name: "", description: "" });
+      setLinkedThing({ id: null, name: "" });
+      setLocationLoaded(false);
       axios
         .get(
           url,
@@ -102,27 +301,88 @@ const Location = () => {
           }
         )
         .then((response) => {
+          if (requestId !== activeLocationRequestRef.current) return;
           if (response.status === 200 && response.data.location.coordinates) {
-            setLatitude(response.data.location.coordinates[1]);
-            setLongitude(response.data.location.coordinates[0]);
+            const currentLat = response.data.location.coordinates[1];
+            const currentLng = response.data.location.coordinates[0];
+            setLatitude(currentLat);
+            setLongitude(currentLng);
+            setDisplayName(getCoordinateTitle(currentLat, currentLng));
 
             axios
               .get(
-                `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${response.data.location.coordinates[1]}&lon=${response.data.location.coordinates[0]}`
+                `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${currentLat}&lon=${currentLng}`
               )
               .then((response) => {
+                if (requestId !== activeLocationRequestRef.current) return;
                 if (response.data.display_name) {
                   setDisplayName(response.data.display_name); 
                 }
-              }); 
+              })
+              .catch(() => {
+                if (requestId !== activeLocationRequestRef.current) return;
+                setDisplayName(getCoordinateTitle(currentLat, currentLng));
+              });
               setSensorThingDesc({name:response?.data?.name , description:response?.data?.description})
+              const firstThing = response?.data?.Things?.[0];
+              setLinkedThing({
+                id: firstThing?.["@iot.id"] ?? null,
+                name: firstThing?.name ?? "",
+              });
+              setLocationLoaded(true);
           }
         })
         .catch((err) => {
+          if (requestId !== activeLocationRequestRef.current) return;
           toast.error("Error Getting Location");
+          setLocationLoaded(true);
         });
     } catch (error) {}
   };
+
+  const openEditModal = () => {
+    if (!isOwner) return;
+    if (isHistoricalLocation) return;
+    editFormik.resetForm();
+    setEditOpen(true);
+  };
+
+  const openCreateModal = () => {
+    if (!isOwner) return;
+    createFormik.resetForm();
+    setCreateOpen(true);
+  };
+
+  const modalFields = [
+    { name: "name", label: "Location Name", xs: 12, sm: 12 },
+    { name: "description", label: "Description", multiline: true, minRows: 3, xs: 12, sm: 12 },
+    { name: "latitude", label: "Latitude", type: "number", xs: 12, sm: 6 },
+    { name: "longitude", label: "Longitude", type: "number", xs: 12, sm: 6 },
+  ];
+
+  const deviceReferenceBlock = (
+    <>
+      <Typography variant="subtitle2" color="text.secondary">
+        Device Reference
+      </Typography>
+      <TextField
+        select
+        label="Device"
+        value={linkedThing.id !== null ? String(linkedThing.id) : ""}
+        fullWidth
+        disabled
+        helperText={
+          isHistoricalLocation
+            ? "No active linked device (historical location)"
+            : "Linked device is read-only"
+        }
+      >
+        <MenuItem value={linkedThing.id !== null ? String(linkedThing.id) : ""}>
+          {linkedThing.name || "Historical location (no active linked device)"}
+        </MenuItem>
+      </TextField>
+    </>
+  );
 
   useEffect(() => {
     if (frostServerPort !== null) {
@@ -132,7 +392,7 @@ const Location = () => {
     }
     setLoading(true);
     setLoading(false);
-  }, [frostServerPort]);
+  }, [frostServerPort, id]);
 
   loading && <div>Loading...</div>;
   return (
@@ -149,17 +409,98 @@ const Location = () => {
         pauseOnHover
         theme="dark"
       />
-      <LinkCustom to="/devices">
-        <Button
-          variant="contained"
-          color="primary"
-          style={{
-            marginBottom: "10px",
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems={{ xs: "stretch", md: "center" }}
+        flexDirection={{ xs: "column", md: "row" }}
+        gap={{ xs: 1.5, md: 0 }}
+        mb={1.25}
+      >
+        <LinkCustom to="/devices">
+          <Button
+            variant="contained"
+            color="primary"
+            sx={primaryButtonSx}
+            fullWidth
+          >
+            Devices
+          </Button>
+        </LinkCustom>
+
+        <Box
+          display="flex"
+          gap={1}
+          flexDirection={{ xs: "column", sm: "row" }}
+          width={{ xs: "100%", md: "auto" }}
+        >
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={openCreateModal}
+            disabled={!isOwner || isHistoricalLocation}
+            sx={primaryButtonSx}
+          >
+            Create New Location
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={openEditModal}
+            disabled={!isOwner || isHistoricalLocation}
+            startIcon={<EditOutlinedIcon />}
+            sx={primaryButtonSx}
+          >
+            Edit Location
+          </Button>
+        </Box>
+      </Box>
+      {isHistoricalLocation && (
+        <Box
+          sx={{
+            mb: 2.5,
+            px: 2,
+            py: 1.5,
+            borderRadius: 1,
+            backgroundColor: "#eef2f7",
+            border: "1px solid #c7d1dc",
+            borderLeft: "6px solid rgb(35, 48, 68)",
           }}
         >
-          Devices
-        </Button>
-      </LinkCustom>
+          <Typography sx={{ color: "rgb(35, 48, 68)", fontWeight: 700, fontSize: 15 }}>
+            Historical Location
+          </Typography>
+          <Typography variant="body2" sx={{ color: "#3f4b59", mt: 0.25 }}>
+            This location has no active linked device and is read-only.
+          </Typography>
+        </Box>
+      )}
+      <EntityFormModal
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        title="Create New Location"
+        sectionTitle="New Location Details"
+        formik={createFormik}
+        fields={modalFields}
+        submitting={creating}
+        submitLabel="Create"
+        primaryButtonSx={primaryButtonSx}
+        cancelButtonSx={cancelButtonSx}
+        topContent={deviceReferenceBlock}
+      />
+      <EntityFormModal
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+        title="Edit Location"
+        sectionTitle="Location Details"
+        formik={editFormik}
+        fields={modalFields}
+        submitting={saving}
+        submitLabel="Save"
+        primaryButtonSx={primaryButtonSx}
+        cancelButtonSx={cancelButtonSx}
+        topContent={deviceReferenceBlock}
+      />
 
       {(displayName && sensorThingDesc?.name && sensorThingDesc?.description) && ( 
         <>
@@ -183,12 +524,7 @@ const Location = () => {
       )}
       {latitude && longitude && (
         <>
-          <Grid container justifyContent="left" alignItems="left">
-            <Typography variant="h6" component="h6" m={2}>
-              <b>Location on map: </b>
-            </Typography>
-          </Grid>
-
+        
           {/* add text left */}
           <Grid item xs={12} sm={12}>
             <MapContainer

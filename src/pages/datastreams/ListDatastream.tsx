@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
+import { useFormik } from "formik";
 import { Breadcrumbs, Button, Typography } from "@mui/material";
 import LinkCustom from "../../components/LinkCustom";
 
@@ -15,6 +16,8 @@ import { GAactionsDataStreams } from "../../utils/GA";
 import { useAppSelector, useIsOwner } from "../../hooks/hooks";
 import DataTableCardV2 from "../../components/DataGridServerSide"
 import BiotechSharpIcon from "@mui/icons-material/BiotechSharp";
+import EntityFormModal from "../../components/EntityFormModal";
+import { editDatastreamValidationSchema } from "../../formik/validation_schema";
 
 const DESCRIPTION_WORD_LIMIT = 7;
 
@@ -76,11 +79,94 @@ const ListDatastream = () => {
   const PAGE_SIZE = 10;
   const [pageSize, setPageSize] = useState(PAGE_SIZE); 
   const [filterQuery, setFilterQuery] = useState("");
-const [sortQuery, setSortQuery] = useState("");
+  const [sortQuery, setSortQuery] = useState("");
+  const [editOpen, setEditOpen] = useState(false);
+  const [editingDatastreamId, setEditingDatastreamId] = useState<number | null>(null);
+  const [saving, setSaving] = useState(false);
   const selectedGroupId = useAppSelector(
     (state) => state.roles.selectedGroupId
   );
   const isOwner = useIsOwner();
+  const primaryButtonSx = {
+    backgroundColor: "rgb(35, 48, 68)",
+    "&:hover": { backgroundColor: "rgb(26, 36, 51)" },
+  };
+  const cancelButtonSx = {
+    backgroundColor: "#6e7881",
+    color: "#ffffff",
+    borderColor: "#6e7881",
+    "&:hover": { backgroundColor: "#5f6870", borderColor: "#5f6870" },
+  };
+
+  const editFormik = useFormik({
+    initialValues: {
+      description: "",
+      unit_name: "",
+      unit_symbol: "",
+      unit_definition: "",
+    },
+    validationSchema: editDatastreamValidationSchema,
+    onSubmit: async (values) => {
+      if (!editingDatastreamId) return;
+      const unitOfMeasurement = {
+        name: values.unit_name,
+        symbol: values.unit_symbol,
+        definition: values.unit_definition,
+      };
+      try {
+        setSaving(true);
+        const response = await axios.post(
+          `${process.env.REACT_APP_BACKEND_URL}/update`,
+          {
+            url: `Datastreams(${editingDatastreamId})`,
+            FROST_PORT: frostServerPort,
+            body: { description: values.description, unitOfMeasurement },
+            keycloak_id: userInfo?.sub,
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${keycloak?.token}`,
+            },
+          }
+        );
+
+        if (response.status === 200) {
+          const updatedList = datastreams.map((stream) =>
+            stream["@iot.id"] === editingDatastreamId
+              ? {
+                ...stream,
+                description: values.description,
+                unitOfMeasurement,
+              }
+              : stream
+          );
+          setDatastreams(updatedList);
+          setEditOpen(false);
+          setEditingDatastreamId(null);
+          Swal.fire({
+            icon: "success",
+            title: "Success",
+            text: "Datastream edited successfully!",
+          });
+        } else {
+          Swal.fire({
+            icon: "error",
+            title: "Oops...",
+            text: "Datastream not edited!",
+          });
+        }
+      } catch {
+        Swal.fire({
+          icon: "error",
+          title: "Oops...",
+          text: "Something went wrong! Datastream not edited!",
+        });
+      } finally {
+        setSaving(false);
+      }
+    },
+  });
 
 const fetchDatastreams = useCallback(
   async (newPage = 0, newPageSize = pageSize, filter = filterQuery, sort = sortQuery) => {
@@ -301,146 +387,14 @@ const handlePageSizeChange = (newPageSize: number) => {
           onClick={() => {
             const row = params?.data;
             if (!isOwner) return;
-            Swal.fire({
-              title: "Edit Datastream",
-              html:
-                `<div class="swal-input-row-with-label">` +
-                `<label for="description">Description</label>` +
-                `<div class="swal-input-field">` +
-                `<input id="description" class="swal2-input" placeholder="Enter description" value="${
-                  row.description || ""
-                }">` +
-                `</div>` +
-                `</div>` +
-                `<div class="swal-input-row-with-label">` +
-                `<label for="unitName">Unit Name</label>` +
-                `<div class="swal-input-field">` +
-                `<input id="unitName" class="swal2-input" placeholder="Enter unit name" value="${
-                  row.unitOfMeasurement?.name || ""
-                }">` +
-                `</div>` +
-                `</div>` +
-                `<div class="swal-input-row-with-label">` +
-                `<label for="unitSymbol">Unit Symbol</label>` +
-                `<div class="swal-input-field">` +
-                `<input id="unitSymbol" class="swal2-input" placeholder="Enter unit symbol" value="${
-                  row.unitOfMeasurement?.symbol || ""
-                }">` +
-                `</div>` +
-                `</div>` +
-                `<div class="swal-input-row-with-label">` +
-                `<label for="unitDefinition">Unit Definition</label>` +
-                `<div class="swal-input-field">` +
-                `<input id="unitDefinition" class="swal2-input" placeholder="Enter unit definition" value="${
-                  row.unitOfMeasurement?.definition || ""
-                }">` +
-                `</div>` +
-                `</div>`,
-              showCancelButton: true,
-              confirmButtonText: "Save",
-              showLoaderOnConfirm: true,
-              preConfirm: () => {
-                const description = (
-                  document.getElementById("description") as HTMLInputElement
-                ).value;
-                const unitName = (
-                  document.getElementById("unitName") as HTMLInputElement
-                ).value;
-                const unitSymbol = (
-                  document.getElementById("unitSymbol") as HTMLInputElement
-                ).value;
-                const unitDefinition = (
-                  document.getElementById("unitDefinition") as HTMLInputElement
-                ).value;
-
-                if (!description) {
-                  Swal.showValidationMessage("Please enter a description");
-                } else {
-                  return {
-                    description,
-                    unitOfMeasurement: {
-                      name: unitName,
-                      symbol: unitSymbol,
-                      definition: unitDefinition,
-                    },
-                  };
-                }
-              },
-            }).then((result) => {
-              if (result.isConfirmed) {
-                const { description, unitOfMeasurement } = result.value as {
-                  description: string;
-                  unitOfMeasurement: {
-                    name: string;
-                    symbol: string;
-                    definition: string;
-                  };
-                };
-
-                axios
-                  .post(
-                    `${process.env.REACT_APP_BACKEND_URL}/update`,
-                    {
-                      url: `Datastreams(${row["@iot.id"]})`,
-                      FROST_PORT: frostServerPort,
-                      body: { description, unitOfMeasurement },
-                      keycloak_id: userInfo?.sub,
-                    },
-                    {
-                      headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${keycloak?.token}`,
-                      },
-                    }
-                  )
-                  .then((response) => {
-                    if (response.status === 200) {
-                      const updatedList = datastreams.map((stream) => {
-                        if (stream["@iot.id"] === row["@iot.id"]) {
-                          stream.description = description;
-                          stream.unitOfMeasurement = unitOfMeasurement;
-                        }
-                        return stream;
-                      });
-                      setDatastreams(updatedList);
-                      Swal.fire({
-                        icon: "success",
-                        title: "Success",
-                        text: "Datastream edited successfully!",
-                      });
-                    } else {
-                      Swal.fire({
-                        icon: "error",
-                        title: "Oops...",
-                        text: "Datastream not edited!",
-                      });
-                    }
-                  })
-                  .catch(() => {
-                    axios.post(
-                      `http://localhost:4500/mutation_error_logs`,
-                      {
-                        keycloak_id: userInfo?.sub,
-                        method: "UPDATE",
-                        attribute: "Datastreams",
-                        attribute_id: row["@iot.id"],
-                        frost_port: frostServerPort,
-                      },
-                      {
-                        headers: {
-                          "Content-Type": "application/json",
-                          Authorization: `Bearer ${keycloak?.token}`,
-                        },
-                      }
-                    );
-                    Swal.fire({
-                      icon: "error",
-                      title: "Oops...",
-                      text: "Something went wrong! Datastream not edited!",
-                    });
-                  });
-              }
+            setEditingDatastreamId(row?.["@iot.id"]);
+            editFormik.setValues({
+              description: row?.description || "",
+              unit_name: row?.unitOfMeasurement?.name || "",
+              unit_symbol: row?.unitOfMeasurement?.symbol || "",
+              unit_definition: row?.unitOfMeasurement?.definition || "",
             });
+            setEditOpen(true);
           }}
         />
       ),
@@ -593,12 +547,29 @@ const handlePageSizeChange = (newPageSize: number) => {
       {/* Create Button */}
       {isOwner ? (
         <LinkCustom to="/datastreams/store">
-          <Button variant="contained" color="primary" sx={{ mb: 2 }}>
+          <Button
+            variant="contained"
+            color="primary"
+            sx={{
+              mb: 2,
+              backgroundColor: "rgb(35, 48, 68)",
+              "&:hover": { backgroundColor: "rgb(26, 36, 51)" },
+            }}
+          >
             Create
           </Button>
         </LinkCustom>
       ) : (
-        <Button variant="contained" color="primary" disabled sx={{ mb: 2 }}>
+        <Button
+          variant="contained"
+          color="primary"
+          disabled
+          sx={{
+            mb: 2,
+            backgroundColor: "rgb(35, 48, 68)",
+            "&:hover": { backgroundColor: "rgb(26, 36, 51)" },
+          }}
+        >
           Create
         </Button>
       )}
@@ -626,6 +597,33 @@ const handlePageSizeChange = (newPageSize: number) => {
     fetchDatastreams(0, pageSize, filterQuery, sq);
   }}
 />
+      <EntityFormModal
+        open={editOpen}
+        onClose={() => {
+          setEditOpen(false);
+          setEditingDatastreamId(null);
+        }}
+        title="Edit Datastream"
+        sectionTitle="Datastream Details"
+        formik={editFormik}
+        fields={[
+          {
+            name: "description",
+            label: "Description",
+            multiline: true,
+            minRows: 3,
+            xs: 12,
+            sm: 12,
+          },
+          { name: "unit_name", label: "Unit Name", xs: 12, sm: 4 },
+          { name: "unit_symbol", label: "Unit Symbol", xs: 12, sm: 4 },
+          { name: "unit_definition", label: "Unit Definition", xs: 12, sm: 4 },
+        ]}
+        submitting={saving}
+        submitLabel="Save"
+        primaryButtonSx={primaryButtonSx}
+        cancelButtonSx={cancelButtonSx}
+      />
     </Dashboard>
   );
 };

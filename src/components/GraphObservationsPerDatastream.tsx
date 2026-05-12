@@ -1,5 +1,5 @@
 import { Box, Button, Grid, TextField, useMediaQuery } from "@mui/material";
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { CSVLink } from "react-csv";
 import { MobileDateTimePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import {
@@ -41,6 +41,8 @@ function GraphObservationsPerDatastream({
   const [result_times, setResultTimes] = useState<any[]>([]);
   const [observations, setObservations] = useState<any[]>([]);
   const [isLoading, setLoading] = useState(false);
+  const chartContainerRef = useRef<HTMLDivElement | null>(null);
+  const [chartWidth, setChartWidth] = useState(0);
 
   const observedPropertyLabel =
     datastreamMetadata?.ObservedProperty?.name ||
@@ -70,7 +72,30 @@ function GraphObservationsPerDatastream({
     datastreamMetadata?.ObservedProperty?.definition ||
     "";
 
-  const xAxisTickLimit = isMobile ? 4 : 8;
+  useEffect(() => {
+    if (!chartContainerRef.current) {
+      return;
+    }
+
+    const element = chartContainerRef.current;
+    const updateWidth = () => {
+      setChartWidth(element.clientWidth || 0);
+    };
+
+    updateWidth();
+    const resizeObserver = new ResizeObserver(updateWidth);
+    resizeObserver.observe(element);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
+
+  const tickPixelSpacing = isMobile ? 110 : 90;
+  const xAxisTickLimit = Math.max(
+    isMobile ? 4 : 6,
+    Math.floor(chartWidth / tickPixelSpacing)
+  );
   const xAxisTickStep =
     phenomenon_times.length > xAxisTickLimit
       ? Math.ceil(phenomenon_times.length / xAxisTickLimit)
@@ -189,7 +214,7 @@ function GraphObservationsPerDatastream({
     const backend_url = process.env.REACT_APP_FROST_URL;
     axios
       .get(
-        `https://${frostServerPort}-${backend_url}/FROST-Server/v1.0/Datastreams(${id})/Observations?$orderby=phenomenonTime`,
+        `https://${frostServerPort}-${backend_url}/FROST-Server/v1.0/Datastreams(${id})/Observations?$orderby=phenomenonTime desc&$top=50`,
         {
           headers: {
             "Content-Type": "application/json",
@@ -199,15 +224,19 @@ function GraphObservationsPerDatastream({
       )
       .then((res) => {
         if (res.status === 200 && res.data.value) {
-          setObservations(res.data.value); 
+          const latestSorted = [...res.data.value].sort(
+            (a: any, b: any) =>
+              new Date(a.phenomenonTime).getTime() -
+              new Date(b.phenomenonTime).getTime()
+          );
+
+          setObservations(latestSorted);
           setPhenomenonTimes(
-            res?.data.value
-              .map((item: any) => formatLocalDateTime(item.phenomenonTime))
-              .slice(0, 50)
+            latestSorted.map((item: any) =>
+              formatLocalDateTime(item.phenomenonTime)
+            )
           );
-          setResultTimes(
-            res?.data.value.map((item: any) => item.result).slice(0, 50)
-          );
+          setResultTimes(latestSorted.map((item: any) => item.result));
         }
       })
       .catch((err) => {
@@ -471,6 +500,7 @@ function GraphObservationsPerDatastream({
             </Grid>
           </LocalizationProvider>
           <Box
+            ref={chartContainerRef}
             sx={{
               width: "100%",
               maxWidth: "100%",

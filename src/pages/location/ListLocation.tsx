@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import DataTable, { ExpanderComponentProps } from "react-data-table-component";
+import { useFormik } from "formik";
 import { Breadcrumbs, Button, Typography } from "@mui/material";
 import LinkCustom from "../../components/LinkCustom";
 
@@ -12,9 +12,11 @@ import ReactGA from "react-ga4";
 import { GAactionsLocations } from "../../utils/GA";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import Swal from "sweetalert2";
-import { useAppSelector, useIsOwner } from "../../hooks/hooks";
+import { useIsOwner } from "../../hooks/hooks";
 import DeleteForeverOutlinedIcon from "@mui/icons-material/DeleteForeverOutlined";
 import DataTableCardV2 from "../../components/DataGridServerSide";
+import EntityFormModal from "../../components/EntityFormModal";
+import { editLocationValidationSchema } from "../../formik/validation_schema";
 
 const ListLocations = () => {
   const { keycloak } = useKeycloak();
@@ -31,8 +33,97 @@ const ListLocations = () => {
 
   const [filterQuery, setFilterQuery] = useState("");
   const [sortQuery, setSortQuery] = useState("");
+  const [editOpen, setEditOpen] = useState(false);
+  const [editingLocationId, setEditingLocationId] = useState<number | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const isOwner = useIsOwner();
+  const primaryButtonSx = {
+    backgroundColor: "rgb(35, 48, 68)",
+    "&:hover": {
+      backgroundColor: "rgb(26, 36, 51)",
+    },
+  };
+  const cancelButtonSx = {
+    backgroundColor: "#6e7881",
+    color: "#ffffff",
+    borderColor: "#6e7881",
+    "&:hover": {
+      backgroundColor: "#5f6870",
+      borderColor: "#5f6870",
+    },
+  };
+
+  const editFormik = useFormik({
+    initialValues: {
+      name: "",
+      description: "",
+      latitude: "",
+      longitude: "",
+    },
+    enableReinitialize: false,
+    validationSchema: editLocationValidationSchema,
+    onSubmit: async (values) => {
+      if (!editingLocationId) return;
+      const lat = parseFloat(values.latitude);
+      const lng = parseFloat(values.longitude);
+
+      try {
+        setSaving(true);
+        const response = await axios.post(
+          `${process.env.REACT_APP_BACKEND_URL}/update`,
+          {
+            url: `Locations(${editingLocationId})`,
+            FROST_PORT: frostServerPort,
+            keycloak_id: userInfo?.sub,
+            body: {
+              name: values.name,
+              description: values.description,
+              encodingType: "application/vnd.geo+json",
+              location: {
+                type: "Point",
+                coordinates: [lng, lat],
+              },
+            },
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${keycloak?.token}`,
+            },
+          }
+        );
+
+        if (response.status === 200) {
+          const updated = locations.map((loc: any) =>
+            loc["@iot.id"] === editingLocationId
+              ? {
+                ...loc,
+                name: values.name,
+                description: values.description,
+                location: { ...loc.location, coordinates: [lng, lat] },
+              }
+              : loc
+          );
+          setLocations(updated);
+          setEditOpen(false);
+          setEditingLocationId(null);
+          Swal.fire("Success", "Location updated!", "success");
+        } else {
+          Swal.fire("Error", "Failed to update location.", "error");
+        }
+      } catch (error) {
+        const errorMessage = axios.isAxiosError(error)
+          ? (error.response?.data as any)?.error ||
+          (error.response?.data as any)?.message ||
+          "Server error occurred."
+          : "Server error occurred.";
+        Swal.fire("Error", errorMessage, "error");
+      } finally {
+        setSaving(false);
+      }
+    },
+  });
 
   const fetchLocations = async (
     newPage = 0,
@@ -180,146 +271,22 @@ const ListLocations = () => {
             }}
             onClick={() => {
               if (!isOwner) return;
-
-              const currentLat = row?.location?.coordinates[1];
-              const currentLng = row?.location?.coordinates[0];
-
-              Swal.fire({
-                title: "Edit Location",
-              html: `
-  <div style="display:flex; flex-direction:column; gap:14px;">
-
-    <!-- NAME -->
-    <div style="display:grid; grid-template-columns: 90px 1fr; align-items:center;">
-      <label for="name" style="font-size:13px; font-weight:600;">Name</label>
-      <input id="name" class="swal2-input" value="${row.name || ""}">
-    </div>
-    <div style="display:flex; flex-direction:column; gap:14px;">
-
-    <!-- description -->
-    <div style="display:grid; grid-template-columns: 90px 1fr; align-items:center;">
-      <label for="description" style="font-size:13px; font-weight:600;">Description</label>
-     <textarea
-  id="description"
-  class="swal2-input"
-  style="
-    height: 90px;
-    resize: vertical;
-    padding-top: 10px;
-    line-height: 1.4;
-    margin-left: 3em !important; 
-   
-
-    width: calc(100% - 6em); 
-    box-sizing: border-box;
-
-    margin: 0;
-    display: block;
-
-    border: 1px solid #d9d9d9;
-    border-radius: 4px;
-    outline: none;
-  "
-  onfocus="
-    this.style.borderColor='#7367f0';
-    this.style.boxShadow='0 0 0 3px rgba(115,103,240,0.25)';
-  "
-  onblur="
-    this.style.borderColor='#d9d9d9';
-    this.style.boxShadow='none';
-  "
->${row.description || ""}</textarea>
-    </div>
-
-
-    <!-- LATITUDE -->
-    <div style="display:grid; grid-template-columns: 90px 1fr; align-items:center;">
-      <label for="latitude" style="font-size:13px; font-weight:600;">Latitude</label>
-      <input
-        id="latitude"
-        type="number"
-        class="swal2-input"
-        value="${currentLat ?? ""}"
-      >
-    </div>
-
-    <!-- LONGITUDE -->
-    <div style="display:grid; grid-template-columns: 90px 1fr; align-items:center;">
-      <label for="longitude" style="font-size:13px; font-weight:600;">Longitude</label>
-      <input
-        id="longitude"
-        type="number"
-        class="swal2-input"
-        value="${currentLng ?? ""}"
-      >
-    </div>
-
-  </div>
-`,
-
-
-                showCancelButton: true,
-                confirmButtonText: "Save",
-                preConfirm: () => {
-                  const name = (document.getElementById("name") as HTMLInputElement)?.value;
-                  const description = (document.getElementById("description") as HTMLInputElement)?.value;
-                  const lat = parseFloat((document.getElementById("latitude") as HTMLInputElement)?.value);
-                  const lng = parseFloat((document.getElementById("longitude") as HTMLInputElement)?.value);
-
-                  if (!name || isNaN(lat) || isNaN(lng)) {
-                    Swal.showValidationMessage("Please enter valid name, latitude, and longitude.");
-                    return false;
-                  }
-                  return { name, description, lat, lng };
-                },
-              }).then((result) => {
-                if (result.isConfirmed) {
-                  const { name, description, lat, lng } = result.value;
-                  axios
-                    .post(
-                      `${process.env.REACT_APP_BACKEND_URL}/update`,
-                      {
-                        url: `Locations(${row["@iot.id"]})`,
-                        FROST_PORT: frostServerPort,
-                        keycloak_id: userInfo?.sub,
-                        body: {
-                          name,
-                          description,
-                          encodingType: "application/vnd.geo+json",
-                          location: {
-                            type: "Point",
-                            coordinates: [lng, lat],
-                          },
-                        },
-                      },
-                      {
-                        headers: {
-                          "Content-Type": "application/json",
-                          Authorization: `Bearer ${keycloak?.token}`,
-                        },
-                      }
-                    )
-                    .then((response:any) => {
-                      if (response.status === 200) {
-                        const updated = locations.map((loc: any) =>
-                          loc["@iot.id"] === row["@iot.id"]
-                            ? { ...loc, name, description, location: { ...loc.location, coordinates: [lng, lat] } }
-                            : loc
-                        );
-                        setLocations(updated);
-                        Swal.fire("Success", "Location updated!", "success");
-                      } else {
-                        Swal.fire("Error", "Failed to update location.", "error");
-                      }
-                    })
-                    .catch((error) => {
-                      const errorMessage = axios.isAxiosError(error)
-                        ? (error.response?.data as any)?.error || (error.response?.data as any)?.message || "Server error occurred."
-                        : "Server error occurred.";
-                      Swal.fire("Error", errorMessage, "error");
-                    });
-                }
+              const currentLat = row?.location?.coordinates?.[1];
+              const currentLng = row?.location?.coordinates?.[0];
+              setEditingLocationId(row?.["@iot.id"]);
+              editFormik.setValues({
+                name: row?.name || "",
+                description: row?.description || "",
+                latitude:
+                  currentLat !== undefined && currentLat !== null
+                    ? String(currentLat)
+                    : "",
+                longitude:
+                  currentLng !== undefined && currentLng !== null
+                    ? String(currentLng)
+                    : "",
               });
+              setEditOpen(true);
             }}
           />
         );
@@ -429,12 +396,29 @@ const ListLocations = () => {
       {/* Create Button */}
       {isOwner ? (
         <LinkCustom to="/locations/store">
-          <Button variant="contained" color="primary" style={{ marginBottom: "10px" }}>
+          <Button
+            variant="contained"
+            color="primary"
+            sx={{
+              mb: "10px",
+              backgroundColor: "rgb(35, 48, 68)",
+              "&:hover": { backgroundColor: "rgb(26, 36, 51)" },
+            }}
+          >
             Create
           </Button>
         </LinkCustom>
       ) : (
-        <Button variant="contained" color="primary" disabled style={{ marginBottom: "10px" }}>
+        <Button
+          variant="contained"
+          color="primary"
+          disabled
+          sx={{
+            mb: "10px",
+            backgroundColor: "rgb(35, 48, 68)",
+            "&:hover": { backgroundColor: "rgb(26, 36, 51)" },
+          }}
+        >
           Create
         </Button>
       )}
@@ -462,6 +446,33 @@ Each location includes a name, description, and geographic coordinates, and can 
           setPageLinks({});
           fetchLocations(0, pageSize, filterQuery, sq);
         }}
+      />
+      <EntityFormModal
+        open={editOpen}
+        onClose={() => {
+          setEditOpen(false);
+          setEditingLocationId(null);
+        }}
+        title="Edit Location"
+        sectionTitle="Location Details"
+        formik={editFormik}
+        fields={[
+          { name: "name", label: "Location Name", xs: 12, sm: 12 },
+          {
+            name: "description",
+            label: "Description",
+            multiline: true,
+            minRows: 3,
+            xs: 12,
+            sm: 12,
+          },
+          { name: "latitude", label: "Latitude", type: "number", xs: 12, sm: 6 },
+          { name: "longitude", label: "Longitude", type: "number", xs: 12, sm: 6 },
+        ]}
+        submitting={saving}
+        submitLabel="Save"
+        primaryButtonSx={primaryButtonSx}
+        cancelButtonSx={cancelButtonSx}
       />
 
     </Dashboard>

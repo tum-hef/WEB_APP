@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
+import { useFormik } from "formik";
 import { Breadcrumbs, Button, Typography } from "@mui/material";
 import LinkCustom from "../../components/LinkCustom";
 import Dashboard from "../../components/DashboardComponent";
@@ -12,6 +13,8 @@ import ReactGA from "react-ga4";
 import { GAactionsSensors } from "../../utils/GA";
 import { useAppSelector, useIsOwner } from "../../hooks/hooks";
 import DataTableCardV2 from "../../components/DataGridServerSide";
+import EntityFormModal from "../../components/EntityFormModal";
+import { editSensorValidationSchema } from "../../formik/validation_schema";
 const ListSensors = () => {
   const { keycloak } = useKeycloak();
   const userInfo = keycloak?.idTokenParsed;
@@ -27,11 +30,76 @@ const [loading, setLoading] = useState(false);
 
 const [filterQuery, setFilterQuery] = useState("");
 const [sortQuery, setSortQuery] = useState("");
+const [editOpen, setEditOpen] = useState(false);
+const [editingSensorId, setEditingSensorId] = useState<number | null>(null);
+const [saving, setSaving] = useState(false);
   const selectedGroupId = useAppSelector((state) => state.roles.selectedGroupId);
   const group = useAppSelector((state) =>
     state.roles.groups.find((g) => g?.group_name_id === selectedGroupId)
   );
   const isOwner = useIsOwner();
+  const primaryButtonSx = {
+    backgroundColor: "rgb(35, 48, 68)",
+    "&:hover": { backgroundColor: "rgb(26, 36, 51)" },
+  };
+  const cancelButtonSx = {
+    backgroundColor: "#6e7881",
+    color: "#ffffff",
+    borderColor: "#6e7881",
+    "&:hover": { backgroundColor: "#5f6870", borderColor: "#5f6870" },
+  };
+
+  const editFormik = useFormik({
+    initialValues: { name: "", description: "", metadata: "" },
+    validationSchema: editSensorValidationSchema,
+    onSubmit: async (values) => {
+      if (!editingSensorId) return;
+      try {
+        setSaving(true);
+        const response = await axios.post(
+          `${process.env.REACT_APP_BACKEND_URL}/update`,
+          {
+            url: `Sensors(${editingSensorId})`,
+            FROST_PORT: frostServerPort,
+            body: {
+              name: values.name,
+              description: values.description,
+              metadata: values.metadata,
+            },
+            keycloak_id: userInfo?.sub,
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${keycloak?.token}`,
+            },
+          }
+        );
+        if (response.status === 200) {
+          const newSensors = sensors.map((sensor) =>
+            sensor["@iot.id"] === editingSensorId
+              ? {
+                ...sensor,
+                name: values.name,
+                description: values.description,
+                metadata: values.metadata,
+              }
+              : sensor
+          );
+          setSensors(newSensors);
+          setEditOpen(false);
+          setEditingSensorId(null);
+          Swal.fire("Success", "Sensor edited successfully!", "success");
+        } else {
+          Swal.fire("Oops...", "Something went wrong! Sensor not edited!", "error");
+        }
+      } catch {
+        Swal.fire("Oops...", "Something went wrong! Sensor not edited!", "error");
+      } finally {
+        setSaving(false);
+      }
+    },
+  });
 
  const fetchSensors = async (
   newPage = 0,
@@ -165,80 +233,13 @@ const [sortQuery, setSortQuery] = useState("");
           }}
           onClick={() => {
             if (!isOwner) return;
-            Swal.fire({
-              title: "Edit Sensor",
-              html:
-                `<div class="swal-input-row-with-label">` +
-                `<label for="name">New Name</label>` +
-                `<div class="swal-input-field">` +
-                `<input id="name" class="swal2-input" placeholder="Enter new name" value="${params.data.name || ""}">` +
-                `</div>` +
-                `</div>` +
-                `<div class="swal-input-row">` +
-                `<label for="description">New Description</label>` +
-                `<input id="description" class="swal2-input" placeholder="Enter new description" value="${params.data.description || ""}">` +
-                `</div>` +
-                `<div class="swal-input-row">` +
-                `<label for="metadata">New Metadata</label>` +
-                `<input id="metadata" class="swal2-input" placeholder="Enter new metadata" value="${params.data.metadata || ""}">` +
-                `</div>`,
-              showCancelButton: true,
-              confirmButtonText: "Save",
-              showLoaderOnConfirm: true,
-              preConfirm: () => {
-                const name = (document.getElementById("name") as HTMLInputElement).value;
-                const description = (document.getElementById("description") as HTMLInputElement).value;
-                const metadata = (document.getElementById("metadata") as HTMLInputElement).value;
-                if (!name) {
-                  Swal.showValidationMessage("Please enter a Sensor name");
-                } else {
-                  return { name, description, metadata };
-                }
-              },
-            }).then((result) => {
-              if (result.isConfirmed) {
-                const { name, description, metadata } = result.value as {
-                  name: string;
-                  description: string;
-                  metadata: string;
-                };
-                axios
-                  .post(
-                    `${process.env.REACT_APP_BACKEND_URL}/update`,
-                    {
-                      url: `Sensors(${params.data["@iot.id"]})`,
-                      FROST_PORT: frostServerPort,
-                      body: { name, description, metadata },
-                      keycloak_id: userInfo?.sub,
-                    },
-                    {
-                      headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${keycloak?.token}`,
-                      },
-                    }
-                  )
-                  .then((response) => {
-                    if (response.status === 200) {
-                      const newSensors = sensors.map((sensor) => {
-                        if (sensor["@iot.id"] === params.data["@iot.id"]) {
-                          sensor.name = name;
-                          sensor.description = description;
-                          sensor.metadata = metadata;
-                        }
-                        return sensor;
-                      });
-                      setSensors(newSensors);
-                      Swal.fire("Success", "Sensor edited successfully!", "success");
-                    } else {
-                      Swal.fire("Oops...", "Something went wrong! Sensor not edited!", "error");
-                    }
-                  })
-                  .catch(() => {
-                    Swal.fire("Oops...", "Something went wrong! Sensor not edited!", "error");
-                  });
-              }
+            setEditingSensorId(params.data?.["@iot.id"]);
+            editFormik.setValues({
+              name: params.data?.name || "",
+              description: params.data?.description || "",
+              metadata: params.data?.metadata || "",
             });
+            setEditOpen(true);
           }}
         />
       ),
@@ -330,12 +331,29 @@ const handlePageSizeChange = (newPageSize: number) => {
       {/* Create Button */}
       {isOwner ? (
         <LinkCustom to="/sensors/store">
-          <Button variant="contained" color="primary" style={{ marginBottom: "10px" }}>
+          <Button
+            variant="contained"
+            color="primary"
+            sx={{
+              mb: "10px",
+              backgroundColor: "rgb(35, 48, 68)",
+              "&:hover": { backgroundColor: "rgb(26, 36, 51)" },
+            }}
+          >
             Create
           </Button>
         </LinkCustom>
       ) : (
-        <Button variant="contained" color="primary" disabled style={{ marginBottom: "10px" }}>
+        <Button
+          variant="contained"
+          color="primary"
+          disabled
+          sx={{
+            mb: "10px",
+            backgroundColor: "rgb(35, 48, 68)",
+            "&:hover": { backgroundColor: "rgb(26, 36, 51)" },
+          }}
+        >
           Create
         </Button>
       )}
@@ -364,6 +382,32 @@ Each sensor defines how a measurement is made, including its metadata and descri
     fetchSensors(0, pageSize, filterQuery, sq);
   }}
 />
+      <EntityFormModal
+        open={editOpen}
+        onClose={() => {
+          setEditOpen(false);
+          setEditingSensorId(null);
+        }}
+        title="Edit Sensor Type"
+        sectionTitle="Sensor Details"
+        formik={editFormik}
+        fields={[
+          { name: "name", label: "Sensor Name", xs: 12, sm: 12 },
+          {
+            name: "description",
+            label: "Description",
+            multiline: true,
+            minRows: 3,
+            xs: 12,
+            sm: 12,
+          },
+          { name: "metadata", label: "Metadata", xs: 12, sm: 12 },
+        ]}
+        submitting={saving}
+        submitLabel="Save"
+        primaryButtonSx={primaryButtonSx}
+        cancelButtonSx={cancelButtonSx}
+      />
     </Dashboard>
   );
 };

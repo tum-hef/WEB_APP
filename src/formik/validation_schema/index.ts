@@ -165,3 +165,44 @@ export const update_password_validationSchema = yup.object().shape({
     .required("Confirm password is required")
     .oneOf([yup.ref("new_password"), null], "Passwords must match"),
 });
+
+
+export const editLocationValidationSchema = yup.object().shape({
+    name: yup.string().required("Name is required").min(3, "Name must be at least 3 characters"),
+    description: yup
+      .string()
+      .required("Description is required")
+      .min(3, "Description must be at least 3 characters"),
+    latitude: yup
+      .string()
+      .required("Latitude is required")
+      .matches(/^-?\d+(\.\d+)?$/, "Latitude must be a valid number"),
+    longitude: yup
+      .string()
+      .required("Longitude is required")
+      .matches(/^-?\d+(\.\d+)?$/, "Longitude must be a valid number"),
+  });
+
+export const editDeviceValidationSchema = yup.object().shape({
+  name: yup.string().required("Name is required"),
+  description: yup.string().required("Description is required"),
+});
+
+export const editSensorValidationSchema = yup.object().shape({
+  name: yup.string().required("Sensor name is required"),
+  description: yup.string().required("Description is required"),
+  metadata: yup.string().required("Metadata is required"),
+});
+
+export const editObservationPropertyValidationSchema = yup.object().shape({
+  name: yup.string().required("Measurement property name is required"),
+  description: yup.string().required("Description is required"),
+  definition: yup.string().required("Definition is required"),
+});
+
+export const editDatastreamValidationSchema = yup.object().shape({
+  description: yup.string().required("Description is required"),
+  unit_name: yup.string().required("Unit name is required"),
+  unit_symbol: yup.string().required("Unit symbol is required"),
+  unit_definition: yup.string().required("Unit definition is required"),
+});
