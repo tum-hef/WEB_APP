@@ -214,7 +214,7 @@ function GraphObservationsPerDatastream({
     const backend_url = process.env.REACT_APP_FROST_URL;
     axios
       .get(
-        `https://${frostServerPort}-${backend_url}/FROST-Server/v1.0/Datastreams(${id})/Observations?$orderby=phenomenonTime desc&$top=50`,
+        `https://${frostServerPort}-${backend_url}/FROST-Server/v1.0/Datastreams(${id})/Observations?$orderby=phenomenonTime desc&$top=100`,
         {
           headers: {
             "Content-Type": "application/json",
