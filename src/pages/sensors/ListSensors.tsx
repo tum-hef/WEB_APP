@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import axios from "axios";
 import { useFormik } from "formik";
 import { Breadcrumbs, Button, Typography } from "@mui/material";
@@ -14,6 +14,7 @@ import { GAactionsSensors } from "../../utils/GA";
 import { useAppSelector, useIsOwner } from "../../hooks/hooks";
 import DataTableCardV2 from "../../components/DataGridServerSide";
 import EntityFormModal from "../../components/EntityFormModal";
+import ConfirmDeleteDialog from "../../components/ConfirmDeleteDialog";
 import { editSensorValidationSchema } from "../../formik/validation_schema";
 const ListSensors = () => {
   const { keycloak } = useKeycloak();
@@ -33,6 +34,9 @@ const [sortQuery, setSortQuery] = useState("");
 const [editOpen, setEditOpen] = useState(false);
 const [editingSensorId, setEditingSensorId] = useState<number | null>(null);
 const [saving, setSaving] = useState(false);
+const [deleteOpen, setDeleteOpen] = useState(false);
+const [deleting, setDeleting] = useState(false);
+const [sensorToDelete, setSensorToDelete] = useState<any | null>(null);
   const selectedGroupId = useAppSelector((state) => state.roles.selectedGroupId);
   const group = useAppSelector((state) =>
     state.roles.groups.find((g) => g?.group_name_id === selectedGroupId)
@@ -188,7 +192,65 @@ const [saving, setSaving] = useState(false);
   }
 }, [frostServerPort]);
 
-  const columnDefs = [
+  const openEditDialog = useCallback(
+    (row: any) => {
+      setEditingSensorId(row?.["@iot.id"]);
+      editFormik.setValues({
+        name: row?.name || "",
+        description: row?.description || "",
+        metadata: row?.metadata || "",
+      });
+      setEditOpen(true);
+    },
+    [editFormik.setValues]
+  );
+
+  const openDeleteDialog = useCallback((row: any) => {
+    setSensorToDelete(row);
+    setDeleteOpen(true);
+  }, []);
+
+  const closeDeleteDialog = useCallback(() => {
+    if (deleting) return;
+    setDeleteOpen(false);
+    setSensorToDelete(null);
+  }, [deleting]);
+
+  const confirmDeleteSensor = useCallback(async () => {
+    if (!sensorToDelete) return;
+    try {
+      setDeleting(true);
+      const response = await axios.post(
+        `${process.env.REACT_APP_BACKEND_URL}/delete`,
+        {
+          url: `Sensors(${sensorToDelete["@iot.id"]})`,
+          FROST_PORT: frostServerPort,
+          keycloak_id: userInfo?.sub,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `${token}`,
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        Swal.fire("Success", "Sensor deleted successfully!", "success");
+        setSensors((prev) => prev.filter((sensor) => sensor["@iot.id"] !== sensorToDelete["@iot.id"]));
+      } else {
+        Swal.fire("Oops...", "Something went wrong! Sensor not deleted!", "error");
+      }
+    } catch {
+      Swal.fire("Oops...", "Something went wrong! Sensor not deleted!", "error");
+    } finally {
+      setDeleting(false);
+      setDeleteOpen(false);
+      setSensorToDelete(null);
+    }
+  }, [frostServerPort, sensorToDelete, token, userInfo?.sub]);
+
+  const columnDefs = useMemo(() => [
     {
       headerName: "ID",
       field: "@iot.id",
@@ -233,13 +295,7 @@ const [saving, setSaving] = useState(false);
           }}
           onClick={() => {
             if (!isOwner) return;
-            setEditingSensorId(params.data?.["@iot.id"]);
-            editFormik.setValues({
-              name: params.data?.name || "",
-              description: params.data?.description || "",
-              metadata: params.data?.metadata || "",
-            });
-            setEditOpen(true);
+            openEditDialog(params.data);
           }}
         />
       ),
@@ -258,51 +314,12 @@ const [saving, setSaving] = useState(false);
           }}
           onClick={() => {
             if (!isOwner) return;
-            Swal.fire({
-              title: `Are you sure you want to delete ${params.data.name}?`,
-              text: "This action cannot be undone. Linked datastreams might break!",
-              icon: "warning",
-              showCancelButton: true,
-              confirmButtonColor: "#3085d6",
-              cancelButtonColor: "#d33",
-              confirmButtonText: "Yes, delete it!",
-            }).then(async (result) => {
-              if (result.isConfirmed) {
-                try {
-                  const response = await axios.post(
-                    `${process.env.REACT_APP_BACKEND_URL}/delete`,
-                    {
-                      url: `Sensors(${params.data["@iot.id"]})`,
-                      FROST_PORT: frostServerPort,
-                      keycloak_id: userInfo?.sub,
-                    },
-                    {
-                      headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `${token}`,
-                      },
-                    }
-                  );
-
-                  if (response.status === 200) {
-                    Swal.fire("Success", "Sensor deleted successfully!", "success");
-                    const newSensors = sensors.filter(
-                      (sensor) => sensor["@iot.id"] !== params.data["@iot.id"]
-                    );
-                    setSensors(newSensors);
-                  } else {
-                    Swal.fire("Oops...", "Something went wrong! Sensor not deleted!", "error");
-                  }
-                } catch (error) {
-                  Swal.fire("Oops...", "Something went wrong! Sensor not deleted!", "error");
-                }
-              }
-            });
+            openDeleteDialog(params.data);
           }}
         />
       ),
     },
-  ];
+  ], [isOwner, openDeleteDialog, openEditDialog]);
 
 
   // onChange 
@@ -406,6 +423,16 @@ Each sensor defines how a measurement is made, including its metadata and descri
         submitting={saving}
         submitLabel="Save"
         primaryButtonSx={primaryButtonSx}
+        cancelButtonSx={cancelButtonSx}
+      />
+      <ConfirmDeleteDialog
+        open={deleteOpen}
+        title="Delete Sensor Type"
+        entityName={sensorToDelete?.name || ""}
+        description="This action cannot be undone. Linked datastreams might break."
+        loading={deleting}
+        onCancel={closeDeleteDialog}
+        onConfirm={confirmDeleteSensor}
         cancelButtonSx={cancelButtonSx}
       />
     </Dashboard>
