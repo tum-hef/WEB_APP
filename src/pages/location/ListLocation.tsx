@@ -155,6 +155,7 @@ const ListLocations = () => {
           $top: newPageSize,
           $skip: newPage * newPageSize,
           $count: true,
+          $expand: "Things($select=@iot.id)",
           ...(filter && { $filter: filter }),
           ...(sort && { $orderby: sort }),
         },
@@ -261,16 +262,18 @@ const ListLocations = () => {
       headerName: "Edit",
       cellRenderer: (params: any) => {
         const row = params.data;
+        const hasLinkedThing = Boolean(row?.Things?.[0]?.["@iot.id"]);
+        const canEdit = isOwner && hasLinkedThing;
         return (
           <EditOutlinedIcon
             style={{
-              cursor: isOwner ? "pointer" : "not-allowed",
-              color: isOwner ? "red" : "gray",
-              opacity: isOwner ? 1 : 0.4,
-              pointerEvents: isOwner ? "auto" : "none",
+              cursor: canEdit ? "pointer" : "not-allowed",
+              color: canEdit ? "red" : "gray",
+              opacity: canEdit ? 1 : 0.4,
+              pointerEvents: canEdit ? "auto" : "none",
             }}
             onClick={() => {
-              if (!isOwner) return;
+              if (!canEdit) return;
               const currentLat = row?.location?.coordinates?.[1];
               const currentLng = row?.location?.coordinates?.[0];
               setEditingLocationId(row?.["@iot.id"]);
