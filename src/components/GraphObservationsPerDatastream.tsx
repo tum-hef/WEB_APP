@@ -25,6 +25,10 @@ declare const process: any;
 const formatLocalDateTime = (value: string | Date) =>
   format(new Date(value), "dd.MM.yyyy HH:mm");
 
+// Balanced for production: fewer requests than 100, safer payload size than 1000.
+const OBSERVATIONS_PAGE_SIZE = 500;
+const GRAPH_INITIAL_POINTS = 100;
+
 function GraphObservationsPerDatastream({
   token,
   frostServerPort,
@@ -214,7 +218,7 @@ function GraphObservationsPerDatastream({
     const backend_url = process.env.REACT_APP_FROST_URL;
     axios
       .get(
-        `https://${frostServerPort}-${backend_url}/FROST-Server/v1.0/Datastreams(${id})/Observations?$orderby=phenomenonTime desc&$top=100`,
+        `https://${frostServerPort}-${backend_url}/FROST-Server/v1.0/Datastreams(${id})/Observations?$orderby=phenomenonTime desc&$top=${GRAPH_INITIAL_POINTS}`,
         {
           headers: {
             "Content-Type": "application/json",
@@ -293,7 +297,7 @@ function GraphObservationsPerDatastream({
       const filterQuery = `phenomenonTime ge ${startDate} and phenomenonTime le ${endDate}`;
       const baseUrl = `https://${frostServerPort}-${backend_url}/FROST-Server/v1.0/Datastreams(${id})/Observations?$filter=${encodeURIComponent(
         filterQuery
-      )}&$orderby=phenomenonTime&$top=100`;
+      )}&$orderby=phenomenonTime&$top=${OBSERVATIONS_PAGE_SIZE}`;
   
       const observations = await fetchAllObservations(baseUrl, token);
 
