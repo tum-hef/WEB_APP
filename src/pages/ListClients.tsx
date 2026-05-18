@@ -1,7 +1,7 @@
 import LinkCustom from "../components/LinkCustom";
 import { ToastContainer, toast } from "react-toastify";
 import { useKeycloak } from "@react-keycloak/web";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Dashboard from "../components/DashboardComponent";
 
 import {
@@ -22,17 +22,17 @@ import {
   TableRow,
   TextField,
   Typography,
-  Popover,
-  List,
-  ListItem,
-  ListItemText,
-  Divider,
-  ClickAwayListener,
   CircularProgress,
   FormControlLabel,
   Switch,
   Menu,
-  MenuItem
+  MenuItem,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  Tabs,
+  Tab,
+  Chip
 } from "@mui/material";
 import axios, { AxiosError } from "axios";
 import { useLocation } from "react-router-dom";
@@ -53,6 +53,7 @@ import * as Yup from "yup";
 import { setSelectedGroupId } from "../store/rolesSlice";
 import { useAppDispatch } from "../hooks/hooks";
 import { Settings } from "@mui/icons-material";
+import { Colors } from "../styles/Colors";
 
 
 interface Group {
@@ -76,12 +77,8 @@ export default function ListClients() {
   const [joinNewGroups, setJoinNewGroups] = useState<any[]>([]);
   const [myGroups, setMyGroups] = useState<any[]>([]);
   const [anchorEl, setAnchorEl] = useState(null);
-  const [pendingRequests, setPendingRequests] = useState([]);
-  const [anchorElPending, setAnchorElPending] = useState(null);
-  const [selectedMembers, setSelectedMembers] = useState([]);
-  const [openPendingGroupId, setOpenPendingGroupId] = useState<number | null>(null);
-  const [pendingPopover, setPendingPopover] = useState<{ anchorEl: HTMLElement | null, groupId: number | null }>({ anchorEl: null, groupId: null });
-  const [membersPopover, setMembersPopover] = useState<{ anchorEl: HTMLElement | null, groupId: number | null }>({ anchorEl: null, groupId: null });
+  const [memberModalGroup, setMemberModalGroup] = useState<any | null>(null);
+  const [memberModalTab, setMemberModalTab] = useState<"members" | "pending">("members");
   const [nodeRedMenuAnchor, setNodeRedMenuAnchor] = useState<null | HTMLElement>(null);
   const [nodeRedTargetGroup, setNodeRedTargetGroup] = useState<any>(null);
 
@@ -90,8 +87,6 @@ export default function ListClients() {
 
 
 
-  const popoverRef = useRef(null); // ✅ Store popover anchor in a ref
-  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const message = searchParams.get("message");
   const validationSchema = Yup.object({
     searchQuery: Yup.string()
@@ -328,53 +323,76 @@ export default function ListClients() {
     }
   };
 
-  const handleAction = (action: string, userId: any) => {
-    let data = { "membership_id": userId, "action": action } 
-      const token = keycloak?.token;
-    Swal.fire({
+  const handleAction = async (action: string, userId: any) => {
+    const isApproveAction = action === "approve";
+    const token = keycloak?.token;
+
+    const confirmation = await Swal.fire({
       title: `Are you sure you want to ${action} this request?`,
       icon: "warning",
       showCancelButton: true,
       confirmButtonText: "Yes",
       cancelButtonText: "No",
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        try {
-          const response = await axios.post(
-            `${process.env.REACT_APP_BACKEND_URL}/manage_membership`,
-            data,
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
-          Swal.fire("Success", response.data.message, "success");
-          getAllGroups();
-        } catch (error: any) {
-          Swal.fire(
-            "Error",
-            error?.response?.data?.message || "An error occurred.",
-            "error"
-          );
-        }
-      }
+      input: isApproveAction ? "select" : undefined,
+      inputValue: isApproveAction ? "reader" : undefined,
+      inputOptions: isApproveAction
+        ? { reader: "Reader", editor: "Editor" }
+        : undefined,
+      inputPlaceholder: isApproveAction ? "Select role" : undefined,
+      inputValidator: isApproveAction
+        ? (value: string) => {
+            if (!value || !["reader", "editor"].includes(value)) {
+              return "Please select a valid role.";
+            }
+            return null;
+          }
+        : undefined,
     });
+
+    if (!confirmation.isConfirmed) return;
+
+    const selectedRole = isApproveAction ? confirmation.value : undefined;
+    if (isApproveAction && !["reader", "editor"].includes(selectedRole)) {
+      Swal.fire("Validation Error", "Selected role is invalid.", "error");
+      return;
+    }
+
+    const data = {
+      membership_id: userId,
+      action,
+      ...(isApproveAction ? { role: selectedRole } : {}),
+    };
+
+    try {
+      const response = await axios.post(
+        `${process.env.REACT_APP_BACKEND_URL}/manage_membership`,
+        data,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      Swal.fire("Success", response.data.message, "success");
+      getAllGroups();
+    } catch (error: any) {
+      Swal.fire(
+        "Error",
+        error?.response?.data?.message ||
+          "Failed to update membership. Please verify role and membership status.",
+        "error"
+      );
+    }
   };
-  const handleViewMembers = (event: React.MouseEvent<HTMLElement>, groupId: number) => {
-    setMembersPopover({ anchorEl: event.currentTarget, groupId });
+  const openMemberModal = (group: any, tab: "members" | "pending") => {
+    setMemberModalGroup(group);
+    setMemberModalTab(tab);
   };
 
-  const handleCloseMembersPopover = () => {
-    setMembersPopover({ anchorEl: null, groupId: null });
+  const closeMemberModal = () => {
+    setMemberModalGroup(null);
+    setMemberModalTab("members");
   };
-  const handleOpenPendingPopover = (event: React.MouseEvent<HTMLElement>, groupId: number) => {
-    setPendingPopover({ anchorEl: event.currentTarget, groupId }); // Attach popover to clicked element
-    setOpenPendingGroupId(groupId);  // Track which group's popover is open
-  };
-
-
-  const handleClosePendingPopover = () => {
-    console.log("Close button clicked");
-    setPendingPopover({ anchorEl: null, groupId: null }); // New object ensures state updates
-    setOpenPendingGroupId(null); // Also reset open group tracking
-  };
+  const approvedMembers =
+    memberModalGroup?.members?.filter((x: any) => x?.membership_status === "approved") || [];
+  const pendingMembers =
+    memberModalGroup?.members?.filter((x: any) => x?.membership_status === "pending") || [];
 
   const handleNodeRedMenuOpen = (
     event: React.MouseEvent<HTMLElement>,
@@ -686,91 +704,14 @@ const handleApplyNodeRed = async (groupId: string) => {
                                 }}
                               >
                                 {/* View Members */}
-                                <IconButton disabled={!group?.is_owner} color="primary" onClick={(e) => handleViewMembers(e, group?.id)}>
+                                <IconButton disabled={!group?.is_owner} color="primary" onClick={() => openMemberModal(group, "members")}>
                                   <GroupIcon />
                                 </IconButton>
-                                {membersPopover.groupId === group?.id && (
-                                  <Popover
-                                    open={Boolean(membersPopover.anchorEl)}
-                                    anchorEl={membersPopover.anchorEl}
-                                    onClose={handleCloseMembersPopover}
-                                    anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-                                    transformOrigin={{ vertical: "top", horizontal: "left" }}
-                                  >
-                                    <ClickAwayListener onClickAway={handleCloseMembersPopover}>
-                                      <Box sx={{ padding: 1, minWidth: 250, maxHeight: 300, overflowY: "auto" }}>
-                                        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: 1 }}>
-                                          <Typography variant="subtitle1">Members</Typography>
-                                          <IconButton size="small" onClick={handleCloseMembersPopover}>
-                                            <CloseIcon />
-                                          </IconButton>
-                                        </Box>
-                                        <Divider />
-                                        <List>
-                                          {group?.members?.some((x: any) => x?.membership_status === "approved") ? (
-                                            group?.members
-                                              .filter((x: any) => x?.membership_status === "approved")
-                                              .map((member: any, index: any) => (
-                                                <ListItem key={index} sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                                  <ListItemText primary={`${member?.first_name} ${member?.last_name}`} secondary={member?.email} />
-                                                  <IconButton color="error" size="small" onClick={() => handleLeaveGroup(group?.id, member.email, true)}>
-                                                    <RemoveCircleIcon />
-                                                  </IconButton>
-                                                </ListItem>
-                                              ))
-                                          ) : (
-                                            <Typography sx={{ padding: 1 }}>No approved members found.</Typography>
-                                          )}
-                                        </List>
-                                      </Box>
-                                    </ClickAwayListener>
-                                  </Popover>
-                                )}
 
                                 {/* View Pending Requests */}
-                                <IconButton color="warning" disabled={!group?.is_owner} onClick={(e) => handleOpenPendingPopover(e, group?.id)}>
+                                <IconButton color="warning" disabled={!group?.is_owner} onClick={() => openMemberModal(group, "pending")}>
                                   <HourglassEmptyIcon />
                                 </IconButton>
-                                {openPendingGroupId === group?.id && (
-                                  <Popover
-                                    open={Boolean(pendingPopover.anchorEl)}
-                                    anchorEl={pendingPopover.anchorEl}
-                                    onClose={handleClosePendingPopover}
-                                    anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-                                    transformOrigin={{ vertical: "top", horizontal: "left" }}
-                                  >
-                                    <ClickAwayListener onClickAway={handleClosePendingPopover}>
-                                      <Box sx={{ padding: 1, minWidth: 250, maxHeight: 300, overflowY: "auto" }}>
-                                        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: 1 }}>
-                                          <Typography variant="subtitle1">Pending Requests</Typography>
-                                          <IconButton size="small" onClick={handleClosePendingPopover}>
-                                            <CloseIcon />
-                                          </IconButton>
-                                        </Box>
-                                        <Divider />
-                                        <List>
-                                          {group?.members?.some((x: any) => x?.membership_status === "pending") ? (
-                                            group?.members
-                                              .filter((x: any) => x?.membership_status === "pending")
-                                              .map((member: any, index: any) => (
-                                                <ListItem key={index} sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                                  <ListItemText primary={`${member.first_name} ${member.last_name}`} secondary={member.email} />
-                                                  <IconButton color="success" size="small" onClick={() => handleAction("approve", member?.membership_id)}>
-                                                    <CheckCircleIcon />
-                                                  </IconButton>
-                                                  <IconButton color="error" size="small" onClick={() => handleAction("reject", member?.membership_id)}>
-                                                    <CancelIcon />
-                                                  </IconButton>
-                                                </ListItem>
-                                              ))
-                                          ) : (
-                                            <Typography sx={{ padding: 1 }}>No pending requests.</Typography>
-                                          )}
-                                        </List>
-                                      </Box>
-                                    </ClickAwayListener>
-                                  </Popover>
-                                )}
 
                                 {/* Leave Group */}
                                 <IconButton color="error" disabled={group?.is_owner} onClick={() => handleLeaveGroup(group?.id, userInfo?.email, false)}>
@@ -1060,6 +1001,188 @@ const handleApplyNodeRed = async (groupId: string) => {
           </Box>
         </>
       )}
+      <Dialog
+        open={Boolean(memberModalGroup)}
+        onClose={(_, reason) => {
+          if (reason === "backdropClick" || reason === "escapeKeyDown") return;
+          closeMemberModal();
+        }}
+        disableEscapeKeyDown
+        fullWidth
+        maxWidth="md"
+        PaperProps={{
+          sx: {
+            backgroundColor: "background.paper",
+            color: "text.primary",
+            borderRadius: 2,
+          },
+        }}
+      >
+        <DialogTitle
+          sx={(theme) => ({
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            borderBottom: `1px solid ${theme.palette.divider}`,
+            pb: 1.5
+          })}
+        >
+          <Box>
+            <Typography variant="h6" sx={{ fontWeight: 700 }}>Project Authorization</Typography>
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
+              Manage approved members and pending access requests
+            </Typography>
+          </Box>
+          <IconButton size="small" onClick={closeMemberModal}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers sx={{ px: 3, py: 2 }}>
+          <Box
+            sx={(theme) => ({
+              mb: 2,
+              px: 1.5,
+              py: 1.25,
+              border: `1px solid ${theme.palette.divider}`,
+              borderRadius: 1,
+              borderLeft: `5px solid ${Colors.main}`,
+              backgroundColor:
+                theme.palette.mode === "dark"
+                  ? "rgba(255,255,255,0.03)"
+                  : "background.default",
+            })}
+          >
+            <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+              {memberModalGroup?.name || "Project"}
+            </Typography>
+            <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>
+              Manage approved members and pending access requests for this project.
+            </Typography>
+            <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 0.5 }}>
+              Group ID: {memberModalGroup?.keycloak_group_id || "-"}
+            </Typography>
+          </Box>
+          <Tabs
+            value={memberModalTab}
+            onChange={(_, newTab) => setMemberModalTab(newTab)}
+            sx={(theme) => ({
+              mb: 2,
+              borderBottom: `1px solid ${theme.palette.divider}`,
+              "& .MuiTab-root": {
+                textTransform: "none",
+                fontWeight: 600,
+                color:
+                  theme.palette.mode === "dark"
+                    ? "rgba(255,255,255,0.75)"
+                    : `${Colors.main}B3`,
+              },
+              "& .Mui-selected": {
+                color: Colors.main,
+              },
+              "& .MuiTabs-indicator": {
+                backgroundColor: Colors.main,
+              },
+            })}
+          >
+            <Tab label={`Approved Members (${approvedMembers.length})`} value="members" />
+            <Tab label={`Pending Requests (${pendingMembers.length})`} value="pending" />
+          </Tabs>
+
+          {memberModalTab === "members" && (
+            <TableContainer component={Paper} variant="outlined" sx={{ maxHeight: 430 }}>
+              <Table stickyHeader size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 700, backgroundColor: "background.default" }}>Name</TableCell>
+                    <TableCell sx={{ fontWeight: 700, backgroundColor: "background.default" }}>Email</TableCell>
+                    <TableCell sx={{ fontWeight: 700, backgroundColor: "background.default" }}>Role</TableCell>
+                    <TableCell sx={{ fontWeight: 700, textAlign: "center", backgroundColor: "background.default" }}>Action</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {approvedMembers.length > 0 ? (
+                    approvedMembers.map((member: any, index: any) => (
+                      <TableRow key={index} hover>
+                        <TableCell>{`${member?.first_name} ${member?.last_name}`}</TableCell>
+                        <TableCell>{member?.email}</TableCell>
+                        <TableCell>
+                          <Chip
+                            label={member?.role || "reader"}
+                            size="small"
+                            color={member?.role === "editor" ? "secondary" : "primary"}
+                            variant={member?.role === "editor" ? "filled" : "outlined"}
+                          />
+                        </TableCell>
+                        <TableCell sx={{ textAlign: "center" }}>
+                          <IconButton
+                            color="error"
+                            size="small"
+                            onClick={() => handleLeaveGroup(memberModalGroup?.id, member.email, true)}
+                          >
+                            <RemoveCircleIcon />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={4} sx={{ py: 4, textAlign: "center", color: "text.secondary" }}>
+                        No approved members found.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+
+          {memberModalTab === "pending" && (
+            <TableContainer component={Paper} variant="outlined" sx={{ maxHeight: 430 }}>
+              <Table stickyHeader size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 700, backgroundColor: "background.default" }}>Name</TableCell>
+                    <TableCell sx={{ fontWeight: 700, backgroundColor: "background.default" }}>Email</TableCell>
+                    <TableCell sx={{ fontWeight: 700, textAlign: "center", backgroundColor: "background.default" }}>Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {pendingMembers.length > 0 ? (
+                    pendingMembers.map((member: any, index: any) => (
+                      <TableRow key={index} hover>
+                        <TableCell>{`${member.first_name} ${member.last_name}`}</TableCell>
+                        <TableCell>{member.email}</TableCell>
+                        <TableCell sx={{ textAlign: "center" }}>
+                          <IconButton
+                            color="success"
+                            size="small"
+                            onClick={() => handleAction("approve", member?.membership_id)}
+                          >
+                            <CheckCircleIcon />
+                          </IconButton>
+                          <IconButton
+                            color="error"
+                            size="small"
+                            onClick={() => handleAction("reject", member?.membership_id)}
+                          >
+                            <CancelIcon />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={3} sx={{ py: 4, textAlign: "center", color: "text.secondary" }}>
+                        No pending requests.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+        </DialogContent>
+      </Dialog>
       {isCreatingProject || loading && (
         <Box
           sx={{
