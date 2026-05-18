@@ -32,7 +32,10 @@ import {
   DialogContent,
   Tabs,
   Tab,
-  Chip
+  Chip,
+  FormControl,
+  InputLabel,
+  Select
 } from "@mui/material";
 import axios, { AxiosError } from "axios";
 import { useLocation } from "react-router-dom";
@@ -44,7 +47,7 @@ import ExitToAppIcon from "@mui/icons-material/ExitToApp"; // Leave Group
 import CheckCircleIcon from "@mui/icons-material/CheckCircle"; // Approve Icon
 import CancelIcon from "@mui/icons-material/Cancel"; // Reject Icon
 import CloseIcon from "@mui/icons-material/Close"; // Close Popover Ico
-import RemoveCircleIcon from "@mui/icons-material/RemoveCircle"; // Remove Member Icon
+import PersonRemoveAlt1Icon from "@mui/icons-material/PersonRemoveAlt1";
 import Tooltip from "@mui/material/Tooltip";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline"
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
@@ -79,6 +82,18 @@ export default function ListClients() {
   const [anchorEl, setAnchorEl] = useState(null);
   const [memberModalGroup, setMemberModalGroup] = useState<any | null>(null);
   const [memberModalTab, setMemberModalTab] = useState<"members" | "pending">("members");
+  const [memberActionDialog, setMemberActionDialog] = useState<{
+    open: boolean;
+    type: "approve" | "reject" | "changeRole";
+    membershipId?: any;
+    memberName?: string;
+    currentRole?: "reader" | "editor";
+    selectedRole: "reader" | "editor";
+  }>({
+    open: false,
+    type: "approve",
+    selectedRole: "reader",
+  });
   const [nodeRedMenuAnchor, setNodeRedMenuAnchor] = useState<null | HTMLElement>(null);
   const [nodeRedTargetGroup, setNodeRedTargetGroup] = useState<any>(null);
 
@@ -323,61 +338,84 @@ export default function ListClients() {
     }
   };
 
-  const handleAction = async (action: string, userId: any) => {
-    const isApproveAction = action === "approve";
-    const token = keycloak?.token;
-
-    const confirmation = await Swal.fire({
-      title: `Are you sure you want to ${action} this request?`,
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Yes",
-      cancelButtonText: "No",
-      input: isApproveAction ? "select" : undefined,
-      inputValue: isApproveAction ? "reader" : undefined,
-      inputOptions: isApproveAction
-        ? { reader: "Reader", editor: "Editor" }
-        : undefined,
-      inputPlaceholder: isApproveAction ? "Select role" : undefined,
-      inputValidator: isApproveAction
-        ? (value: string) => {
-            if (!value || !["reader", "editor"].includes(value)) {
-              return "Please select a valid role.";
-            }
-            return null;
-          }
-        : undefined,
+  const openMemberActionDialog = (
+    type: "approve" | "reject" | "changeRole",
+    member: any
+  ) => {
+    const memberName = `${member?.first_name || ""} ${member?.last_name || ""}`.trim();
+    const currentRole = member?.role === "editor" ? "editor" : "reader";
+    setMemberActionDialog({
+      open: true,
+      type,
+      membershipId: member?.membership_id,
+      memberName,
+      currentRole,
+      selectedRole: type === "changeRole" ? currentRole : "reader",
     });
+  };
 
-    if (!confirmation.isConfirmed) return;
+  const closeMemberActionDialog = () => {
+    setMemberActionDialog((prev) => ({ ...prev, open: false }));
+  };
 
-    const selectedRole = isApproveAction ? confirmation.value : undefined;
-    if (isApproveAction && !["reader", "editor"].includes(selectedRole)) {
-      Swal.fire("Validation Error", "Selected role is invalid.", "error");
+  const submitMemberActionDialog = async () => {
+    const token = keycloak?.token;
+    if (!token) {
+      toast.error("Authentication token not found.");
+      return;
+    }
+    if (!memberActionDialog.membershipId) {
+      toast.error("Membership ID is missing.");
       return;
     }
 
-    const data = {
-      membership_id: userId,
-      action,
-      ...(isApproveAction ? { role: selectedRole } : {}),
-    };
-
     try {
-      const response = await axios.post(
-        `${process.env.REACT_APP_BACKEND_URL}/manage_membership`,
-        data,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      Swal.fire("Success", response.data.message, "success");
+      if (memberActionDialog.type === "approve" || memberActionDialog.type === "reject") {
+        const action = memberActionDialog.type;
+        const payload = {
+          membership_id: memberActionDialog.membershipId,
+          action,
+          ...(action === "approve" ? { role: memberActionDialog.selectedRole } : {}),
+        };
+        const response = await axios.post(
+          `${process.env.REACT_APP_BACKEND_URL}/manage_membership`,
+          payload,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        toast.success(response?.data?.message || "Membership updated.");
+      }
+
+      if (memberActionDialog.type === "changeRole") {
+        if (memberActionDialog.selectedRole === memberActionDialog.currentRole) {
+          toast.info("Selected role is already assigned.");
+          closeMemberActionDialog();
+          return;
+        }
+
+        const payload = {
+          membership_id: memberActionDialog.membershipId,
+          role: memberActionDialog.selectedRole,
+        };
+        try {
+          await axios.post(
+            `${process.env.REACT_APP_BACKEND_URL}/change_member_role`,
+            payload,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+        } catch {
+          await axios.post(
+            `${process.env.REACT_APP_BACKEND_URL}/manage_membership`,
+            { membership_id: memberActionDialog.membershipId, action: "change_role", role: memberActionDialog.selectedRole },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+        }
+        toast.success("Member role updated successfully.");
+      }
+
+      closeMemberActionDialog();
       getAllGroups();
     } catch (error: any) {
-      Swal.fire(
-        "Error",
-        error?.response?.data?.message ||
-          "Failed to update membership. Please verify role and membership status.",
-        "error"
-      );
+      toast.error(error?.response?.data?.message || "Failed to update member.");
     }
   };
   const openMemberModal = (group: any, tab: "members" | "pending") => {
@@ -388,6 +426,7 @@ export default function ListClients() {
   const closeMemberModal = () => {
     setMemberModalGroup(null);
     setMemberModalTab("members");
+    closeMemberActionDialog();
   };
   const approvedMembers =
     memberModalGroup?.members?.filter((x: any) => x?.membership_status === "approved") || [];
@@ -1064,7 +1103,12 @@ const handleApplyNodeRed = async (groupId: string) => {
           </Box>
           <Tabs
             value={memberModalTab}
-            onChange={(_, newTab) => setMemberModalTab(newTab)}
+            onChange={(_, newTab) => {
+              setMemberModalTab(newTab);
+              if (memberActionDialog.open) {
+                closeMemberActionDialog();
+              }
+            }}
             sx={(theme) => ({
               mb: 2,
               borderBottom: `1px solid ${theme.palette.divider}`,
@@ -1088,6 +1132,83 @@ const handleApplyNodeRed = async (groupId: string) => {
             <Tab label={`Pending Requests (${pendingMembers.length})`} value="pending" />
           </Tabs>
 
+          {memberActionDialog.open && (
+            <Box
+              sx={(theme) => ({
+                mb: 2,
+                p: 2,
+                border: `1px solid ${theme.palette.divider}`,
+                borderRadius: 1,
+                backgroundColor: "background.default",
+                boxShadow: theme.shadows[0],
+              })}
+            >
+              <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                {memberActionDialog.type === "approve" && "Approve Request"}
+                {memberActionDialog.type === "reject" && "Reject Request"}
+                {memberActionDialog.type === "changeRole" && "Change Member Role"}
+              </Typography>
+              <Typography variant="body2" sx={{ mt: 0.5, mb: 1.5, color: "text.secondary" }}>
+                {memberActionDialog.memberName || "Selected member"}
+              </Typography>
+
+              {(memberActionDialog.type === "approve" || memberActionDialog.type === "changeRole") && (
+                <FormControl fullWidth size="small" sx={{ mb: 2 }}>
+                  <InputLabel id="member-role-label">Role</InputLabel>
+                  <Select
+                    labelId="member-role-label"
+                    label="Role"
+                    value={memberActionDialog.selectedRole}
+                    onChange={(e) =>
+                      setMemberActionDialog((prev) => ({
+                        ...prev,
+                        selectedRole: e.target.value as "reader" | "editor",
+                      }))
+                    }
+                  >
+                    <MenuItem value="reader">Reader</MenuItem>
+                    <MenuItem value="editor">Editor</MenuItem>
+                  </Select>
+                </FormControl>
+              )}
+
+              <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
+                <Button
+                  variant="outlined"
+                  onClick={closeMemberActionDialog}
+                  size="small"
+                  sx={{
+                    borderColor: Colors.main,
+                    color: Colors.main,
+                    textTransform: "none",
+                    fontWeight: 600,
+                    "&:hover": {
+                      borderColor: Colors.main,
+                      backgroundColor: "rgba(35,48,68,0.06)",
+                    },
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="contained"
+                  onClick={submitMemberActionDialog}
+                  size="small"
+                  sx={{
+                    backgroundColor: Colors.main,
+                    color: "#fff",
+                    textTransform: "none",
+                    fontWeight: 700,
+                    px: 2.25,
+                    "&:hover": { backgroundColor: Colors.main, opacity: 0.95 },
+                  }}
+                >
+                  Confirm
+                </Button>
+              </Box>
+            </Box>
+          )}
+
           {memberModalTab === "members" && (
             <TableContainer component={Paper} variant="outlined" sx={{ maxHeight: 430 }}>
               <Table stickyHeader size="small">
@@ -1096,7 +1217,7 @@ const handleApplyNodeRed = async (groupId: string) => {
                     <TableCell sx={{ fontWeight: 700, backgroundColor: "background.default" }}>Name</TableCell>
                     <TableCell sx={{ fontWeight: 700, backgroundColor: "background.default" }}>Email</TableCell>
                     <TableCell sx={{ fontWeight: 700, backgroundColor: "background.default" }}>Role</TableCell>
-                    <TableCell sx={{ fontWeight: 700, textAlign: "center", backgroundColor: "background.default" }}>Action</TableCell>
+                    <TableCell sx={{ fontWeight: 700, textAlign: "center", backgroundColor: "background.default" }}>Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -1114,13 +1235,27 @@ const handleApplyNodeRed = async (groupId: string) => {
                           />
                         </TableCell>
                         <TableCell sx={{ textAlign: "center" }}>
-                          <IconButton
-                            color="error"
-                            size="small"
-                            onClick={() => handleLeaveGroup(memberModalGroup?.id, member.email, true)}
-                          >
-                            <RemoveCircleIcon />
-                          </IconButton>
+                          <Tooltip title="Change Role">
+                            <span>
+                              <IconButton
+                                color="primary"
+                                size="small"
+                                disabled={!memberModalGroup?.is_owner}
+                                onClick={() => openMemberActionDialog("changeRole", member)}
+                              >
+                                <EditOutlinedIcon fontSize="small" />
+                              </IconButton>
+                            </span>
+                          </Tooltip>
+                          <Tooltip title="Remove Member">
+                            <IconButton
+                              color="error"
+                              size="small"
+                              onClick={() => handleLeaveGroup(memberModalGroup?.id, member.email, true)}
+                            >
+                              <PersonRemoveAlt1Icon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
                         </TableCell>
                       </TableRow>
                     ))
@@ -1153,20 +1288,20 @@ const handleApplyNodeRed = async (groupId: string) => {
                         <TableCell>{`${member.first_name} ${member.last_name}`}</TableCell>
                         <TableCell>{member.email}</TableCell>
                         <TableCell sx={{ textAlign: "center" }}>
-                          <IconButton
-                            color="success"
-                            size="small"
-                            onClick={() => handleAction("approve", member?.membership_id)}
-                          >
-                            <CheckCircleIcon />
-                          </IconButton>
-                          <IconButton
-                            color="error"
-                            size="small"
-                            onClick={() => handleAction("reject", member?.membership_id)}
-                          >
-                            <CancelIcon />
-                          </IconButton>
+                        <IconButton
+                          color="success"
+                          size="small"
+                          onClick={() => openMemberActionDialog("approve", member)}
+                        >
+                          <CheckCircleIcon />
+                        </IconButton>
+                        <IconButton
+                          color="error"
+                          size="small"
+                          onClick={() => openMemberActionDialog("reject", member)}
+                        >
+                          <CancelIcon />
+                        </IconButton>
                         </TableCell>
                       </TableRow>
                     ))
