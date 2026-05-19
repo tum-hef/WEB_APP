@@ -84,11 +84,12 @@ export default function ListClients() {
   const [memberModalTab, setMemberModalTab] = useState<"members" | "pending">("members");
   const [memberActionDialog, setMemberActionDialog] = useState<{
     open: boolean;
-    type: "approve" | "reject" | "changeRole";
+    type: "approve" | "reject" | "changeRole" | "removeMember";
     membershipId?: any;
     userId?: any;
     serviceId?: any;
     memberName?: string;
+    memberEmail?: string;
     currentRole?: "reader" | "editor";
     selectedRole: "reader" | "editor";
   }>({
@@ -102,7 +103,6 @@ export default function ListClients() {
 
   const [isCreatingProject, setIsCreatingProject] = useState(false);
   const dispatch = useAppDispatch();
-
 
 
   const message = searchParams.get("message");
@@ -342,7 +342,7 @@ export default function ListClients() {
   };
 
   const openMemberActionDialog = (
-    type: "approve" | "reject" | "changeRole",
+    type: "approve" | "reject" | "changeRole" | "removeMember",
     member: any
   ) => {
     const memberName = `${member?.first_name || ""} ${member?.last_name || ""}`.trim();
@@ -363,6 +363,7 @@ export default function ListClients() {
       userId: memberUserId,
       serviceId,
       memberName,
+      memberEmail: member?.email,
       currentRole,
       selectedRole: type === "changeRole" ? currentRole : "reader",
     });
@@ -379,7 +380,12 @@ export default function ListClients() {
       toast.error("Authentication token not found.");
       return;
     }
-    if (!memberActionDialog.membershipId) {
+    if (
+      (memberActionDialog.type === "approve" ||
+        memberActionDialog.type === "reject" ||
+        memberActionDialog.type === "changeRole") &&
+      !memberActionDialog.membershipId
+    ) {
       toast.error("Membership ID is missing.");
       return;
     }
@@ -423,6 +429,21 @@ export default function ListClients() {
           { headers: { Authorization: `Bearer ${token}` } }
         );
         toast.success("Member role updated successfully.");
+      }
+      if (memberActionDialog.type === "removeMember") {
+        if (!memberActionDialog.serviceId || !memberActionDialog.memberEmail) {
+          toast.error("Missing group_id or user email for remove action.");
+          return;
+        }
+        const response = await axios.post(
+          `${process.env.REACT_APP_BACKEND_URL}/leave_group`,
+          {
+            user_email: memberActionDialog.memberEmail,
+            group_id: memberActionDialog.serviceId,
+          },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        toast.success(response?.data?.message || "Member removed successfully.");
       }
 
       closeMemberActionDialog();
@@ -1170,10 +1191,16 @@ const handleApplyNodeRed = async (groupId: string) => {
                 {memberActionDialog.type === "approve" && "Approve Request"}
                 {memberActionDialog.type === "reject" && "Reject Request"}
                 {memberActionDialog.type === "changeRole" && "Change Member Role"}
+                {memberActionDialog.type === "removeMember" && "Remove Member"}
               </Typography>
               <Typography variant="body2" sx={{ mt: 0.5, mb: 1.5, color: "text.secondary" }}>
                 {memberActionDialog.memberName || "Selected member"}
               </Typography>
+              {memberActionDialog.type === "removeMember" && (
+                <Typography variant="body2" sx={{ mb: 1.5, color: "error.main", fontWeight: 600 }}>
+                  This will remove the member from this project.
+                </Typography>
+              )}
 
               {(memberActionDialog.type === "approve" || memberActionDialog.type === "changeRole") && (
                 <FormControl fullWidth size="small" sx={{ mb: 2 }}>
@@ -1288,18 +1315,21 @@ const handleApplyNodeRed = async (groupId: string) => {
                             </span>
                           </Tooltip>
                           <Tooltip title="Remove Member">
-                            <IconButton
-                              color="inherit"
-                              size="small"
-                              onClick={() => handleLeaveGroup(memberModalGroup?.id, member.email, true)}
-                              sx={{
-                                backgroundColor: "error.main",
-                                color: "#fff",
-                                "&:hover": { backgroundColor: "error.main", opacity: 0.92 },
-                              }}
-                            >
-                              <PersonRemoveAlt1Icon fontSize="small" />
-                            </IconButton>
+                            <span>
+                              <IconButton
+                                color="inherit"
+                                size="small"
+                                disabled={!memberModalGroup?.is_owner}
+                                onClick={() => openMemberActionDialog("removeMember", member)}
+                                sx={{
+                                  backgroundColor: "error.main",
+                                  color: "#fff",
+                                  "&:hover": { backgroundColor: "error.main", opacity: 0.92 },
+                                }}
+                              >
+                                <PersonRemoveAlt1Icon fontSize="small" />
+                              </IconButton>
+                            </span>
                           </Tooltip>
                         </TableCell>
                       </TableRow>
