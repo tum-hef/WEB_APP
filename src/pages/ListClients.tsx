@@ -1224,24 +1224,38 @@ const handleApplyNodeRed = async (groupId: string) => {
                   {approvedMembers.length > 0 ? (
                     approvedMembers.map((member: any, index: any) => (
                       <TableRow key={index} hover>
-                        <TableCell>{`${member?.first_name} ${member?.last_name}`}</TableCell>
-                        <TableCell>{member?.email}</TableCell>
+                        <TableCell sx={{ py: 1.2 }}>{`${member?.first_name} ${member?.last_name}`}</TableCell>
+                        <TableCell sx={{ py: 1.2 }}>{member?.email}</TableCell>
                         <TableCell>
                           <Chip
-                            label={member?.role || "reader"}
+                            label={(member?.role || "reader").toUpperCase()}
                             size="small"
                             color={member?.role === "editor" ? "secondary" : "primary"}
-                            variant={member?.role === "editor" ? "filled" : "outlined"}
+                            variant="filled"
+                            sx={
+                              member?.role === "editor"
+                                ? {}
+                                : {
+                                    backgroundColor: Colors.main,
+                                    color: "#fff",
+                                  }
+                            }
                           />
                         </TableCell>
                         <TableCell sx={{ textAlign: "center" }}>
                           <Tooltip title="Change Role">
                             <span>
                               <IconButton
-                                color="primary"
+                                color="inherit"
                                 size="small"
                                 disabled={!memberModalGroup?.is_owner}
                                 onClick={() => openMemberActionDialog("changeRole", member)}
+                                sx={{
+                                  backgroundColor: Colors.main,
+                                  color: "#fff",
+                                  mr: 0.75,
+                                  "&:hover": { backgroundColor: Colors.main, opacity: 0.92 },
+                                }}
                               >
                                 <EditOutlinedIcon fontSize="small" />
                               </IconButton>
@@ -1249,9 +1263,14 @@ const handleApplyNodeRed = async (groupId: string) => {
                           </Tooltip>
                           <Tooltip title="Remove Member">
                             <IconButton
-                              color="error"
+                              color="inherit"
                               size="small"
                               onClick={() => handleLeaveGroup(memberModalGroup?.id, member.email, true)}
+                              sx={{
+                                backgroundColor: "error.main",
+                                color: "#fff",
+                                "&:hover": { backgroundColor: "error.main", opacity: 0.92 },
+                              }}
                             >
                               <PersonRemoveAlt1Icon fontSize="small" />
                             </IconButton>
@@ -1285,23 +1304,38 @@ const handleApplyNodeRed = async (groupId: string) => {
                   {pendingMembers.length > 0 ? (
                     pendingMembers.map((member: any, index: any) => (
                       <TableRow key={index} hover>
-                        <TableCell>{`${member.first_name} ${member.last_name}`}</TableCell>
-                        <TableCell>{member.email}</TableCell>
+                        <TableCell sx={{ py: 1.2 }}>{`${member.first_name} ${member.last_name}`}</TableCell>
+                        <TableCell sx={{ py: 1.2 }}>{member.email}</TableCell>
                         <TableCell sx={{ textAlign: "center" }}>
-                        <IconButton
-                          color="success"
-                          size="small"
-                          onClick={() => openMemberActionDialog("approve", member)}
-                        >
-                          <CheckCircleIcon />
-                        </IconButton>
-                        <IconButton
-                          color="error"
-                          size="small"
-                          onClick={() => openMemberActionDialog("reject", member)}
-                        >
-                          <CancelIcon />
-                        </IconButton>
+                          <Tooltip title="Approve Request">
+                            <IconButton
+                              color="inherit"
+                              size="small"
+                              onClick={() => openMemberActionDialog("approve", member)}
+                              sx={{
+                                backgroundColor: "success.main",
+                                color: "#fff",
+                                mr: 0.75,
+                                "&:hover": { backgroundColor: "success.main", opacity: 0.92 },
+                              }}
+                            >
+                              <CheckCircleIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Reject Request">
+                            <IconButton
+                              color="inherit"
+                              size="small"
+                              onClick={() => openMemberActionDialog("reject", member)}
+                              sx={{
+                                backgroundColor: "error.main",
+                                color: "#fff",
+                                "&:hover": { backgroundColor: "error.main", opacity: 0.92 },
+                              }}
+                            >
+                              <CancelIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
                         </TableCell>
                       </TableRow>
                     ))
