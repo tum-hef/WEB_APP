@@ -86,6 +86,8 @@ export default function ListClients() {
     open: boolean;
     type: "approve" | "reject" | "changeRole";
     membershipId?: any;
+    userId?: any;
+    serviceId?: any;
     memberName?: string;
     currentRole?: "reader" | "editor";
     selectedRole: "reader" | "editor";
@@ -94,6 +96,7 @@ export default function ListClients() {
     type: "approve",
     selectedRole: "reader",
   });
+  const [memberActionSubmitting, setMemberActionSubmitting] = useState(false);
   const [nodeRedMenuAnchor, setNodeRedMenuAnchor] = useState<null | HTMLElement>(null);
   const [nodeRedTargetGroup, setNodeRedTargetGroup] = useState<any>(null);
 
@@ -344,10 +347,21 @@ export default function ListClients() {
   ) => {
     const memberName = `${member?.first_name || ""} ${member?.last_name || ""}`.trim();
     const currentRole = member?.role === "editor" ? "editor" : "reader";
+    const memberUserId =
+      member?.user_id ??
+      member?.keycloak_user_id ??
+      member?.userid ??
+      member?.id;
+    const serviceId =
+      memberModalGroup?.id ??
+      memberModalGroup?.service_id ??
+      memberModalGroup?.keycloak_group_id;
     setMemberActionDialog({
       open: true,
       type,
       membershipId: member?.membership_id,
+      userId: memberUserId,
+      serviceId,
       memberName,
       currentRole,
       selectedRole: type === "changeRole" ? currentRole : "reader",
@@ -355,6 +369,7 @@ export default function ListClients() {
   };
 
   const closeMemberActionDialog = () => {
+    if (memberActionSubmitting) return;
     setMemberActionDialog((prev) => ({ ...prev, open: false }));
   };
 
@@ -369,6 +384,7 @@ export default function ListClients() {
       return;
     }
 
+    setMemberActionSubmitting(true);
     try {
       if (memberActionDialog.type === "approve" || memberActionDialog.type === "reject") {
         const action = memberActionDialog.type;
@@ -391,24 +407,21 @@ export default function ListClients() {
           closeMemberActionDialog();
           return;
         }
+        if (!memberActionDialog.serviceId || !memberActionDialog.userId) {
+          toast.error("Missing service_id or user_id for role update.");
+          return;
+        }
 
         const payload = {
-          membership_id: memberActionDialog.membershipId,
+          service_id: memberActionDialog.serviceId,
+          user_id: memberActionDialog.userId,
           role: memberActionDialog.selectedRole,
         };
-        try {
-          await axios.post(
-            `${process.env.REACT_APP_BACKEND_URL}/change_member_role`,
-            payload,
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
-        } catch {
-          await axios.post(
-            `${process.env.REACT_APP_BACKEND_URL}/manage_membership`,
-            { membership_id: memberActionDialog.membershipId, action: "change_role", role: memberActionDialog.selectedRole },
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
-        }
+        await axios.post(
+          `${process.env.REACT_APP_BACKEND_URL}/change_member_role`,
+          payload,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
         toast.success("Member role updated successfully.");
       }
 
@@ -416,6 +429,8 @@ export default function ListClients() {
       getAllGroups();
     } catch (error: any) {
       toast.error(error?.response?.data?.message || "Failed to update member.");
+    } finally {
+      setMemberActionSubmitting(false);
     }
   };
   const openMemberModal = (group: any, tab: "members" | "pending") => {
@@ -432,6 +447,14 @@ export default function ListClients() {
     memberModalGroup?.members?.filter((x: any) => x?.membership_status === "approved") || [];
   const pendingMembers =
     memberModalGroup?.members?.filter((x: any) => x?.membership_status === "pending") || [];
+
+  useEffect(() => {
+    if (!memberModalGroup?.id) return;
+    const refreshedGroup = myGroups.find((g: any) => g?.id === memberModalGroup.id);
+    if (refreshedGroup) {
+      setMemberModalGroup(refreshedGroup);
+    }
+  }, [myGroups, memberModalGroup?.id]);
 
   const handleNodeRedMenuOpen = (
     event: React.MouseEvent<HTMLElement>,
@@ -1159,6 +1182,7 @@ const handleApplyNodeRed = async (groupId: string) => {
                     labelId="member-role-label"
                     label="Role"
                     value={memberActionDialog.selectedRole}
+                    disabled={memberActionSubmitting}
                     onChange={(e) =>
                       setMemberActionDialog((prev) => ({
                         ...prev,
@@ -1176,6 +1200,7 @@ const handleApplyNodeRed = async (groupId: string) => {
                 <Button
                   variant="outlined"
                   onClick={closeMemberActionDialog}
+                  disabled={memberActionSubmitting}
                   size="small"
                   sx={{
                     borderColor: Colors.main,
@@ -1193,6 +1218,7 @@ const handleApplyNodeRed = async (groupId: string) => {
                 <Button
                   variant="contained"
                   onClick={submitMemberActionDialog}
+                  disabled={memberActionSubmitting}
                   size="small"
                   sx={{
                     backgroundColor: Colors.main,
@@ -1203,7 +1229,7 @@ const handleApplyNodeRed = async (groupId: string) => {
                     "&:hover": { backgroundColor: Colors.main, opacity: 0.95 },
                   }}
                 >
-                  Confirm
+                  {memberActionSubmitting ? "Confirming..." : "Confirm"}
                 </Button>
               </Box>
             </Box>
