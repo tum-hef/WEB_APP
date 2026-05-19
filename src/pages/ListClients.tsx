@@ -36,6 +36,7 @@ import {
   FormControl,
   InputLabel,
   Select
+  , Alert
 } from "@mui/material";
 import axios, { AxiosError } from "axios";
 import { useLocation } from "react-router-dom";
@@ -102,7 +103,19 @@ export default function ListClients() {
   const [nodeRedTargetGroup, setNodeRedTargetGroup] = useState<any>(null);
 
   const [isCreatingProject, setIsCreatingProject] = useState(false);
+  const [groupSearchFeedback, setGroupSearchFeedback] = useState<{
+    severity: "success" | "info" | "warning" | "error";
+    message: string;
+  } | null>(null);
   const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    if (!groupSearchFeedback) return;
+    const timer = setTimeout(() => {
+      setGroupSearchFeedback(null);
+    }, 4000);
+    return () => clearTimeout(timer);
+  }, [groupSearchFeedback]);
 
 
   const message = searchParams.get("message");
@@ -261,6 +274,7 @@ export default function ListClients() {
       toast.error("Group ID is required.");
       return;
     }
+    setGroupSearchFeedback(null);
 
     try {
       const token = keycloak?.token;
@@ -288,36 +302,30 @@ export default function ListClients() {
       // Check if the response is an array (user is not a member and can join)
       if (Array.isArray(groupData)) {
         setJoinNewGroups(groupData);
-
-        Swal.fire({
-          icon: "success",
-          title: "Success!",
-          text: "Project details fetched successfully.",
-          confirmButtonColor: "#3085d6",
+        setGroupSearchFeedback({
+          severity: "success",
+          message: "Project details fetched successfully.",
         });
       }
       // Check if response is an object with status (user is already a member or owner)
       else if (groupData?.status === "owner") {
-        Swal.fire({
-          icon: "info",
-          title: "Info",
-          text: "You are already the owner of this project.",
-          confirmButtonColor: "#3085d6",
+        setJoinNewGroups([]);
+        setGroupSearchFeedback({
+          severity: "info",
+          message: "You are already the owner of this project.",
         });
       } else if (groupData?.status === "member") {
-        Swal.fire({
-          icon: "info",
-          title: "Info",
-          text: "You are already a member of this project.",
-          confirmButtonColor: "#3085d6",
+        setJoinNewGroups([]);
+        setGroupSearchFeedback({
+          severity: "info",
+          message: "You are already a member of this project.",
         });
       } else {
         // Handle unexpected response formats
-        Swal.fire({
-          icon: "warning",
-          title: "Warning",
-          text: "Unexpected response received.",
-          confirmButtonColor: "#f39c12",
+        setJoinNewGroups([]);
+        setGroupSearchFeedback({
+          severity: "warning",
+          message: "Unexpected response received.",
         });
       }
     } catch (error: any) {
@@ -331,12 +339,10 @@ export default function ListClients() {
       }
 
       toast.error(errorMessage);
-
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: errorMessage,
-        confirmButtonColor: "#d33",
+      setJoinNewGroups([]);
+      setGroupSearchFeedback({
+        severity: "error",
+        message: errorMessage,
       });
     }
   };
@@ -532,11 +538,7 @@ const handleApplyNodeRed = async (groupId: string) => {
 
   const joinGroup = async (group_id: any) => {
     if (!group_id) {
-      Swal.fire({
-        icon: "warning",
-        title: "Invalid Group",
-        text: "Please select a valid project to join.",
-      });
+      toast.warning("Please select a valid project to join.");
       return;
     }
 
@@ -549,18 +551,19 @@ const handleApplyNodeRed = async (groupId: string) => {
         `${process.env.REACT_APP_BACKEND_URL}/join_group`,
         data
       );
-      Swal.fire({
-        icon: "success",
-        title: "Join Request Sent",
-        text: response?.data?.message || "Your request to join the project was successful!",
+      toast.success(response?.data?.message || "Your request to join the project was successful.");
+      setGroupSearchFeedback({
+        severity: "success",
+        message: "Join request sent successfully.",
       });
       getAllGroups();
     } catch (error: any) {
       console.error("Error joining group:", error);
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: error.response?.data?.message || "Failed to join the project. Please try again later.",
+      const message = error.response?.data?.message || "Failed to join the project. Please try again later.";
+      toast.error(message);
+      setGroupSearchFeedback({
+        severity: "error",
+        message,
       });
     }
   };
@@ -1026,6 +1029,20 @@ const handleApplyNodeRed = async (groupId: string) => {
                     </Grid>
                   </Grid>
                 </Box>
+                {groupSearchFeedback && (
+                  <Alert
+                    severity={groupSearchFeedback.severity}
+                    sx={{
+                      mt: 2,
+                      mb: 1,
+                      borderRadius: 1.5,
+                      border: "1px solid",
+                      borderColor: "divider",
+                    }}
+                  >
+                    {groupSearchFeedback.message}
+                  </Alert>
+                )}
 
                 {joinNewGroups?.length > 0 && (
                   <TableContainer component={Paper} sx={{ maxHeight: "70vh", overflowY: "auto" }}>
