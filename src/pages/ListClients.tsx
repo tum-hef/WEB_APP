@@ -3,6 +3,7 @@ import { ToastContainer, toast } from "react-toastify";
 import { useKeycloak } from "@react-keycloak/web";
 import { useEffect, useState } from "react";
 import Dashboard from "../components/DashboardComponent";
+import EntityFormModal from "../components/EntityFormModal";
 
 import {
   Accordion,
@@ -99,6 +100,13 @@ export default function ListClients() {
     selectedRole: "reader",
   });
   const [memberActionSubmitting, setMemberActionSubmitting] = useState(false);
+  const [editProjectDialog, setEditProjectDialog] = useState<{
+    open: boolean;
+    groupId?: number;
+  }>({
+    open: false,
+  });
+  const [editProjectSubmitting, setEditProjectSubmitting] = useState(false);
   const [nodeRedMenuAnchor, setNodeRedMenuAnchor] = useState<null | HTMLElement>(null);
   const [nodeRedTargetGroup, setNodeRedTargetGroup] = useState<any>(null);
 
@@ -204,6 +212,51 @@ export default function ListClients() {
           }
         }
       });
+    },
+  });
+
+  const editProjectFormik = useFormik({
+    initialValues: {
+      name: "",
+      description: "",
+    },
+    validationSchema: Yup.object({
+      name: Yup.string().trim().required("Project name is required"),
+      description: Yup.string().trim().required("Project description is required"),
+    }),
+    onSubmit: async (values) => {
+      if (!editProjectDialog.groupId) {
+        toast.error("Project ID is missing.");
+        return;
+      }
+
+      try {
+        setEditProjectSubmitting(true);
+        const token = keycloak?.token;
+        await axios.patch(
+          `${process.env.REACT_APP_BACKEND_URL}/projects/${editProjectDialog.groupId}`,
+          {
+            project_name: values.name.trim(),
+            project_description: values.description.trim(),
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        toast.success("Project updated successfully!");
+        setEditProjectDialog({
+          open: false,
+          groupId: undefined,
+        });
+        getAllGroups();
+      } catch (error: any) {
+        toast.error(error?.response?.data?.message || "Failed to update project.");
+      } finally {
+        setEditProjectSubmitting(false);
+      }
     },
   });
 
@@ -614,59 +667,23 @@ const handleApplyNodeRed = async (groupId: string) => {
     });
   };
 
-  // Update Project Function
+  const openEditProjectDialog = (group: any) => {
+    setEditProjectDialog({
+      open: true,
+      groupId: group?.id,
+    });
+    editProjectFormik.setValues({
+      name: group?.name || "",
+      description: group?.description || "",
+    });
+    editProjectFormik.setTouched({});
+  };
 
-  const handleEditProjectSwal = (group: any) => {
-    Swal.fire({
-      title: "Edit Project",
-      html: `
-     <div class="swal-input-row-with-label">` +
-        `<label for="name">New Name</label>` +
-        `<div class="swal-input-field">` +
-        `<input id="name" class="swal2-input" placeholder="Enter the new device name" value="${group?.name || ""
-        }">` +
-        `</div>` +
-        `</div>` +
-        `<div class="swal-input-row">` +
-        `<label for="description">New Description</label>` +
-        `<input id="description" class="swal2-input" placeholder="Enter the new device description" value="${group?.description || ""
-        }">` +
-        `</div>
-    `,
-      showCancelButton: true,
-      confirmButtonText: "Save",
-      showLoaderOnConfirm: true,
-      preConfirm: () => {
-        const name = (document.getElementById("name") as HTMLInputElement).value.trim();
-        const description = (document.getElementById("description") as HTMLInputElement).value.trim();
-
-        if (!name) {
-          Swal.showValidationMessage("Please enter a project name");
-          return false;
-        }
-
-        return { name, description };
-      },
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        try {
-          const token = keycloak?.token;
-          await axios.patch(`${process.env.REACT_APP_BACKEND_URL}/projects/${group.id}`, {
-            project_name: result.value.name,
-            project_description: result.value.description
-          }, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json"
-            }
-          });
-
-          await Swal.fire("Success", "Project updated successfully!", "success");
-          getAllGroups();
-        } catch (error) {
-          await Swal.fire("Error", "Failed to update project", "error");
-        }
-      }
+  const closeEditProjectDialog = () => {
+    if (editProjectSubmitting) return;
+    setEditProjectDialog({
+      open: false,
+      groupId: undefined,
     });
   };
 
@@ -820,7 +837,7 @@ const handleApplyNodeRed = async (groupId: string) => {
                                 </IconButton>
 
                                 {/* Edit Group */}
-                                <IconButton color="error" disabled={!group?.is_owner} onClick={() => handleEditProjectSwal(group)}>
+                                <IconButton color="error" disabled={!group?.is_owner} onClick={() => openEditProjectDialog(group)}>
                                   <Tooltip title="Edit Project">
                                     <EditOutlinedIcon />
                                   </Tooltip>
@@ -1121,6 +1138,36 @@ const handleApplyNodeRed = async (groupId: string) => {
           </Box>
         </>
       )}
+      <EntityFormModal
+        open={editProjectDialog.open}
+        onClose={closeEditProjectDialog}
+        title="Edit Project"
+        sectionTitle="Project Details"
+        formik={editProjectFormik}
+        fields={[
+          { name: "name", label: "Project Name", xs: 12, sm: 12 },
+          {
+            name: "description",
+            label: "Project Description",
+            multiline: true,
+            minRows: 3,
+            xs: 12,
+            sm: 12,
+          },
+        ]}
+        submitting={editProjectSubmitting}
+        submitLabel="Save"
+        primaryButtonSx={{
+          backgroundColor: Colors.main,
+          "&:hover": { backgroundColor: Colors.main, opacity: 0.95 },
+        }}
+        cancelButtonSx={{
+          borderColor: Colors.main,
+          color: Colors.main,
+          "&:hover": { borderColor: Colors.main, backgroundColor: "rgba(35,48,68,0.06)" },
+        }}
+      />
+
       <Dialog
         open={Boolean(memberModalGroup)}
         onClose={(_, reason) => {
