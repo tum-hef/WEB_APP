@@ -347,12 +347,17 @@ export default function ListClients() {
     }
   };
 
+  const normalizeMemberRole = (roleValue: any): "reader" | "editor" => {
+    const normalized = String(roleValue || "").trim().toLowerCase();
+    return normalized === "editor" || normalized === "editors" ? "editor" : "reader";
+  };
+
   const openMemberActionDialog = (
     type: "approve" | "reject" | "changeRole" | "removeMember",
     member: any
   ) => {
     const memberName = `${member?.first_name || ""} ${member?.last_name || ""}`.trim();
-    const currentRole = member?.role === "editors" ? "editor" : "reader";
+    const currentRole = normalizeMemberRole(member?.role);
     const memberUserId =
       member?.user_id ??
       member?.keycloak_user_id ??
@@ -1310,13 +1315,16 @@ const handleApplyNodeRed = async (groupId: string) => {
                         <TableCell sx={{ py: 1.2 }}>{`${member?.first_name} ${member?.last_name}`}</TableCell>
                         <TableCell sx={{ py: 1.2 }}>{member?.email}</TableCell>
                         <TableCell>
+                          {(() => {
+                            const role = normalizeMemberRole(member?.role);
+                            return (
                           <Chip
-                            label={(member?.role  === "Editors" ? "editor" : "reader").toUpperCase()}
+                            label={role.toUpperCase()}
                             size="small"
-                            color={member?.role === "Editors" ? "secondary" : "primary"}
+                            color={role === "editor" ? "secondary" : "primary"}
                             variant="filled"
                             sx={
-                              member?.role === "Editors"
+                              role === "editor"
                                 ? {}
                                 : {
                                     backgroundColor: Colors.main,
@@ -1324,6 +1332,8 @@ const handleApplyNodeRed = async (groupId: string) => {
                                   }
                             }
                           />
+                            );
+                          })()}
                         </TableCell>
                         <TableCell sx={{ textAlign: "center" }}>
                           <Tooltip title="Change Role">
