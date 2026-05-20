@@ -107,6 +107,7 @@ export default function ListClients() {
     severity: "success" | "info" | "warning" | "error";
     message: string;
   } | null>(null);
+  const [nodeRedToggleFeedback, setNodeRedToggleFeedback] = useState<string | null>(null);
   const dispatch = useAppDispatch();
 
   useEffect(() => {
@@ -116,6 +117,14 @@ export default function ListClients() {
     }, 4000);
     return () => clearTimeout(timer);
   }, [groupSearchFeedback]);
+
+  useEffect(() => {
+    if (!nodeRedToggleFeedback) return;
+    const timer = setTimeout(() => {
+      setNodeRedToggleFeedback(null);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [nodeRedToggleFeedback]);
 
 
   const message = searchParams.get("message");
@@ -149,6 +158,7 @@ export default function ListClients() {
         .required("Project description is required"),
     }),
     onSubmit: async (values, { resetForm }) => {
+      setNodeRedToggleFeedback(null);
       const token = keycloak?.token;
       if (!token) {
         Swal.fire("Error", "Authentication token not found. Please log in.", "error");
@@ -919,6 +929,19 @@ const handleApplyNodeRed = async (groupId: string) => {
               </AccordionSummary>
               <AccordionDetails>
                 <Box component="form" onSubmit={formikCreateProject.handleSubmit} sx={{ width: "100%" }}>
+                  {nodeRedToggleFeedback && (
+                    <Alert
+                      severity="info"
+                      sx={{
+                        mb: 2,
+                        borderRadius: 1.5,
+                        border: "1px solid",
+                        borderColor: "divider",
+                      }}
+                    >
+                      {nodeRedToggleFeedback}
+                    </Alert>
+                  )}
                   <Grid container spacing={2}>
                     <Grid item xs={12} sm={6}>
                       <TextField
@@ -959,19 +982,11 @@ const handleApplyNodeRed = async (groupId: string) => {
                             onChange={(e) => {
                               const checked = e.target.checked;
                               formikCreateProject.setFieldValue("includeNodeRed", checked);
-
-                              Swal.fire({
-                                icon: "info",
-                                title: "Node-RED Toggle",
-                                text: checked
+                              setNodeRedToggleFeedback(
+                                checked
                                   ? "Node-RED will be included in this project."
-                                  : "Node-RED will not be included in this project.",
-                                timer: 2500,
-                                showConfirmButton: false,
-                                position: "bottom-end",
-                                toast: true,
-
-                              });
+                                  : "Node-RED will not be included in this project."
+                              );
                             }}
                           />
                         }
