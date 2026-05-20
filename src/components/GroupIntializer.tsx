@@ -29,12 +29,24 @@ useEffect(() => {
 
         const savedGroupId = localStorage.getItem("group_id");
         const validGroup = groups.find((g: any) => g.group_name_id === savedGroupId);
+        const wasRemovedFromSelectedGroup = Boolean(savedGroupId) && !validGroup;
 
         // Prioritize localStorage value if it's valid
-        const finalGroupId = validGroup ? validGroup.group_name_id : groups[0]?.group_name_id;
+        const finalGroupId = validGroup ? validGroup.group_name_id : groups[0]?.group_name_id || "";
 
-        dispatch(setSelectedGroupId(finalGroupId));
-        localStorage.setItem("group_id", finalGroupId);
+        if (wasRemovedFromSelectedGroup) {
+          localStorage.removeItem("group_id");
+          dispatch(setSelectedGroupId(""));
+          window.location.assign("/dashboard");
+          return;
+        }
+
+        dispatch(setSelectedGroupId(finalGroupId || ""));
+        if (finalGroupId) {
+          localStorage.setItem("group_id", finalGroupId);
+        } else {
+          localStorage.removeItem("group_id");
+        }
       }
     } catch (err) {
       console.error("Error fetching groups:", err);
