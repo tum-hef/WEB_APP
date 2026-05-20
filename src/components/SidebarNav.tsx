@@ -56,6 +56,27 @@ const PerfectScrollbar = styled(ReactPerfectScrollbar)`
 const Items = styled.div`
   padding-top: ${(props) => props.theme.spacing(2.5)};
   padding-bottom: ${(props) => props.theme.spacing(2.5)};
+
+  /* Prevent MUI default light highlight flashes inside dark sidebar. */
+  .MuiListItemButton-root {
+    color: #ffffff;
+    background-color: transparent;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .MuiListItemButton-root:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .MuiListItemButton-root.Mui-selected,
+  .MuiListItemButton-root.Mui-selected:hover,
+  .MuiListItemButton-root.Mui-focusVisible {
+    background-color: rgba(255, 255, 255, 0.14);
+  }
+
+  .MuiTouchRipple-root {
+    display: none;
+  }
 `;
 
 type SidebarNavProps = {

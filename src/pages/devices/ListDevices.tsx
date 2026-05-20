@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { useFormik } from "formik";
 import {
@@ -21,6 +21,7 @@ import MapIcon from "@mui/icons-material/Map";
 import { useAppSelector, useIsOwner } from "../../hooks/hooks";
 import DataTableCardV2 from "../../components/DataGridServerSide";
 import EntityFormModal from "../../components/EntityFormModal";
+import ConfirmDeleteDialog from "../../components/ConfirmDeleteDialog";
 import { editDeviceValidationSchema } from "../../formik/validation_schema";
 
 const Devices = () => {
@@ -40,6 +41,9 @@ const Devices = () => {
   const [editOpen, setEditOpen] = useState(false);
   const [editingDeviceId, setEditingDeviceId] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deviceToDelete, setDeviceToDelete] = useState<any | null>(null);
   const isOwner = useIsOwner();
   const primaryButtonSx = {
     backgroundColor: "rgb(35, 48, 68)",
@@ -174,7 +178,81 @@ const Devices = () => {
     }
   }, [frostServerPort]);
 
-  const columnDefs = [
+  const openEditDialog = useCallback(
+    (row: any) => {
+      setEditingDeviceId(row?.["@iot.id"]);
+      editFormik.setValues({
+        name: row?.name || "",
+        description: row?.description || "",
+      });
+      setEditOpen(true);
+    },
+    [editFormik.setValues]
+  );
+
+  const openDeleteDialog = useCallback((row: any) => {
+    setDeviceToDelete(row);
+    setDeleteOpen(true);
+  }, []);
+
+  const closeDeleteDialog = useCallback(() => {
+    if (deleting) return;
+    setDeleteOpen(false);
+    setDeviceToDelete(null);
+  }, [deleting]);
+
+  const confirmDeleteDevice = useCallback(async () => {
+    if (!deviceToDelete) return;
+
+    try {
+      setDeleting(true);
+      const response = await axios.post(
+        `${process.env.REACT_APP_BACKEND_URL}/delete`,
+        {
+          url: `Things(${deviceToDelete["@iot.id"]})`,
+          FROST_PORT: frostServerPort,
+          keycloak_id: userInfo?.sub,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `${token}`,
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        Swal.fire({ icon: "success", title: "Success", text: "Device deleted successfully!" });
+        setDevices((prev) => prev.filter((device) => device["@iot.id"] !== deviceToDelete["@iot.id"]));
+      } else {
+        Swal.fire({ icon: "error", title: "Oops...", text: "Something went wrong! Device not deleted!" });
+      }
+    } catch {
+      axios.post(
+        `http://localhost:4500/mutation_error_logs`,
+        {
+          keycloak_id: userInfo?.sub,
+          method: "DELETE",
+          attribute: "Devices",
+          attribute_id: deviceToDelete["@iot.id"],
+          frost_port: frostServerPort,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      Swal.fire({ icon: "error", title: "Oops...", text: "Something went wrong! Device not deleted!" });
+    } finally {
+      setDeleting(false);
+      setDeleteOpen(false);
+      setDeviceToDelete(null);
+    }
+  }, [deviceToDelete, frostServerPort, token, userInfo?.sub]);
+
+  const columnDefs = useMemo(() => [
     {
       headerName: "ID",
       field: "@iot.id",
@@ -231,12 +309,7 @@ const Devices = () => {
             }}
             onClick={() => {
               if (!isOwner) return;
-              setEditingDeviceId(row?.["@iot.id"]);
-              editFormik.setValues({
-                name: row?.name || "",
-                description: row?.description || "",
-              });
-              setEditOpen(true);
+              openEditDialog(row);
             }}
           />
         );
@@ -259,77 +332,7 @@ const Devices = () => {
             }}
             onClick={() => {
               if (!isOwner) return;
-
-              Swal.fire({
-                title: `Are you sure you want to delete ${row.name}?`,
-                text: "You will not be able to recover this device! Linked datastream might become dysfunctional!",
-                icon: "warning",
-                showCancelButton: true,
-                confirmButtonColor: "#3085d6",
-                cancelButtonColor: "#d33",
-                confirmButtonText: "Yes, delete it!",
-              }).then(async (result) => {
-                if (result.isConfirmed) {
-                  try {
-                    const response = await axios.post(
-                      `${process.env.REACT_APP_BACKEND_URL}/delete`,
-                      {
-                        url: `Things(${row["@iot.id"]})`,
-                        FROST_PORT: frostServerPort,
-                        keycloak_id: userInfo?.sub,
-                      },
-                      {
-                        headers: {
-                          "Content-Type": "application/json",
-                          Authorization: `${token}`,
-                        },
-                      }
-                    );
-
-                    if (response.status === 200) {
-                      Swal.fire({
-                        icon: "success",
-                        title: "Success",
-                        text: "Device deleted successfully!",
-                      });
-
-                      const newDevices = devices.filter(
-                        (device) => device["@iot.id"] !== row["@iot.id"]
-                      );
-                      setDevices(newDevices);
-                    } else {
-                      Swal.fire({
-                        icon: "error",
-                        title: "Oops...",
-                        text: "Something went wrong! Device not deleted!",
-                      });
-                    }
-                  } catch (error) {
-                    axios.post(
-                      `http://localhost:4500/mutation_error_logs`,
-                      {
-                        keycloak_id: userInfo?.sub,
-                        method: "DELETE",
-                        attribute: "Devices",
-                        attribute_id: row["@iot.id"],
-                        frost_port: frostServerPort,
-                      },
-                      {
-                        headers: {
-                          "Content-Type": "application/json",
-                          Authorization: `Bearer ${token}`,
-                        },
-                      }
-                    );
-
-                    Swal.fire({
-                      icon: "error",
-                      title: "Oops...",
-                      text: "Something went wrong! Device not deleted!",
-                    });
-                  }
-                }
-              });
+              openDeleteDialog(row);
             }}
           />
         );
@@ -358,7 +361,7 @@ const Devices = () => {
         );
       },
     },
-  ];
+  ], [isOwner, openDeleteDialog, openEditDialog]);
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
@@ -460,6 +463,16 @@ Each device can have one or more datastreams (e.g., temperature, humidity) that 
         submitting={saving}
         submitLabel="Save"
         primaryButtonSx={primaryButtonSx}
+        cancelButtonSx={cancelButtonSx}
+      />
+      <ConfirmDeleteDialog
+        open={deleteOpen}
+        title="Delete Device"
+        entityName={deviceToDelete?.name || ""}
+        description="You will not be able to recover this device. Linked datastreams might become dysfunctional."
+        loading={deleting}
+        onCancel={closeDeleteDialog}
+        onConfirm={confirmDeleteDevice}
         cancelButtonSx={cancelButtonSx}
       />
     </Dashboard>

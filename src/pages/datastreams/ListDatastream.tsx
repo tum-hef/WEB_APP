@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import axios from "axios";
 import { useFormik } from "formik";
 import { Breadcrumbs, Button, Typography } from "@mui/material";
@@ -17,6 +17,7 @@ import { useAppSelector, useIsOwner } from "../../hooks/hooks";
 import DataTableCardV2 from "../../components/DataGridServerSide"
 import BiotechSharpIcon from "@mui/icons-material/BiotechSharp";
 import EntityFormModal from "../../components/EntityFormModal";
+import ConfirmDeleteDialog from "../../components/ConfirmDeleteDialog";
 import { editDatastreamValidationSchema } from "../../formik/validation_schema";
 
 const DESCRIPTION_WORD_LIMIT = 7;
@@ -83,6 +84,9 @@ const ListDatastream = () => {
   const [editOpen, setEditOpen] = useState(false);
   const [editingDatastreamId, setEditingDatastreamId] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [datastreamToDelete, setDatastreamToDelete] = useState<any | null>(null);
   const selectedGroupId = useAppSelector(
     (state) => state.roles.selectedGroupId
   );
@@ -246,42 +250,93 @@ const fetchDatastreams = useCallback(
     }
   };
 
-  const handleDeleteDatastream = async (id: number) => {
-    const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
-    const isDev = process.env.REACT_APP_IS_DEVELOPMENT === "true";
-    const baseUrl = isDev
-      ? `${backend_url}:${frostServerPort}`
-      : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}`;
-
-    try {
-      const confirmed = await Swal.fire({
-        title: "Are you sure?",
-        text: "This will permanently delete the datastream.",
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonColor: "#d33",
-        cancelButtonColor: "#3085d6",
-        confirmButtonText: "Yes, delete it!",
+  const openEditDialog = useCallback(
+    (row: any) => {
+      setEditingDatastreamId(row?.["@iot.id"]);
+      editFormik.setValues({
+        description: row?.description || "",
+        unit_name: row?.unitOfMeasurement?.name || "",
+        unit_symbol: row?.unitOfMeasurement?.symbol || "",
+        unit_definition: row?.unitOfMeasurement?.definition || "",
       });
+      setEditOpen(true);
+    },
+    [editFormik.setValues]
+  );
 
-      if (confirmed.isConfirmed) {
-        const deleteUrl = `${baseUrl}/FROST-Server/v1.0/Datastreams(${id})`;
+  const openDeleteDialog = useCallback((row: any) => {
+    setDatastreamToDelete(row);
+    setDeleteOpen(true);
+  }, []);
 
-        await axios.delete(deleteUrl, {
+  const closeDeleteDialog = useCallback(() => {
+    if (deleting) return;
+    setDeleteOpen(false);
+    setDatastreamToDelete(null);
+  }, [deleting]);
+
+  const confirmDeleteDatastream = useCallback(async () => {
+    if (!datastreamToDelete) return;
+    try {
+      setDeleting(true);
+      const response = await axios.post(
+        `${process.env.REACT_APP_BACKEND_URL}/delete`,
+        {
+          url: `Datastreams(${datastreamToDelete["@iot.id"]})`,
+          FROST_PORT: frostServerPort,
+          keycloak_id: userInfo?.sub,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `${token}`,
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        Swal.fire({
+          icon: "success",
+          title: "Deleted!",
+          text: `Datastream "${datastreamToDelete.name}" deleted successfully!`,
+        });
+        setDatastreams((prev) => prev.filter((ds) => ds["@iot.id"] !== datastreamToDelete["@iot.id"]));
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Oops...",
+          text: "Datastream not deleted! Try again.",
+        });
+      }
+    } catch {
+      axios.post(
+        `http://localhost:4500/mutation_error_logs`,
+        {
+          keycloak_id: userInfo?.sub,
+          method: "DELETE",
+          attribute: "Datastreams",
+          attribute_id: datastreamToDelete["@iot.id"],
+          frost_port: frostServerPort,
+        },
+        {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-        });
+        }
+      );
 
-        toast.success("Datastream deleted successfully!");
-        fetchDatastreams(); // Refresh the list
-      }
-    } catch (error) {
-      console.error("Error deleting datastream:", error);
-      toast.error("Failed to delete datastream");
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Something went wrong while deleting the datastream.",
+      });
+    } finally {
+      setDeleting(false);
+      setDeleteOpen(false);
+      setDatastreamToDelete(null);
     }
-  };
+  }, [datastreamToDelete, frostServerPort, token, userInfo?.sub]);
 
  const handlePageChange = (newPage: number) => {
   setPage(newPage);
@@ -309,7 +364,7 @@ const handlePageSizeChange = (newPageSize: number) => {
     }
   }, [frostServerPort]);
 
-  const columns = [
+  const columns = useMemo(() => [
     {
       headerName: "ID",
       field: "@iot.id",
@@ -387,14 +442,7 @@ const handlePageSizeChange = (newPageSize: number) => {
           onClick={() => {
             const row = params?.data;
             if (!isOwner) return;
-            setEditingDatastreamId(row?.["@iot.id"]);
-            editFormik.setValues({
-              description: row?.description || "",
-              unit_name: row?.unitOfMeasurement?.name || "",
-              unit_symbol: row?.unitOfMeasurement?.symbol || "",
-              unit_definition: row?.unitOfMeasurement?.definition || "",
-            });
-            setEditOpen(true);
+            openEditDialog(row);
           }}
         />
       ),
@@ -415,78 +463,7 @@ const handlePageSizeChange = (newPageSize: number) => {
           onClick={() => {
             if (!isOwner) return;
             const row = params?.data;
-            Swal.fire({
-              title: `Delete "${row.name}"?`,
-              text: "This will permanently delete the datastream and its related data!",
-              icon: "warning",
-              showCancelButton: true,
-              confirmButtonColor: "#3085d6",
-              cancelButtonColor: "#d33",
-              confirmButtonText: "Yes, delete it!",
-            }).then(async (result) => {
-              if (result.isConfirmed) {
-                try {
-                  const response = await axios.post(
-                    `${process.env.REACT_APP_BACKEND_URL}/delete`,
-                    {
-                      url: `Datastreams(${row["@iot.id"]})`,
-                      FROST_PORT: frostServerPort,
-                      keycloak_id: userInfo?.sub,
-                    },
-                    {
-                      headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `${token}`, // 👈 No "Bearer" prefix since your current API works that way
-                      },
-                    }
-                  );
-
-                  if (response.status === 200) {
-                    Swal.fire({
-                      icon: "success",
-                      title: "Deleted!",
-                      text: `Datastream "${row.name}" deleted successfully!`,
-                    });
-
-                    // Remove the deleted datastream from state
-                    const updatedList = datastreams.filter(
-                      (ds) => ds["@iot.id"] !== row["@iot.id"]
-                    );
-                    setDatastreams(updatedList);
-                  } else {
-                    Swal.fire({
-                      icon: "error",
-                      title: "Oops...",
-                      text: "Datastream not deleted! Try again.",
-                    });
-                  }
-                } catch (error) {
-                  // Log error via your error tracking API
-                  axios.post(
-                    `http://localhost:4500/mutation_error_logs`,
-                    {
-                      keycloak_id: userInfo?.sub,
-                      method: "DELETE",
-                      attribute: "Datastreams",
-                      attribute_id: row["@iot.id"],
-                      frost_port: frostServerPort,
-                    },
-                    {
-                      headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${token}`,
-                      },
-                    }
-                  );
-
-                  Swal.fire({
-                    icon: "error",
-                    title: "Error",
-                    text: "Something went wrong while deleting the datastream.",
-                  });
-                }
-              }
-            });
+            openDeleteDialog(row);
           }}
         />
       ),
@@ -530,7 +507,7 @@ const handlePageSizeChange = (newPageSize: number) => {
       sortable: false,
       filter: false,
     },
-  ];
+  ], [isOwner, openDeleteDialog, openEditDialog]);
 
 
   return (
@@ -622,6 +599,16 @@ const handlePageSizeChange = (newPageSize: number) => {
         submitting={saving}
         submitLabel="Save"
         primaryButtonSx={primaryButtonSx}
+        cancelButtonSx={cancelButtonSx}
+      />
+      <ConfirmDeleteDialog
+        open={deleteOpen}
+        title="Delete Datastream"
+        entityName={datastreamToDelete?.name || ""}
+        description="This will permanently delete the datastream and its related data."
+        loading={deleting}
+        onCancel={closeDeleteDialog}
+        onConfirm={confirmDeleteDatastream}
         cancelButtonSx={cancelButtonSx}
       />
     </Dashboard>

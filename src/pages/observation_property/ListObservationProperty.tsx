@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import axios from "axios";
 import { useFormik } from "formik";
 import { Breadcrumbs, Button, Typography } from "@mui/material";
@@ -16,6 +16,7 @@ import { GAactionsObservationProperties } from "../../utils/GA";
 import { useAppSelector, useIsOwner } from "../../hooks/hooks";
 import DataTableCardV2 from "../../components/DataGridServerSide";
 import EntityFormModal from "../../components/EntityFormModal";
+import ConfirmDeleteDialog from "../../components/ConfirmDeleteDialog";
 import { editObservationPropertyValidationSchema } from "../../formik/validation_schema";
 
 const ListObservationProperty = () => {
@@ -37,6 +38,9 @@ const [sortQuery, setSortQuery] = useState("");
   const [editOpen, setEditOpen] = useState(false);
   const [editingObservedPropertyId, setEditingObservedPropertyId] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [observationPropertyToDelete, setObservationPropertyToDelete] = useState<any | null>(null);
   const selectedGroupId = useAppSelector(state => state.roles.selectedGroupId);
   const group = useAppSelector(state =>
     state.roles.groups.find(g => g?.group_name_id === selectedGroupId)
@@ -208,7 +212,91 @@ const [sortQuery, setSortQuery] = useState("");
 }, [frostServerPort]);
 
 
-  const columns = [
+  const openEditDialog = useCallback(
+    (row: any) => {
+      setEditingObservedPropertyId(row?.["@iot.id"]);
+      editFormik.setValues({
+        name: row?.name || "",
+        description: row?.description || "",
+        definition: row?.definition || "",
+      });
+      setEditOpen(true);
+    },
+    [editFormik.setValues]
+  );
+
+  const openDeleteDialog = useCallback((row: any) => {
+    setObservationPropertyToDelete(row);
+    setDeleteOpen(true);
+  }, []);
+
+  const closeDeleteDialog = useCallback(() => {
+    if (deleting) return;
+    setDeleteOpen(false);
+    setObservationPropertyToDelete(null);
+  }, [deleting]);
+
+  const confirmDeleteObservationProperty = useCallback(async () => {
+    if (!observationPropertyToDelete) return;
+    try {
+      setDeleting(true);
+      const response = await axios.post(
+        `${process.env.REACT_APP_BACKEND_URL}/delete`,
+        {
+          url: `ObservedProperties(${observationPropertyToDelete["@iot.id"]})`,
+          FROST_PORT: frostServerPort,
+          keycloak_id: userInfo?.sub,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `${token}`,
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        Swal.fire({ icon: "success", title: "Success", text: "Measurement Property deleted successfully!" });
+        setObservationProperty((prev) =>
+          prev.filter((observation_property) => observation_property["@iot.id"] !== observationPropertyToDelete["@iot.id"])
+        );
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Oops...",
+          text: "Something went wrong! Measurement Property not deleted!",
+        });
+      }
+    } catch {
+      await axios.post(
+        `http://localhost:4500/mutation_error_logs`,
+        {
+          keycloak_id: userInfo?.sub,
+          method: "DELETE",
+          attribute: "Measurement Property",
+          attribute_id: observationPropertyToDelete["@iot.id"],
+          frost_port: frostServerPort,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${keycloak?.token}`,
+          },
+        }
+      );
+      Swal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: "Something went wrong! Measurement Property not deleted!",
+      });
+    } finally {
+      setDeleting(false);
+      setDeleteOpen(false);
+      setObservationPropertyToDelete(null);
+    }
+  }, [frostServerPort, keycloak?.token, observationPropertyToDelete, token, userInfo?.sub]);
+
+  const columns = useMemo(() => [
     {
       headerName: "ID",
       field: "@iot.id",
@@ -259,13 +347,7 @@ const [sortQuery, setSortQuery] = useState("");
           onClick={() => {
             const row = params?.data;
             if (!isOwner) return;
-            setEditingObservedPropertyId(row?.["@iot.id"]);
-            editFormik.setValues({
-              name: row?.name || "",
-              description: row?.description || "",
-              definition: row?.definition || "",
-            });
-            setEditOpen(true);
+            openEditDialog(row);
           }}
         />
       ),
@@ -285,82 +367,14 @@ const [sortQuery, setSortQuery] = useState("");
           onClick={() => {
             const row = params?.data;
             if (!isOwner) return;
-            Swal.fire({
-              title: `Are you sure you want to delete ${row.name}?`,
-              text: "You will not be able to recover this Measurement Property! Linked datastream might become disfunctional!",
-              icon: "warning",
-              showCancelButton: true,
-              confirmButtonColor: "#3085d6",
-              cancelButtonColor: "#d33",
-              confirmButtonText: "Yes, delete it!",
-            }).then(async (result) => {
-              if (result.isConfirmed) {
-                try {
-                  const response = await axios.post(
-                    `${process.env.REACT_APP_BACKEND_URL}/delete`,
-                    {
-                      url: `ObservedProperties(${row["@iot.id"]})`,
-                      FROST_PORT: frostServerPort,
-                      keycloak_id: userInfo?.sub,
-                    },
-                    {
-                      headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `${token}`,
-                      },
-                    }
-                  );
-
-                  if (response.status === 200) {
-                    Swal.fire({
-                      icon: "success",
-                      title: "Success",
-                      text: "Measurement Property deleted successfully!",
-                    });
-                    const newObservationProperty = observationProperty.filter(
-                      (observation_property) =>
-                        observation_property["@iot.id"] !== row["@iot.id"]
-                    );
-                    setObservationProperty(newObservationProperty);
-                  } else {
-                    Swal.fire({
-                      icon: "error",
-                      title: "Oops...",
-                      text: "Something went wrong! Measurement Property not deleted!",
-                    });
-                  }
-                } catch (error) {
-                  await axios.post(
-                    `http://localhost:4500/mutation_error_logs`,
-                    {
-                      keycloak_id: userInfo?.sub,
-                      method: "DELETE",
-                      attribute: "Measurement Property",
-                      attribute_id: row["@iot.id"],
-                      frost_port: frostServerPort,
-                    },
-                    {
-                      headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${keycloak?.token}`,
-                      },
-                    }
-                  );
-                  Swal.fire({
-                    icon: "error",
-                    title: "Oops...",
-                    text: "Something went wrong! Measurement Property not deleted!",
-                  });
-                }
-              }
-            });
+            openDeleteDialog(row);
           }}
         />
       ),
       flex: 1,
       filter: false,
     },
-  ];
+  ], [isOwner, keycloak?.token, openDeleteDialog, openEditDialog]);
 
   const handlePageChange = (newPage: number) => {
   setPage(newPage);
@@ -464,6 +478,16 @@ and may include a definition or reference for clarity and standardization."
         submitting={saving}
         submitLabel="Save"
         primaryButtonSx={primaryButtonSx}
+        cancelButtonSx={cancelButtonSx}
+      />
+      <ConfirmDeleteDialog
+        open={deleteOpen}
+        title="Delete Measurement Property"
+        entityName={observationPropertyToDelete?.name || ""}
+        description="You will not be able to recover this measurement property. Linked datastreams might become dysfunctional."
+        loading={deleting}
+        onCancel={closeDeleteDialog}
+        onConfirm={confirmDeleteObservationProperty}
         cancelButtonSx={cancelButtonSx}
       />
 

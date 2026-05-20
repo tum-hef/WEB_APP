@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import axios from "axios";
 import { useFormik } from "formik";
 import { Breadcrumbs, Button, Typography } from "@mui/material";
@@ -16,6 +16,7 @@ import { useIsOwner } from "../../hooks/hooks";
 import DeleteForeverOutlinedIcon from "@mui/icons-material/DeleteForeverOutlined";
 import DataTableCardV2 from "../../components/DataGridServerSide";
 import EntityFormModal from "../../components/EntityFormModal";
+import ConfirmDeleteDialog from "../../components/ConfirmDeleteDialog";
 import { editLocationValidationSchema } from "../../formik/validation_schema";
 
 const ListLocations = () => {
@@ -36,6 +37,9 @@ const ListLocations = () => {
   const [editOpen, setEditOpen] = useState(false);
   const [editingLocationId, setEditingLocationId] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [locationToDelete, setLocationToDelete] = useState<any | null>(null);
 
   const isOwner = useIsOwner();
   const primaryButtonSx = {
@@ -155,6 +159,7 @@ const ListLocations = () => {
           $top: newPageSize,
           $skip: newPage * newPageSize,
           $count: true,
+          $expand: "Things($select=@iot.id)",
           ...(filter && { $filter: filter }),
           ...(sort && { $orderby: sort }),
         },
@@ -214,7 +219,40 @@ const ListLocations = () => {
     }
   }, [frostServerPort]);
 
-  const columnDefs = [
+  const openDeleteDialog = useCallback((row: any) => {
+    setLocationToDelete(row);
+    setDeleteOpen(true);
+  }, []);
+
+  const closeDeleteDialog = useCallback(() => {
+    if (deleting) return;
+    setDeleteOpen(false);
+    setLocationToDelete(null);
+  }, [deleting]);
+
+  const openEditDialog = useCallback(
+    (row: any) => {
+      const currentLat = row?.location?.coordinates?.[1];
+      const currentLng = row?.location?.coordinates?.[0];
+      setEditingLocationId(row?.["@iot.id"]);
+      editFormik.setValues({
+        name: row?.name || "",
+        description: row?.description || "",
+        latitude:
+          currentLat !== undefined && currentLat !== null
+            ? String(currentLat)
+            : "",
+        longitude:
+          currentLng !== undefined && currentLng !== null
+            ? String(currentLng)
+            : "",
+      });
+      setEditOpen(true);
+    },
+    [editFormik.setValues]
+  );
+
+  const columnDefs = useMemo(() => [
     {
       headerName: "ID",
       field: "@iot.id",
@@ -261,32 +299,19 @@ const ListLocations = () => {
       headerName: "Edit",
       cellRenderer: (params: any) => {
         const row = params.data;
+        const hasLinkedThing = Boolean(row?.Things?.[0]?.["@iot.id"]);
+        const canEdit = isOwner && hasLinkedThing;
         return (
           <EditOutlinedIcon
             style={{
-              cursor: isOwner ? "pointer" : "not-allowed",
-              color: isOwner ? "red" : "gray",
-              opacity: isOwner ? 1 : 0.4,
-              pointerEvents: isOwner ? "auto" : "none",
+              cursor: canEdit ? "pointer" : "not-allowed",
+              color: canEdit ? "red" : "gray",
+              opacity: canEdit ? 1 : 0.4,
+              pointerEvents: canEdit ? "auto" : "none",
             }}
             onClick={() => {
-              if (!isOwner) return;
-              const currentLat = row?.location?.coordinates?.[1];
-              const currentLng = row?.location?.coordinates?.[0];
-              setEditingLocationId(row?.["@iot.id"]);
-              editFormik.setValues({
-                name: row?.name || "",
-                description: row?.description || "",
-                latitude:
-                  currentLat !== undefined && currentLat !== null
-                    ? String(currentLat)
-                    : "",
-                longitude:
-                  currentLng !== undefined && currentLng !== null
-                    ? String(currentLng)
-                    : "",
-              });
-              setEditOpen(true);
+              if (!canEdit) return;
+              openEditDialog(row);
             }}
           />
         );
@@ -308,48 +333,7 @@ const ListLocations = () => {
             }}
             onClick={() => {
               if (!isOwner) return;
-              Swal.fire({
-                title: `Are you sure you want to delete "${row.name}"?`,
-                text: "This will permanently delete the location!",
-                icon: "warning",
-                showCancelButton: true,
-                confirmButtonText: "Yes, delete it!",
-              }).then(async (result) => {
-                if (result.isConfirmed) {
-                  try {
-                    const response = await axios.post(
-                      `${process.env.REACT_APP_BACKEND_URL}/delete`,
-                      {
-                        url: `Locations(${row["@iot.id"]})`,
-                        FROST_PORT: frostServerPort,
-                        keycloak_id: userInfo?.sub,
-                      },
-                      {
-                        headers: {
-                          "Content-Type": "application/json",
-                          Authorization: `Bearer ${token}`,
-                        },
-                      }
-                    );
-
-                    if (response.status === 200) {
-                      Swal.fire("Deleted!", "Location deleted successfully!", "success");
-                      setLocations(locations.filter((loc: any) => loc["@iot.id"] !== row["@iot.id"]));
-                    } else {
-                      Swal.fire("Error", "Location not deleted!", "error");
-                    }
-                  } catch {
-                    axios.post("http://localhost:4500/mutation_error_logs", {
-                      keycloak_id: userInfo?.sub,
-                      method: "DELETE",
-                      attribute: "Locations",
-                      attribute_id: row["@iot.id"],
-                      frost_port: frostServerPort,
-                    });
-                    Swal.fire("Error", "Something went wrong while deleting.", "error");
-                  }
-                }
-              });
+              openDeleteDialog(row);
             }}
           />
         );
@@ -367,7 +351,7 @@ const ListLocations = () => {
       ),
       filter: false
     },
-  ];
+  ], [isOwner, openDeleteDialog, openEditDialog]);
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
@@ -379,6 +363,50 @@ const ListLocations = () => {
     setPageSize(newPageSize);
     setPageLinks({});
     fetchLocations(0, newPageSize, filterQuery, sortQuery);
+  };
+
+  const confirmDeleteLocation = async () => {
+    if (!locationToDelete) return;
+
+    try {
+      setDeleting(true);
+      const response = await axios.post(
+        `${process.env.REACT_APP_BACKEND_URL}/delete`,
+        {
+          url: `Locations(${locationToDelete["@iot.id"]})`,
+          FROST_PORT: frostServerPort,
+          keycloak_id: userInfo?.sub,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        Swal.fire("Deleted!", "Location deleted successfully!", "success");
+        setLocations(
+          locations.filter((loc: any) => loc["@iot.id"] !== locationToDelete["@iot.id"])
+        );
+      } else {
+        Swal.fire("Error", "Location not deleted!", "error");
+      }
+    } catch {
+      axios.post("http://localhost:4500/mutation_error_logs", {
+        keycloak_id: userInfo?.sub,
+        method: "DELETE",
+        attribute: "Locations",
+        attribute_id: locationToDelete["@iot.id"],
+        frost_port: frostServerPort,
+      });
+      Swal.fire("Error", "Something went wrong while deleting.", "error");
+    } finally {
+      setDeleting(false);
+      setDeleteOpen(false);
+      setLocationToDelete(null);
+    }
   };
 
 
@@ -472,6 +500,19 @@ Each location includes a name, description, and geographic coordinates, and can 
         submitting={saving}
         submitLabel="Save"
         primaryButtonSx={primaryButtonSx}
+        cancelButtonSx={cancelButtonSx}
+      />
+      <ConfirmDeleteDialog
+        open={deleteOpen}
+        title="Delete Location"
+        entityName={locationToDelete?.name || ""}
+        description="This will remove the location and its map reference from this list."
+        warningText="This action is permanent and cannot be undone."
+        loading={deleting}
+        onCancel={closeDeleteDialog}
+        onConfirm={confirmDeleteLocation}
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
         cancelButtonSx={cancelButtonSx}
       />
 

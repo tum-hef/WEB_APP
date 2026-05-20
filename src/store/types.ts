@@ -12,7 +12,7 @@ export interface GroupAttributes {
     project_description: string | null;
     attributes: GroupAttributes;
     permissions: string[];
-    role: 'owner' | 'reader';
+    role: 'owner' | 'reader' | 'editor';
   }
   
   export interface ClientRoleMapping {

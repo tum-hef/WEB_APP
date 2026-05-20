@@ -9,5 +9,6 @@ export const useIsOwner = (): boolean => {
     const group = useAppSelector((state) =>
       state.roles.groups.find((g) => g.group_name_id === selectedGroupId)
     );
-    return group?.role === "owner";
+    // Keep legacy hook name, but allow write access for owner and editor roles.
+    return group?.role === "owner" || group?.role === "editor";
   };

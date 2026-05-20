@@ -1,8 +1,9 @@
 import LinkCustom from "../components/LinkCustom";
 import { ToastContainer, toast } from "react-toastify";
 import { useKeycloak } from "@react-keycloak/web";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Dashboard from "../components/DashboardComponent";
+import EntityFormModal from "../components/EntityFormModal";
 
 import {
   Accordion,
@@ -22,17 +23,21 @@ import {
   TableRow,
   TextField,
   Typography,
-  Popover,
-  List,
-  ListItem,
-  ListItemText,
-  Divider,
-  ClickAwayListener,
   CircularProgress,
   FormControlLabel,
   Switch,
   Menu,
-  MenuItem
+  MenuItem,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  Tabs,
+  Tab,
+  Chip,
+  FormControl,
+  InputLabel,
+  Select
+  , Alert
 } from "@mui/material";
 import axios, { AxiosError } from "axios";
 import { useLocation } from "react-router-dom";
@@ -44,7 +49,7 @@ import ExitToAppIcon from "@mui/icons-material/ExitToApp"; // Leave Group
 import CheckCircleIcon from "@mui/icons-material/CheckCircle"; // Approve Icon
 import CancelIcon from "@mui/icons-material/Cancel"; // Reject Icon
 import CloseIcon from "@mui/icons-material/Close"; // Close Popover Ico
-import RemoveCircleIcon from "@mui/icons-material/RemoveCircle"; // Remove Member Icon
+import PersonRemoveAlt1Icon from "@mui/icons-material/PersonRemoveAlt1";
 import Tooltip from "@mui/material/Tooltip";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline"
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
@@ -53,6 +58,7 @@ import * as Yup from "yup";
 import { setSelectedGroupId } from "../store/rolesSlice";
 import { useAppDispatch } from "../hooks/hooks";
 import { Settings } from "@mui/icons-material";
+import { Colors } from "../styles/Colors";
 
 
 interface Group {
@@ -76,22 +82,59 @@ export default function ListClients() {
   const [joinNewGroups, setJoinNewGroups] = useState<any[]>([]);
   const [myGroups, setMyGroups] = useState<any[]>([]);
   const [anchorEl, setAnchorEl] = useState(null);
-  const [pendingRequests, setPendingRequests] = useState([]);
-  const [anchorElPending, setAnchorElPending] = useState(null);
-  const [selectedMembers, setSelectedMembers] = useState([]);
-  const [openPendingGroupId, setOpenPendingGroupId] = useState<number | null>(null);
-  const [pendingPopover, setPendingPopover] = useState<{ anchorEl: HTMLElement | null, groupId: number | null }>({ anchorEl: null, groupId: null });
-  const [membersPopover, setMembersPopover] = useState<{ anchorEl: HTMLElement | null, groupId: number | null }>({ anchorEl: null, groupId: null });
+  const [memberModalGroup, setMemberModalGroup] = useState<any | null>(null);
+  const [memberModalTab, setMemberModalTab] = useState<"members" | "pending">("members");
+  const [memberActionDialog, setMemberActionDialog] = useState<{
+    open: boolean;
+    type: "approve" | "reject" | "changeRole" | "removeMember";
+    membershipId?: any;
+    userId?: any;
+    serviceId?: any;
+    memberName?: string;
+    memberEmail?: string;
+    currentRole?: "reader" | "editor";
+    selectedRole: "reader" | "editor";
+  }>({
+    open: false,
+    type: "approve",
+    selectedRole: "reader",
+  });
+  const [memberActionSubmitting, setMemberActionSubmitting] = useState(false);
+  const [editProjectDialog, setEditProjectDialog] = useState<{
+    open: boolean;
+    groupId?: number;
+  }>({
+    open: false,
+  });
+  const [editProjectSubmitting, setEditProjectSubmitting] = useState(false);
   const [nodeRedMenuAnchor, setNodeRedMenuAnchor] = useState<null | HTMLElement>(null);
   const [nodeRedTargetGroup, setNodeRedTargetGroup] = useState<any>(null);
 
   const [isCreatingProject, setIsCreatingProject] = useState(false);
+  const [groupSearchFeedback, setGroupSearchFeedback] = useState<{
+    severity: "success" | "info" | "warning" | "error";
+    message: string;
+  } | null>(null);
+  const [nodeRedToggleFeedback, setNodeRedToggleFeedback] = useState<string | null>(null);
   const dispatch = useAppDispatch();
 
+  useEffect(() => {
+    if (!groupSearchFeedback) return;
+    const timer = setTimeout(() => {
+      setGroupSearchFeedback(null);
+    }, 4000);
+    return () => clearTimeout(timer);
+  }, [groupSearchFeedback]);
+
+  useEffect(() => {
+    if (!nodeRedToggleFeedback) return;
+    const timer = setTimeout(() => {
+      setNodeRedToggleFeedback(null);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [nodeRedToggleFeedback]);
 
 
-  const popoverRef = useRef(null); // ✅ Store popover anchor in a ref
-  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const message = searchParams.get("message");
   const validationSchema = Yup.object({
     searchQuery: Yup.string()
@@ -123,6 +166,7 @@ export default function ListClients() {
         .required("Project description is required"),
     }),
     onSubmit: async (values, { resetForm }) => {
+      setNodeRedToggleFeedback(null);
       const token = keycloak?.token;
       if (!token) {
         Swal.fire("Error", "Authentication token not found. Please log in.", "error");
@@ -168,6 +212,51 @@ export default function ListClients() {
           }
         }
       });
+    },
+  });
+
+  const editProjectFormik = useFormik({
+    initialValues: {
+      name: "",
+      description: "",
+    },
+    validationSchema: Yup.object({
+      name: Yup.string().trim().required("Project name is required"),
+      description: Yup.string().trim().required("Project description is required"),
+    }),
+    onSubmit: async (values) => {
+      if (!editProjectDialog.groupId) {
+        toast.error("Project ID is missing.");
+        return;
+      }
+
+      try {
+        setEditProjectSubmitting(true);
+        const token = keycloak?.token;
+        await axios.patch(
+          `${process.env.REACT_APP_BACKEND_URL}/projects/${editProjectDialog.groupId}`,
+          {
+            project_name: values.name.trim(),
+            project_description: values.description.trim(),
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        toast.success("Project updated successfully!");
+        setEditProjectDialog({
+          open: false,
+          groupId: undefined,
+        });
+        getAllGroups();
+      } catch (error: any) {
+        toast.error(error?.response?.data?.message || "Failed to update project.");
+      } finally {
+        setEditProjectSubmitting(false);
+      }
     },
   });
 
@@ -248,6 +337,7 @@ export default function ListClients() {
       toast.error("Group ID is required.");
       return;
     }
+    setGroupSearchFeedback(null);
 
     try {
       const token = keycloak?.token;
@@ -275,36 +365,30 @@ export default function ListClients() {
       // Check if the response is an array (user is not a member and can join)
       if (Array.isArray(groupData)) {
         setJoinNewGroups(groupData);
-
-        Swal.fire({
-          icon: "success",
-          title: "Success!",
-          text: "Project details fetched successfully.",
-          confirmButtonColor: "#3085d6",
+        setGroupSearchFeedback({
+          severity: "success",
+          message: "Project details fetched successfully.",
         });
       }
       // Check if response is an object with status (user is already a member or owner)
       else if (groupData?.status === "owner") {
-        Swal.fire({
-          icon: "info",
-          title: "Info",
-          text: "You are already the owner of this project.",
-          confirmButtonColor: "#3085d6",
+        setJoinNewGroups([]);
+        setGroupSearchFeedback({
+          severity: "info",
+          message: "You are already the owner of this project.",
         });
       } else if (groupData?.status === "member") {
-        Swal.fire({
-          icon: "info",
-          title: "Info",
-          text: "You are already a member of this project.",
-          confirmButtonColor: "#3085d6",
+        setJoinNewGroups([]);
+        setGroupSearchFeedback({
+          severity: "info",
+          message: "You are already a member of this project.",
         });
       } else {
         // Handle unexpected response formats
-        Swal.fire({
-          icon: "warning",
-          title: "Warning",
-          text: "Unexpected response received.",
-          confirmButtonColor: "#f39c12",
+        setJoinNewGroups([]);
+        setGroupSearchFeedback({
+          severity: "warning",
+          message: "Unexpected response received.",
         });
       }
     } catch (error: any) {
@@ -318,63 +402,154 @@ export default function ListClients() {
       }
 
       toast.error(errorMessage);
-
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: errorMessage,
-        confirmButtonColor: "#d33",
+      setJoinNewGroups([]);
+      setGroupSearchFeedback({
+        severity: "error",
+        message: errorMessage,
       });
     }
   };
 
-  const handleAction = (action: string, userId: any) => {
-    let data = { "membership_id": userId, "action": action } 
-      const token = keycloak?.token;
-    Swal.fire({
-      title: `Are you sure you want to ${action} this request?`,
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Yes",
-      cancelButtonText: "No",
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        try {
-          const response = await axios.post(
-            `${process.env.REACT_APP_BACKEND_URL}/manage_membership`,
-            data,
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
-          Swal.fire("Success", response.data.message, "success");
-          getAllGroups();
-        } catch (error: any) {
-          Swal.fire(
-            "Error",
-            error?.response?.data?.message || "An error occurred.",
-            "error"
-          );
-        }
-      }
+  const normalizeMemberRole = (roleValue: any): "reader" | "editor" => {
+    const normalized = String(roleValue || "").trim().toLowerCase();
+    return normalized === "editor" || normalized === "editors" ? "editor" : "reader";
+  };
+
+  const openMemberActionDialog = (
+    type: "approve" | "reject" | "changeRole" | "removeMember",
+    member: any
+  ) => {
+    const memberName = `${member?.first_name || ""} ${member?.last_name || ""}`.trim();
+    const currentRole = normalizeMemberRole(member?.role);
+    const memberUserId =
+      member?.user_id ??
+      member?.keycloak_user_id ??
+      member?.userid ??
+      member?.id;
+    const serviceId =
+      memberModalGroup?.id ??
+      memberModalGroup?.service_id ??
+      memberModalGroup?.keycloak_group_id;
+    setMemberActionDialog({
+      open: true,
+      type,
+      membershipId: member?.membership_id,
+      userId: memberUserId,
+      serviceId,
+      memberName,
+      memberEmail: member?.email,
+      currentRole,
+      selectedRole: type === "changeRole" ? currentRole : "reader",
     });
   };
-  const handleViewMembers = (event: React.MouseEvent<HTMLElement>, groupId: number) => {
-    setMembersPopover({ anchorEl: event.currentTarget, groupId });
+
+  const closeMemberActionDialog = () => {
+    if (memberActionSubmitting) return;
+    setMemberActionDialog((prev) => ({ ...prev, open: false }));
   };
 
-  const handleCloseMembersPopover = () => {
-    setMembersPopover({ anchorEl: null, groupId: null });
+  const submitMemberActionDialog = async () => {
+    const token = keycloak?.token;
+    if (!token) {
+      toast.error("Authentication token not found.");
+      return;
+    }
+    if (
+      (memberActionDialog.type === "approve" ||
+        memberActionDialog.type === "reject" ||
+        memberActionDialog.type === "changeRole") &&
+      !memberActionDialog.membershipId
+    ) {
+      toast.error("Membership ID is missing.");
+      return;
+    }
+
+    setMemberActionSubmitting(true);
+    try {
+      if (memberActionDialog.type === "approve" || memberActionDialog.type === "reject") {
+        const action = memberActionDialog.type;
+        const payload = {
+          membership_id: memberActionDialog.membershipId,
+          action,
+          ...(action === "approve" ? { role: memberActionDialog.selectedRole } : {}),
+        };
+        const response = await axios.post(
+          `${process.env.REACT_APP_BACKEND_URL}/manage_membership`,
+          payload,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        toast.success(response?.data?.message || "Membership updated.");
+      }
+
+      if (memberActionDialog.type === "changeRole") {
+        if (memberActionDialog.selectedRole === memberActionDialog.currentRole) {
+          toast.info("Selected role is already assigned.");
+          closeMemberActionDialog();
+          return;
+        }
+        if (!memberActionDialog.serviceId || !memberActionDialog.userId) {
+          toast.error("Missing service_id or user_id for role update.");
+          return;
+        }
+
+        const payload = {
+          service_id: memberActionDialog.serviceId,
+          user_id: memberActionDialog.userId,
+          role: memberActionDialog.selectedRole,
+        };
+        await axios.post(
+          `${process.env.REACT_APP_BACKEND_URL}/change_member_role`,
+          payload,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        toast.success("Member role updated successfully.");
+      }
+      if (memberActionDialog.type === "removeMember") {
+        if (!memberActionDialog.serviceId || !memberActionDialog.memberEmail) {
+          toast.error("Missing group_id or user email for remove action.");
+          return;
+        }
+        const response = await axios.post(
+          `${process.env.REACT_APP_BACKEND_URL}/leave_group`,
+          {
+            user_email: memberActionDialog.memberEmail,
+            group_id: memberActionDialog.serviceId,
+          },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        toast.success(response?.data?.message || "Member removed successfully.");
+      }
+
+      closeMemberActionDialog();
+      getAllGroups();
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Failed to update member.");
+    } finally {
+      setMemberActionSubmitting(false);
+    }
   };
-  const handleOpenPendingPopover = (event: React.MouseEvent<HTMLElement>, groupId: number) => {
-    setPendingPopover({ anchorEl: event.currentTarget, groupId }); // Attach popover to clicked element
-    setOpenPendingGroupId(groupId);  // Track which group's popover is open
+  const openMemberModal = (group: any, tab: "members" | "pending") => {
+    setMemberModalGroup(group);
+    setMemberModalTab(tab);
   };
 
-
-  const handleClosePendingPopover = () => {
-    console.log("Close button clicked");
-    setPendingPopover({ anchorEl: null, groupId: null }); // New object ensures state updates
-    setOpenPendingGroupId(null); // Also reset open group tracking
+  const closeMemberModal = () => {
+    setMemberModalGroup(null);
+    setMemberModalTab("members");
+    closeMemberActionDialog();
   };
+  const approvedMembers =
+    memberModalGroup?.members?.filter((x: any) => x?.membership_status === "approved") || [];
+  const pendingMembers =
+    memberModalGroup?.members?.filter((x: any) => x?.membership_status === "pending") || [];
+
+  useEffect(() => {
+    if (!memberModalGroup?.id) return;
+    const refreshedGroup = myGroups.find((g: any) => g?.id === memberModalGroup.id);
+    if (refreshedGroup) {
+      setMemberModalGroup(refreshedGroup);
+    }
+  }, [myGroups, memberModalGroup?.id]);
 
   const handleNodeRedMenuOpen = (
     event: React.MouseEvent<HTMLElement>,
@@ -431,11 +606,7 @@ const handleApplyNodeRed = async (groupId: string) => {
 
   const joinGroup = async (group_id: any) => {
     if (!group_id) {
-      Swal.fire({
-        icon: "warning",
-        title: "Invalid Group",
-        text: "Please select a valid project to join.",
-      });
+      toast.warning("Please select a valid project to join.");
       return;
     }
 
@@ -448,18 +619,19 @@ const handleApplyNodeRed = async (groupId: string) => {
         `${process.env.REACT_APP_BACKEND_URL}/join_group`,
         data
       );
-      Swal.fire({
-        icon: "success",
-        title: "Join Request Sent",
-        text: response?.data?.message || "Your request to join the project was successful!",
+      toast.success(response?.data?.message || "Your request to join the project was successful.");
+      setGroupSearchFeedback({
+        severity: "success",
+        message: "Join request sent successfully.",
       });
       getAllGroups();
     } catch (error: any) {
       console.error("Error joining group:", error);
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: error.response?.data?.message || "Failed to join the project. Please try again later.",
+      const message = error.response?.data?.message || "Failed to join the project. Please try again later.";
+      toast.error(message);
+      setGroupSearchFeedback({
+        severity: "error",
+        message,
       });
     }
   };
@@ -495,59 +667,23 @@ const handleApplyNodeRed = async (groupId: string) => {
     });
   };
 
-  // Update Project Function
+  const openEditProjectDialog = (group: any) => {
+    setEditProjectDialog({
+      open: true,
+      groupId: group?.id,
+    });
+    editProjectFormik.setValues({
+      name: group?.name || "",
+      description: group?.description || "",
+    });
+    editProjectFormik.setTouched({});
+  };
 
-  const handleEditProjectSwal = (group: any) => {
-    Swal.fire({
-      title: "Edit Project",
-      html: `
-     <div class="swal-input-row-with-label">` +
-        `<label for="name">New Name</label>` +
-        `<div class="swal-input-field">` +
-        `<input id="name" class="swal2-input" placeholder="Enter the new device name" value="${group?.name || ""
-        }">` +
-        `</div>` +
-        `</div>` +
-        `<div class="swal-input-row">` +
-        `<label for="description">New Description</label>` +
-        `<input id="description" class="swal2-input" placeholder="Enter the new device description" value="${group?.description || ""
-        }">` +
-        `</div>
-    `,
-      showCancelButton: true,
-      confirmButtonText: "Save",
-      showLoaderOnConfirm: true,
-      preConfirm: () => {
-        const name = (document.getElementById("name") as HTMLInputElement).value.trim();
-        const description = (document.getElementById("description") as HTMLInputElement).value.trim();
-
-        if (!name) {
-          Swal.showValidationMessage("Please enter a project name");
-          return false;
-        }
-
-        return { name, description };
-      },
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        try {
-          const token = keycloak?.token;
-          await axios.patch(`${process.env.REACT_APP_BACKEND_URL}/projects/${group.id}`, {
-            project_name: result.value.name,
-            project_description: result.value.description
-          }, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json"
-            }
-          });
-
-          await Swal.fire("Success", "Project updated successfully!", "success");
-          getAllGroups();
-        } catch (error) {
-          await Swal.fire("Error", "Failed to update project", "error");
-        }
-      }
+  const closeEditProjectDialog = () => {
+    if (editProjectSubmitting) return;
+    setEditProjectDialog({
+      open: false,
+      groupId: undefined,
     });
   };
 
@@ -686,91 +822,14 @@ const handleApplyNodeRed = async (groupId: string) => {
                                 }}
                               >
                                 {/* View Members */}
-                                <IconButton disabled={!group?.is_owner} color="primary" onClick={(e) => handleViewMembers(e, group?.id)}>
+                                <IconButton disabled={!group?.is_owner} color="primary" onClick={() => openMemberModal(group, "members")}>
                                   <GroupIcon />
                                 </IconButton>
-                                {membersPopover.groupId === group?.id && (
-                                  <Popover
-                                    open={Boolean(membersPopover.anchorEl)}
-                                    anchorEl={membersPopover.anchorEl}
-                                    onClose={handleCloseMembersPopover}
-                                    anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-                                    transformOrigin={{ vertical: "top", horizontal: "left" }}
-                                  >
-                                    <ClickAwayListener onClickAway={handleCloseMembersPopover}>
-                                      <Box sx={{ padding: 1, minWidth: 250, maxHeight: 300, overflowY: "auto" }}>
-                                        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: 1 }}>
-                                          <Typography variant="subtitle1">Members</Typography>
-                                          <IconButton size="small" onClick={handleCloseMembersPopover}>
-                                            <CloseIcon />
-                                          </IconButton>
-                                        </Box>
-                                        <Divider />
-                                        <List>
-                                          {group?.members?.some((x: any) => x?.membership_status === "approved") ? (
-                                            group?.members
-                                              .filter((x: any) => x?.membership_status === "approved")
-                                              .map((member: any, index: any) => (
-                                                <ListItem key={index} sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                                  <ListItemText primary={`${member?.first_name} ${member?.last_name}`} secondary={member?.email} />
-                                                  <IconButton color="error" size="small" onClick={() => handleLeaveGroup(group?.id, member.email, true)}>
-                                                    <RemoveCircleIcon />
-                                                  </IconButton>
-                                                </ListItem>
-                                              ))
-                                          ) : (
-                                            <Typography sx={{ padding: 1 }}>No approved members found.</Typography>
-                                          )}
-                                        </List>
-                                      </Box>
-                                    </ClickAwayListener>
-                                  </Popover>
-                                )}
 
                                 {/* View Pending Requests */}
-                                <IconButton color="warning" disabled={!group?.is_owner} onClick={(e) => handleOpenPendingPopover(e, group?.id)}>
+                                <IconButton color="warning" disabled={!group?.is_owner} onClick={() => openMemberModal(group, "pending")}>
                                   <HourglassEmptyIcon />
                                 </IconButton>
-                                {openPendingGroupId === group?.id && (
-                                  <Popover
-                                    open={Boolean(pendingPopover.anchorEl)}
-                                    anchorEl={pendingPopover.anchorEl}
-                                    onClose={handleClosePendingPopover}
-                                    anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-                                    transformOrigin={{ vertical: "top", horizontal: "left" }}
-                                  >
-                                    <ClickAwayListener onClickAway={handleClosePendingPopover}>
-                                      <Box sx={{ padding: 1, minWidth: 250, maxHeight: 300, overflowY: "auto" }}>
-                                        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: 1 }}>
-                                          <Typography variant="subtitle1">Pending Requests</Typography>
-                                          <IconButton size="small" onClick={handleClosePendingPopover}>
-                                            <CloseIcon />
-                                          </IconButton>
-                                        </Box>
-                                        <Divider />
-                                        <List>
-                                          {group?.members?.some((x: any) => x?.membership_status === "pending") ? (
-                                            group?.members
-                                              .filter((x: any) => x?.membership_status === "pending")
-                                              .map((member: any, index: any) => (
-                                                <ListItem key={index} sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                                  <ListItemText primary={`${member.first_name} ${member.last_name}`} secondary={member.email} />
-                                                  <IconButton color="success" size="small" onClick={() => handleAction("approve", member?.membership_id)}>
-                                                    <CheckCircleIcon />
-                                                  </IconButton>
-                                                  <IconButton color="error" size="small" onClick={() => handleAction("reject", member?.membership_id)}>
-                                                    <CancelIcon />
-                                                  </IconButton>
-                                                </ListItem>
-                                              ))
-                                          ) : (
-                                            <Typography sx={{ padding: 1 }}>No pending requests.</Typography>
-                                          )}
-                                        </List>
-                                      </Box>
-                                    </ClickAwayListener>
-                                  </Popover>
-                                )}
 
                                 {/* Leave Group */}
                                 <IconButton color="error" disabled={group?.is_owner} onClick={() => handleLeaveGroup(group?.id, userInfo?.email, false)}>
@@ -778,7 +837,7 @@ const handleApplyNodeRed = async (groupId: string) => {
                                 </IconButton>
 
                                 {/* Edit Group */}
-                                <IconButton color="error" disabled={!group?.is_owner} onClick={() => handleEditProjectSwal(group)}>
+                                <IconButton color="error" disabled={!group?.is_owner} onClick={() => openEditProjectDialog(group)}>
                                   <Tooltip title="Edit Project">
                                     <EditOutlinedIcon />
                                   </Tooltip>
@@ -887,6 +946,19 @@ const handleApplyNodeRed = async (groupId: string) => {
               </AccordionSummary>
               <AccordionDetails>
                 <Box component="form" onSubmit={formikCreateProject.handleSubmit} sx={{ width: "100%" }}>
+                  {nodeRedToggleFeedback && (
+                    <Alert
+                      severity="info"
+                      sx={{
+                        mb: 2,
+                        borderRadius: 1.5,
+                        border: "1px solid",
+                        borderColor: "divider",
+                      }}
+                    >
+                      {nodeRedToggleFeedback}
+                    </Alert>
+                  )}
                   <Grid container spacing={2}>
                     <Grid item xs={12} sm={6}>
                       <TextField
@@ -927,19 +999,11 @@ const handleApplyNodeRed = async (groupId: string) => {
                             onChange={(e) => {
                               const checked = e.target.checked;
                               formikCreateProject.setFieldValue("includeNodeRed", checked);
-
-                              Swal.fire({
-                                icon: "info",
-                                title: "Node-RED Toggle",
-                                text: checked
+                              setNodeRedToggleFeedback(
+                                checked
                                   ? "Node-RED will be included in this project."
-                                  : "Node-RED will not be included in this project.",
-                                timer: 2500,
-                                showConfirmButton: false,
-                                position: "bottom-end",
-                                toast: true,
-
-                              });
+                                  : "Node-RED will not be included in this project."
+                              );
                             }}
                           />
                         }
@@ -1002,6 +1066,20 @@ const handleApplyNodeRed = async (groupId: string) => {
                     </Grid>
                   </Grid>
                 </Box>
+                {groupSearchFeedback && (
+                  <Alert
+                    severity={groupSearchFeedback.severity}
+                    sx={{
+                      mt: 2,
+                      mb: 1,
+                      borderRadius: 1.5,
+                      border: "1px solid",
+                      borderColor: "divider",
+                    }}
+                  >
+                    {groupSearchFeedback.message}
+                  </Alert>
+                )}
 
                 {joinNewGroups?.length > 0 && (
                   <TableContainer component={Paper} sx={{ maxHeight: "70vh", overflowY: "auto" }}>
@@ -1060,6 +1138,384 @@ const handleApplyNodeRed = async (groupId: string) => {
           </Box>
         </>
       )}
+      <EntityFormModal
+        open={editProjectDialog.open}
+        onClose={closeEditProjectDialog}
+        title="Edit Project"
+        sectionTitle="Project Details"
+        formik={editProjectFormik}
+        fields={[
+          { name: "name", label: "Project Name", xs: 12, sm: 12 },
+          {
+            name: "description",
+            label: "Project Description",
+            multiline: true,
+            minRows: 3,
+            xs: 12,
+            sm: 12,
+          },
+        ]}
+        submitting={editProjectSubmitting}
+        submitLabel="Save"
+        primaryButtonSx={{
+          backgroundColor: Colors.main,
+          "&:hover": { backgroundColor: Colors.main, opacity: 0.95 },
+        }}
+        cancelButtonSx={{
+          borderColor: Colors.main,
+          color: Colors.main,
+          "&:hover": { borderColor: Colors.main, backgroundColor: "rgba(35,48,68,0.06)" },
+        }}
+      />
+
+      <Dialog
+        open={Boolean(memberModalGroup)}
+        onClose={(_, reason) => {
+          if (reason === "backdropClick" || reason === "escapeKeyDown") return;
+          closeMemberModal();
+        }}
+        disableEscapeKeyDown
+        fullWidth
+        maxWidth="md"
+        PaperProps={{
+          sx: {
+            backgroundColor: "background.paper",
+            color: "text.primary",
+            borderRadius: 2,
+            maxHeight: "85vh",
+          },
+        }}
+      >
+        <DialogTitle
+          sx={(theme) => ({
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            borderBottom: `1px solid ${theme.palette.divider}`,
+            pb: 1.5
+          })}
+        >
+          <Box>
+            <Typography variant="h6" sx={{ fontWeight: 700 }}>Project Authorization</Typography>
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
+              Manage approved members and pending access requests
+            </Typography>
+          </Box>
+          <IconButton size="small" onClick={closeMemberModal}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent
+          dividers
+          sx={{
+            px: 3,
+            py: 2,
+            overflowY: "auto",
+          }}>
+          <Box
+            sx={(theme) => ({
+              mb: 2,
+              px: 1.5,
+              py: 1.25,
+              border: `1px solid ${theme.palette.divider}`,
+              borderRadius: 1,
+              borderLeft: `5px solid ${Colors.main}`,
+              backgroundColor:
+                theme.palette.mode === "dark"
+                  ? "rgba(255,255,255,0.03)"
+                  : "background.default",
+            })}
+          >
+            <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+              {memberModalGroup?.name || "Project"}
+            </Typography>
+            <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>
+              Manage approved members and pending access requests for this project.
+            </Typography>
+            <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 0.5 }}>
+              Group ID: {memberModalGroup?.keycloak_group_id || "-"}
+            </Typography>
+          </Box>
+          <Tabs
+            value={memberModalTab}
+            onChange={(_, newTab) => {
+              setMemberModalTab(newTab);
+              if (memberActionDialog.open) {
+                closeMemberActionDialog();
+              }
+            }}
+            sx={(theme) => ({
+              mb: 2,
+              borderBottom: `1px solid ${theme.palette.divider}`,
+              "& .MuiTab-root": {
+                textTransform: "none",
+                fontWeight: 600,
+                color:
+                  theme.palette.mode === "dark"
+                    ? "rgba(255,255,255,0.75)"
+                    : `${Colors.main}B3`,
+              },
+              "& .Mui-selected": {
+                color: Colors.main,
+              },
+              "& .MuiTabs-indicator": {
+                backgroundColor: Colors.main,
+              },
+            })}
+          >
+            <Tab label={`Approved Members (${approvedMembers.length})`} value="members" />
+            <Tab label={`Pending Requests (${pendingMembers.length})`} value="pending" />
+          </Tabs>
+
+          {memberActionDialog.open && (
+            <Box
+              sx={(theme) => ({
+                mb: 2,
+                p: 2,
+                border: `1px solid ${theme.palette.divider}`,
+                borderRadius: 1,
+                backgroundColor: "background.default",
+                boxShadow: theme.shadows[0],
+              })}
+            >
+              <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                {memberActionDialog.type === "approve" && "Approve Request"}
+                {memberActionDialog.type === "reject" && "Reject Request"}
+                {memberActionDialog.type === "changeRole" && "Change Member Role"}
+                {memberActionDialog.type === "removeMember" && "Remove Member"}
+              </Typography>
+              <Typography variant="body2" sx={{ mt: 0.5, mb: 1.5, color: "text.secondary" }}>
+                {memberActionDialog.memberName || "Selected member"}
+              </Typography>
+              {memberActionDialog.type === "removeMember" && (
+                <Typography variant="body2" sx={{ mb: 1.5, color: "error.main", fontWeight: 600 }}>
+                  This will remove the member from this project.
+                </Typography>
+              )}
+
+              {(memberActionDialog.type === "approve" || memberActionDialog.type === "changeRole") && (
+                <FormControl fullWidth size="small" sx={{ mb: 2 }}>
+                  <InputLabel id="member-role-label">Role</InputLabel>
+                  <Select
+                    labelId="member-role-label"
+                    label="Role"
+                    value={memberActionDialog.selectedRole}
+                    disabled={memberActionSubmitting}
+                    onChange={(e) =>
+                      setMemberActionDialog((prev) => ({
+                        ...prev,
+                        selectedRole: e.target.value as "reader" | "editor",
+                      }))
+                    }
+                  >
+                    <MenuItem value="reader">Reader</MenuItem>
+                    <MenuItem value="editor">Editor</MenuItem>
+                  </Select>
+                </FormControl>
+              )}
+
+              <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
+                <Button
+                  variant="outlined"
+                  onClick={closeMemberActionDialog}
+                  disabled={memberActionSubmitting}
+                  size="small"
+                  sx={{
+                    borderColor: Colors.main,
+                    color: Colors.main,
+                    textTransform: "none",
+                    fontWeight: 600,
+                    "&:hover": {
+                      borderColor: Colors.main,
+                      backgroundColor: "rgba(35,48,68,0.06)",
+                    },
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="contained"
+                  onClick={submitMemberActionDialog}
+                  disabled={memberActionSubmitting}
+                  size="small"
+                  sx={{
+                    backgroundColor: Colors.main,
+                    color: "#fff",
+                    textTransform: "none",
+                    fontWeight: 700,
+                    px: 2.25,
+                    "&:hover": { backgroundColor: Colors.main, opacity: 0.95 },
+                  }}
+                >
+                  {memberActionSubmitting ? "Confirming..." : "Confirm"}
+                </Button>
+              </Box>
+            </Box>
+          )}
+
+          {memberModalTab === "members" && (
+            <TableContainer
+              component={Paper}
+              variant="outlined"
+              sx={{
+                height: 430,
+                overflowY: "auto",
+              }}>
+              <Table stickyHeader size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 700, backgroundColor: "background.default" }}>Name</TableCell>
+                    <TableCell sx={{ fontWeight: 700, backgroundColor: "background.default" }}>Email</TableCell>
+                    <TableCell sx={{ fontWeight: 700, backgroundColor: "background.default" }}>Role</TableCell>
+                    <TableCell sx={{ fontWeight: 700, textAlign: "center", backgroundColor: "background.default" }}>Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {approvedMembers.length > 0 ? (
+                    approvedMembers.map((member: any, index: any) => (
+                      <TableRow key={index} hover>
+                        <TableCell sx={{ py: 1.2 }}>{`${member?.first_name} ${member?.last_name}`}</TableCell>
+                        <TableCell sx={{ py: 1.2 }}>{member?.email}</TableCell>
+                        <TableCell>
+                          {(() => {
+                            const role = normalizeMemberRole(member?.role);
+                            return (
+                          <Chip
+                            label={role.toUpperCase()}
+                            size="small"
+                            color={role === "editor" ? "secondary" : "primary"}
+                            variant="filled"
+                            sx={
+                              role === "editor"
+                                ? {}
+                                : {
+                                    backgroundColor: Colors.main,
+                                    color: "#fff",
+                                  }
+                            }
+                          />
+                            );
+                          })()}
+                        </TableCell>
+                        <TableCell sx={{ textAlign: "center" }}>
+                          <Tooltip title="Change Role">
+                            <span>
+                              <IconButton
+                                color="inherit"
+                                size="small"
+                                disabled={!memberModalGroup?.is_owner}
+                                onClick={() => openMemberActionDialog("changeRole", member)}
+                                sx={{
+                                  backgroundColor: Colors.main,
+                                  color: "#fff",
+                                  mr: 0.75,
+                                  "&:hover": { backgroundColor: Colors.main, opacity: 0.92 },
+                                }}
+                              >
+                                <EditOutlinedIcon fontSize="small" />
+                              </IconButton>
+                            </span>
+                          </Tooltip>
+                          <Tooltip title="Remove Member">
+                            <span>
+                              <IconButton
+                                color="inherit"
+                                size="small"
+                                disabled={!memberModalGroup?.is_owner}
+                                onClick={() => openMemberActionDialog("removeMember", member)}
+                                sx={{
+                                  backgroundColor: "error.main",
+                                  color: "#fff",
+                                  "&:hover": { backgroundColor: "error.main", opacity: 0.92 },
+                                }}
+                              >
+                                <PersonRemoveAlt1Icon fontSize="small" />
+                              </IconButton>
+                            </span>
+                          </Tooltip>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={4} sx={{ py: 4, textAlign: "center", color: "text.secondary" }}>
+                        No approved members found.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+
+          {memberModalTab === "pending" && (
+            <TableContainer
+              component={Paper}
+              variant="outlined"
+              sx={{
+                height: 430,
+                overflowY: "auto",
+              }}>
+              <Table stickyHeader size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 700, backgroundColor: "background.default" }}>Name</TableCell>
+                    <TableCell sx={{ fontWeight: 700, backgroundColor: "background.default" }}>Email</TableCell>
+                    <TableCell sx={{ fontWeight: 700, textAlign: "center", backgroundColor: "background.default" }}>Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {pendingMembers.length > 0 ? (
+                    pendingMembers.map((member: any, index: any) => (
+                      <TableRow key={index} hover>
+                        <TableCell sx={{ py: 1.2 }}>{`${member.first_name} ${member.last_name}`}</TableCell>
+                        <TableCell sx={{ py: 1.2 }}>{member.email}</TableCell>
+                        <TableCell sx={{ textAlign: "center" }}>
+                          <Tooltip title="Approve Request">
+                            <IconButton
+                              color="inherit"
+                              size="small"
+                              onClick={() => openMemberActionDialog("approve", member)}
+                              sx={{
+                                backgroundColor: "success.main",
+                                color: "#fff",
+                                mr: 0.75,
+                                "&:hover": { backgroundColor: "success.main", opacity: 0.92 },
+                              }}
+                            >
+                              <CheckCircleIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Reject Request">
+                            <IconButton
+                              color="inherit"
+                              size="small"
+                              onClick={() => openMemberActionDialog("reject", member)}
+                              sx={{
+                                backgroundColor: "error.main",
+                                color: "#fff",
+                                "&:hover": { backgroundColor: "error.main", opacity: 0.92 },
+                              }}
+                            >
+                              <CancelIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={3} sx={{ py: 4, textAlign: "center", color: "text.secondary" }}>
+                        No pending requests.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+        </DialogContent>
+      </Dialog>
       {isCreatingProject || loading && (
         <Box
           sx={{
@@ -1082,3 +1538,5 @@ const handleApplyNodeRed = async (groupId: string) => {
     </Dashboard>
   );
 }
+
+

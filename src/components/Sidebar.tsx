@@ -22,6 +22,8 @@ const Drawer = styled(MuiDrawer)`
 
   > div {
     border-right: 0;
+    background-color: ${(props) => props.theme.sidebar.background};
+    color: ${(props) => props.theme.sidebar.color};
   }
 `;
 
