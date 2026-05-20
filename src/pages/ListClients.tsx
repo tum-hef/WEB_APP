@@ -1115,6 +1115,7 @@ const handleApplyNodeRed = async (groupId: string) => {
             backgroundColor: "background.paper",
             color: "text.primary",
             borderRadius: 2,
+            maxHeight: "85vh",
           },
         }}
       >
@@ -1137,7 +1138,13 @@ const handleApplyNodeRed = async (groupId: string) => {
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-        <DialogContent dividers sx={{ px: 3, py: 2 }}>
+        <DialogContent
+          dividers
+          sx={{
+            px: 3,
+            py: 2,
+            overflowY: "auto",
+          }}>
           <Box
             sx={(theme) => ({
               mb: 2,
@@ -1280,7 +1287,13 @@ const handleApplyNodeRed = async (groupId: string) => {
           )}
 
           {memberModalTab === "members" && (
-            <TableContainer component={Paper} variant="outlined" sx={{ maxHeight: 430 }}>
+            <TableContainer
+              component={Paper}
+              variant="outlined"
+              sx={{
+                height: 430,
+                overflowY: "auto",
+              }}>
               <Table stickyHeader size="small">
                 <TableHead>
                   <TableRow>
@@ -1364,7 +1377,13 @@ const handleApplyNodeRed = async (groupId: string) => {
           )}
 
           {memberModalTab === "pending" && (
-            <TableContainer component={Paper} variant="outlined" sx={{ maxHeight: 430 }}>
+            <TableContainer
+              component={Paper}
+              variant="outlined"
+              sx={{
+                height: 430,
+                overflowY: "auto",
+              }}>
               <Table stickyHeader size="small">
                 <TableHead>
                   <TableRow>
@@ -1447,3 +1466,5 @@ const handleApplyNodeRed = async (groupId: string) => {
     </Dashboard>
   );
 }
+
+
