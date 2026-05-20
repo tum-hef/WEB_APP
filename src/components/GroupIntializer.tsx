@@ -42,6 +42,24 @@ useEffect(() => {
   };
 
   fetchGroups();
+
+  const handleFocusRefresh = () => {
+    fetchGroups();
+  };
+
+  const handleVisibilityRefresh = () => {
+    if (document.visibilityState === "visible") {
+      fetchGroups();
+    }
+  };
+
+  window.addEventListener("focus", handleFocusRefresh);
+  document.addEventListener("visibilitychange", handleVisibilityRefresh);
+
+  return () => {
+    window.removeEventListener("focus", handleFocusRefresh);
+    document.removeEventListener("visibilitychange", handleVisibilityRefresh);
+  };
 }, [keycloak.authenticated, keycloak.tokenParsed?.sub]);
 
 
