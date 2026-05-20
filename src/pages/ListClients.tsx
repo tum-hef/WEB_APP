@@ -352,7 +352,7 @@ export default function ListClients() {
     member: any
   ) => {
     const memberName = `${member?.first_name || ""} ${member?.last_name || ""}`.trim();
-    const currentRole = member?.role === "editor" ? "editor" : "reader";
+    const currentRole = member?.role === "editors" ? "editor" : "reader";
     const memberUserId =
       member?.user_id ??
       member?.keycloak_user_id ??
@@ -1298,12 +1298,12 @@ const handleApplyNodeRed = async (groupId: string) => {
                         <TableCell sx={{ py: 1.2 }}>{member?.email}</TableCell>
                         <TableCell>
                           <Chip
-                            label={(member?.role || "reader").toUpperCase()}
+                            label={(member?.role  === "Editors" ? "editor" : "reader").toUpperCase()}
                             size="small"
-                            color={member?.role === "editor" ? "secondary" : "primary"}
+                            color={member?.role === "Editors" ? "secondary" : "primary"}
                             variant="filled"
                             sx={
-                              member?.role === "editor"
+                              member?.role === "Editors"
                                 ? {}
                                 : {
                                     backgroundColor: Colors.main,
