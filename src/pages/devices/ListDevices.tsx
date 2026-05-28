@@ -44,7 +44,8 @@ const Devices = () => {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deviceToDelete, setDeviceToDelete] = useState<any | null>(null);
-  const { isOwner } = useIsOwner();
+  const { isOwner, role } = useIsOwner();
+  const canDelete = role === "owner";
   const primaryButtonSx = {
     backgroundColor: "rgb(35, 48, 68)",
     "&:hover": { backgroundColor: "rgb(26, 36, 51)" },
@@ -325,13 +326,13 @@ const Devices = () => {
         return (
           <DeleteForeverOutlinedIcon
             style={{
-              cursor: isOwner ? "pointer" : "not-allowed",
-              color: isOwner ? "red" : "gray",
-              opacity: isOwner ? 1 : 0.4,
-              pointerEvents: isOwner ? "auto" : "none",
+              cursor: canDelete ? "pointer" : "not-allowed",
+              color: canDelete ? "red" : "gray",
+              opacity: canDelete ? 1 : 0.4,
+              pointerEvents: canDelete ? "auto" : "none",
             }}
             onClick={() => {
-              if (!isOwner) return;
+              if (!canDelete) return;
               openDeleteDialog(row);
             }}
           />
@@ -361,7 +362,7 @@ const Devices = () => {
         );
       },
     },
-  ], [isOwner, openDeleteDialog, openEditDialog]);
+  ], [canDelete, isOwner, openDeleteDialog, openEditDialog]);
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage);

@@ -11,7 +11,7 @@ import DeleteForeverOutlinedIcon from "@mui/icons-material/DeleteForeverOutlined
 import Swal from "sweetalert2";
 import ReactGA from "react-ga4";
 import { GAactionsSensors } from "../../utils/GA";
-import { useAppSelector, useIsOwner } from "../../hooks/hooks";
+import { useIsOwner } from "../../hooks/hooks";
 import DataTableCardV2 from "../../components/DataGridServerSide";
 import EntityFormModal from "../../components/EntityFormModal";
 import ConfirmDeleteDialog from "../../components/ConfirmDeleteDialog";
@@ -37,11 +37,8 @@ const [saving, setSaving] = useState(false);
 const [deleteOpen, setDeleteOpen] = useState(false);
 const [deleting, setDeleting] = useState(false);
 const [sensorToDelete, setSensorToDelete] = useState<any | null>(null);
-  const selectedGroupId = useAppSelector((state) => state.roles.selectedGroupId);
-  const group = useAppSelector((state) =>
-    state.roles.groups.find((g) => g?.group_name_id === selectedGroupId)
-  );
-  const { isOwner } = useIsOwner();
+  const { isOwner, role } = useIsOwner();
+  const canDelete = role === "owner";
   const primaryButtonSx = {
     backgroundColor: "rgb(35, 48, 68)",
     "&:hover": { backgroundColor: "rgb(26, 36, 51)" },
@@ -307,19 +304,19 @@ const [sensorToDelete, setSensorToDelete] = useState<any | null>(null);
       cellRenderer: (params: any) => (
         <DeleteForeverOutlinedIcon
           style={{
-            cursor: isOwner ? "pointer" : "not-allowed",
-            color: isOwner ? "red" : "gray",
-            opacity: isOwner ? 1 : 0.4,
-            pointerEvents: isOwner ? "auto" : "none",
+            cursor: canDelete ? "pointer" : "not-allowed",
+            color: canDelete ? "red" : "gray",
+            opacity: canDelete ? 1 : 0.4,
+            pointerEvents: canDelete ? "auto" : "none",
           }}
           onClick={() => {
-            if (!isOwner) return;
+            if (!canDelete) return;
             openDeleteDialog(params.data);
           }}
         />
       ),
     },
-  ], [isOwner, openDeleteDialog, openEditDialog]);
+  ], [canDelete, isOwner, openDeleteDialog, openEditDialog]);
 
 
   // onChange 
