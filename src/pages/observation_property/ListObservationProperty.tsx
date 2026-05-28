@@ -40,7 +40,8 @@ const [sortQuery, setSortQuery] = useState("");
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [observationPropertyToDelete, setObservationPropertyToDelete] = useState<any | null>(null);
-  const { isOwner,role } = useIsOwner();
+  const { isOwner, role } = useIsOwner();
+  const canDelete = role === "owner";
   const primaryButtonSx = {
     backgroundColor: "rgb(35, 48, 68)",
     "&:hover": { backgroundColor: "rgb(26, 36, 51)" },
@@ -51,11 +52,6 @@ const [sortQuery, setSortQuery] = useState("");
     borderColor: "#6e7881",
     "&:hover": { backgroundColor: "#5f6870", borderColor: "#5f6870" },
   };
- 
-
-  useEffect(()=>{
-  console.log("isOwner hook",isOwner,role)
-  },[isOwner])
   const editFormik = useFormik({
     initialValues: { name: "", description: "", definition: "" },
     validationSchema: editObservationPropertyValidationSchema,
@@ -358,14 +354,14 @@ const [sortQuery, setSortQuery] = useState("");
       cellRenderer: (params: any) => (
         <DeleteForeverOutlinedIcon
           style={{
-            cursor: isOwner ? "pointer" : "not-allowed",
-            color: isOwner ? "red" : "gray",
-            opacity: isOwner ? 1 : 0.4,
-            pointerEvents: isOwner ? "auto" : "none",
+            cursor: canDelete ? "pointer" : "not-allowed",
+            color: canDelete ? "red" : "gray",
+            opacity: canDelete ? 1 : 0.4,
+            pointerEvents: canDelete ? "auto" : "none",
           }}
           onClick={() => {
             const row = params?.data;
-            if (!isOwner) return;
+            if (!canDelete) return;
             openDeleteDialog(row);
           }}
         />
@@ -373,7 +369,7 @@ const [sortQuery, setSortQuery] = useState("");
       flex: 1,
       filter: false,
     },
-  ], [isOwner, keycloak?.token, openDeleteDialog, openEditDialog]);
+  ], [canDelete, isOwner, openDeleteDialog, openEditDialog]);
 
   const handlePageChange = (newPage: number) => {
   setPage(newPage);
