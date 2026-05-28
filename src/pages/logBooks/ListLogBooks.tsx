@@ -52,7 +52,8 @@ const ListLogBook = () => {
   const [filterQuery, setFilterQuery] = useState("");
   const [sortQuery, setSortQuery] = useState("");
   const [loading, setLoading] = useState(false);
-  const { isOwner } = useIsOwner();
+  const { isOwner, role } = useIsOwner();
+  const canDelete = role === "owner";
   const CreateLogSchema = Yup.object().shape({
     description: Yup.string()
       .min(3, "Too short")
@@ -211,7 +212,7 @@ const ListLogBook = () => {
   cellStyle: { borderRight: "none" }, // remove grid line
 
   cellRenderer: (params: any) => {
-    const isOwner = params.context.isOwner;
+    const canDelete = params.context.canDelete;
 
     return (
       <EditIcon
@@ -248,14 +249,14 @@ const ListLogBook = () => {
     return (
       <DeleteIcon
         sx={{
-          cursor: isOwner ? "pointer" : "not-allowed",
-          color: isOwner ? "#d32f2f" : "#999999",
-          opacity: isOwner ? 1 : 0.4,
+          cursor: canDelete ? "pointer" : "not-allowed",
+          color: canDelete ? "#d32f2f" : "#999999",
+          opacity: canDelete ? 1 : 0.4,
           width: "22px",
           height: "22px",
         }}
         onClick={() => {
-          if (!isOwner) return;
+          if (!canDelete) return;
           handleDeleteLog(params.data);
         }}
       />
@@ -634,7 +635,7 @@ const handleExportAll = async () => {
         frameworkComponents={{
           dateTimeFilter: DateTimeFilter,
         }}
-        context={{ isOwner }}
+        context={{ isOwner, canDelete }}
         onFilterChange={(fq) => { 
           const normalized = normalizeDateFilterForBackend(fq);
           setFilterQuery(normalized);
