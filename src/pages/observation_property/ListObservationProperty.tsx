@@ -354,7 +354,7 @@ const [sortQuery, setSortQuery] = useState("");
     },
     {
 
-      headerName: "Edit",
+      headerName: "Delete",
       name: "Delete",
       cellRenderer: (params: any) => (
         <DeleteForeverOutlinedIcon
