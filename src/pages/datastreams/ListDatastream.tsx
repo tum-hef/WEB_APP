@@ -13,7 +13,7 @@ import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import Swal from "sweetalert2";
 import ReactGA from "react-ga4";
 import { GAactionsDataStreams } from "../../utils/GA";
-import { useAppSelector, useIsOwner } from "../../hooks/hooks";
+import { useIsOwner } from "../../hooks/hooks";
 import DataTableCardV2 from "../../components/DataGridServerSide"
 import BiotechSharpIcon from "@mui/icons-material/BiotechSharp";
 import EntityFormModal from "../../components/EntityFormModal";
@@ -87,10 +87,8 @@ const ListDatastream = () => {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [datastreamToDelete, setDatastreamToDelete] = useState<any | null>(null);
-  const selectedGroupId = useAppSelector(
-    (state) => state.roles.selectedGroupId
-  );
-  const { isOwner } = useIsOwner();
+  const { isOwner, role } = useIsOwner();
+  const canDelete = role === "owner";
   const primaryButtonSx = {
     backgroundColor: "rgb(35, 48, 68)",
     "&:hover": { backgroundColor: "rgb(26, 36, 51)" },
@@ -455,13 +453,13 @@ const handlePageSizeChange = (newPageSize: number) => {
       cellRenderer: (params: any) => (
         <DeleteForeverOutlinedIcon
           style={{
-            cursor: isOwner ? "pointer" : "not-allowed",
-            color: isOwner ? "red" : "gray",
-            opacity: isOwner ? 1 : 0.4,
-            pointerEvents: isOwner ? "auto" : "none",
+            cursor: canDelete ? "pointer" : "not-allowed",
+            color: canDelete ? "red" : "gray",
+            opacity: canDelete ? 1 : 0.4,
+            pointerEvents: canDelete ? "auto" : "none",
           }}
           onClick={() => {
-            if (!isOwner) return;
+            if (!canDelete) return;
             const row = params?.data;
             openDeleteDialog(row);
           }}
@@ -507,7 +505,7 @@ const handlePageSizeChange = (newPageSize: number) => {
       sortable: false,
       filter: false,
     },
-  ], [isOwner, openDeleteDialog, openEditDialog]);
+  ], [canDelete, isOwner, openDeleteDialog, openEditDialog]);
 
 
   return (
