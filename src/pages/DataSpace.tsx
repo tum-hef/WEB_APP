@@ -38,7 +38,7 @@ export default function DataSpace() {
   const group = useAppSelector(state =>
     state.roles.groups.find(g => g.group_name_id === selectedGroupId)
   );
-  const isOwner = useIsOwner();
+  const { isOwner } = useIsOwner();
 
   const toggleVisibility = () => setShowSecret(!showSecret)
 

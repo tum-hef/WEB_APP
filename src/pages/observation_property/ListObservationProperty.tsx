@@ -13,7 +13,7 @@ import Swal from "sweetalert2";
 import ReactGA from "react-ga4";
 
 import { GAactionsObservationProperties } from "../../utils/GA";
-import { useAppSelector, useIsOwner } from "../../hooks/hooks";
+import { useIsOwner } from "../../hooks/hooks";
 import DataTableCardV2 from "../../components/DataGridServerSide";
 import EntityFormModal from "../../components/EntityFormModal";
 import ConfirmDeleteDialog from "../../components/ConfirmDeleteDialog";
@@ -23,7 +23,6 @@ const ListObservationProperty = () => {
   const { keycloak } = useKeycloak();
   const userInfo = keycloak?.idTokenParsed;
   const token = keycloak?.token;
-  console.log(token);
 
   const [frostServerPort, setFrostServerPort] = useState<number | null>(null);
   const [observationProperty, setObservationProperty] = useState<any[]>([]);
@@ -41,11 +40,7 @@ const [sortQuery, setSortQuery] = useState("");
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [observationPropertyToDelete, setObservationPropertyToDelete] = useState<any | null>(null);
-  const selectedGroupId = useAppSelector(state => state.roles.selectedGroupId);
-  const group = useAppSelector(state =>
-    state.roles.groups.find(g => g?.group_name_id === selectedGroupId)
-  );
-  const isOwner = useIsOwner();
+  const { isOwner,role } = useIsOwner();
   const primaryButtonSx = {
     backgroundColor: "rgb(35, 48, 68)",
     "&:hover": { backgroundColor: "rgb(26, 36, 51)" },
@@ -56,7 +51,11 @@ const [sortQuery, setSortQuery] = useState("");
     borderColor: "#6e7881",
     "&:hover": { backgroundColor: "#5f6870", borderColor: "#5f6870" },
   };
+ 
 
+  useEffect(()=>{
+  console.log("isOwner hook",isOwner,role)
+  },[isOwner])
   const editFormik = useFormik({
     initialValues: { name: "", description: "", definition: "" },
     validationSchema: editObservationPropertyValidationSchema,

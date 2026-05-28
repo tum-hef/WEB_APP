@@ -44,7 +44,7 @@ const Devices = () => {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deviceToDelete, setDeviceToDelete] = useState<any | null>(null);
-  const isOwner = useIsOwner();
+  const { isOwner } = useIsOwner();
   const primaryButtonSx = {
     backgroundColor: "rgb(35, 48, 68)",
     "&:hover": { backgroundColor: "rgb(26, 36, 51)" },

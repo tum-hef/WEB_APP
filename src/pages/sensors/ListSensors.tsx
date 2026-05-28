@@ -41,7 +41,7 @@ const [sensorToDelete, setSensorToDelete] = useState<any | null>(null);
   const group = useAppSelector((state) =>
     state.roles.groups.find((g) => g?.group_name_id === selectedGroupId)
   );
-  const isOwner = useIsOwner();
+  const { isOwner } = useIsOwner();
   const primaryButtonSx = {
     backgroundColor: "rgb(35, 48, 68)",
     "&:hover": { backgroundColor: "rgb(26, 36, 51)" },

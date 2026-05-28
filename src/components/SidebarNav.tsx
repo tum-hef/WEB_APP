@@ -100,7 +100,7 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
   const location = useLocation();
   const token = keycloak?.token;
   const currentUrl = location.pathname;
-  const isOwner = useIsOwner();
+  const { isOwner } = useIsOwner();
    const [openDataSpace, setOpenDataSpace] = useState(false);
   const [openTraining, setOpenTraining] = useState(false);
   const [openFrostEntities, setOpenFrostEntities] = useState(false);

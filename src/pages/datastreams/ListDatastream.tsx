@@ -90,7 +90,7 @@ const ListDatastream = () => {
   const selectedGroupId = useAppSelector(
     (state) => state.roles.selectedGroupId
   );
-  const isOwner = useIsOwner();
+  const { isOwner } = useIsOwner();
   const primaryButtonSx = {
     backgroundColor: "rgb(35, 48, 68)",
     "&:hover": { backgroundColor: "rgb(26, 36, 51)" },

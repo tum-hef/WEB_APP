@@ -41,7 +41,7 @@ const ListLocations = () => {
   const [deleting, setDeleting] = useState(false);
   const [locationToDelete, setLocationToDelete] = useState<any | null>(null);
 
-  const isOwner = useIsOwner();
+  const { isOwner } = useIsOwner();
   const primaryButtonSx = {
     backgroundColor: "rgb(35, 48, 68)",
     "&:hover": {

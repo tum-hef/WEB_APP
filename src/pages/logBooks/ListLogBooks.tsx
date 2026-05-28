@@ -52,7 +52,7 @@ const ListLogBook = () => {
   const [filterQuery, setFilterQuery] = useState("");
   const [sortQuery, setSortQuery] = useState("");
   const [loading, setLoading] = useState(false);
-  const isOwner = useIsOwner();
+  const { isOwner } = useIsOwner();
   const CreateLogSchema = Yup.object().shape({
     description: Yup.string()
       .min(3, "Too short")

@@ -18,7 +18,6 @@ const Reports = () => {
   const { keycloak } = useKeycloak();
   const userInfo = keycloak?.idTokenParsed;
   const token = keycloak?.token;
-  console.log(token);
 
   const [frostServerPort, setFrostServerPort] = useState<number | null>(null);
   const [finalLogs, setFinalLogs] = useState<any[]>([]);
