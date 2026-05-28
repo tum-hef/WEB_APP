@@ -52,7 +52,7 @@ const Location = () => {
   const { keycloak } = useKeycloak();
   const userInfo = keycloak?.idTokenParsed;
   const token = keycloak?.token;
-  const isOwner = useIsOwner();
+  const { isOwner } = useIsOwner();
   const [longitude, setLongitude] = useState<number | null>(null);
   const [latitude, setLatitude] = useState<number | null>(null);
 

@@ -13,7 +13,7 @@ import Swal from "sweetalert2";
 import ReactGA from "react-ga4";
 
 import { GAactionsObservationProperties } from "../../utils/GA";
-import { useAppSelector, useIsOwner } from "../../hooks/hooks";
+import { useIsOwner } from "../../hooks/hooks";
 import DataTableCardV2 from "../../components/DataGridServerSide";
 import EntityFormModal from "../../components/EntityFormModal";
 import ConfirmDeleteDialog from "../../components/ConfirmDeleteDialog";
@@ -23,7 +23,6 @@ const ListObservationProperty = () => {
   const { keycloak } = useKeycloak();
   const userInfo = keycloak?.idTokenParsed;
   const token = keycloak?.token;
-  console.log(token);
 
   const [frostServerPort, setFrostServerPort] = useState<number | null>(null);
   const [observationProperty, setObservationProperty] = useState<any[]>([]);
@@ -41,11 +40,8 @@ const [sortQuery, setSortQuery] = useState("");
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [observationPropertyToDelete, setObservationPropertyToDelete] = useState<any | null>(null);
-  const selectedGroupId = useAppSelector(state => state.roles.selectedGroupId);
-  const group = useAppSelector(state =>
-    state.roles.groups.find(g => g?.group_name_id === selectedGroupId)
-  );
-  const isOwner = useIsOwner();
+  const { isOwner, role } = useIsOwner();
+  const canDelete = role === "owner";
   const primaryButtonSx = {
     backgroundColor: "rgb(35, 48, 68)",
     "&:hover": { backgroundColor: "rgb(26, 36, 51)" },
@@ -56,7 +52,6 @@ const [sortQuery, setSortQuery] = useState("");
     borderColor: "#6e7881",
     "&:hover": { backgroundColor: "#5f6870", borderColor: "#5f6870" },
   };
-
   const editFormik = useFormik({
     initialValues: { name: "", description: "", definition: "" },
     validationSchema: editObservationPropertyValidationSchema,
@@ -354,19 +349,19 @@ const [sortQuery, setSortQuery] = useState("");
     },
     {
 
-      headerName: "Edit",
+      headerName: "Delete",
       name: "Delete",
       cellRenderer: (params: any) => (
         <DeleteForeverOutlinedIcon
           style={{
-            cursor: isOwner ? "pointer" : "not-allowed",
-            color: isOwner ? "red" : "gray",
-            opacity: isOwner ? 1 : 0.4,
-            pointerEvents: isOwner ? "auto" : "none",
+            cursor: canDelete ? "pointer" : "not-allowed",
+            color: canDelete ? "red" : "gray",
+            opacity: canDelete ? 1 : 0.4,
+            pointerEvents: canDelete ? "auto" : "none",
           }}
           onClick={() => {
             const row = params?.data;
-            if (!isOwner) return;
+            if (!canDelete) return;
             openDeleteDialog(row);
           }}
         />
@@ -374,7 +369,7 @@ const [sortQuery, setSortQuery] = useState("");
       flex: 1,
       filter: false,
     },
-  ], [isOwner, keycloak?.token, openDeleteDialog, openEditDialog]);
+  ], [canDelete, isOwner, openDeleteDialog, openEditDialog]);
 
   const handlePageChange = (newPage: number) => {
   setPage(newPage);

@@ -61,7 +61,7 @@ export default function DashboardPage() {
   const queryParams = new URLSearchParams(location.search);
   const selectedGroupId = useAppSelector(state => state.roles.selectedGroupId);
   const dispatch = useAppDispatch();
-  const isOwner = useIsOwner();
+  const { isOwner } = useIsOwner();
 
 
 
