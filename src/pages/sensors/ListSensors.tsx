@@ -24,19 +24,19 @@ const ListSensors = () => {
   const [frostServerPort, setFrostServerPort] = useState<number | null>(null);
   const [sensors, setSensors] = useState<any[]>([]);
   const [page, setPage] = useState(0);
-const [pageSize, setPageSize] = useState(10);
-const [totalRows, setTotalRows] = useState(0);
-const [pageLinks, setPageLinks] = useState<{ [key: number]: string }>({});
-const [loading, setLoading] = useState(false);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalRows, setTotalRows] = useState(0);
+  const [pageLinks, setPageLinks] = useState<{ [key: number]: string }>({});
+  const [loading, setLoading] = useState(false);
 
-const [filterQuery, setFilterQuery] = useState("");
-const [sortQuery, setSortQuery] = useState("");
-const [editOpen, setEditOpen] = useState(false);
-const [editingSensorId, setEditingSensorId] = useState<number | null>(null);
-const [saving, setSaving] = useState(false);
-const [deleteOpen, setDeleteOpen] = useState(false);
-const [deleting, setDeleting] = useState(false);
-const [sensorToDelete, setSensorToDelete] = useState<any | null>(null);
+  const [filterQuery, setFilterQuery] = useState("");
+  const [sortQuery, setSortQuery] = useState("");
+  const [editOpen, setEditOpen] = useState(false);
+  const [editingSensorId, setEditingSensorId] = useState<number | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [sensorToDelete, setSensorToDelete] = useState<any | null>(null);
   const { isOwner, role } = useIsOwner();
   const canDelete = role === "owner";
   const primaryButtonSx = {
@@ -102,55 +102,55 @@ const [sensorToDelete, setSensorToDelete] = useState<any | null>(null);
     },
   });
 
- const fetchSensors = async (
-  newPage = 0,
-  newPageSize = pageSize,
-  filter = filterQuery,
-  sort = sortQuery
-) => {
-  if (frostServerPort === null) return;
-  setLoading(true);
+  const fetchSensors = async (
+    newPage = 0,
+    newPageSize = pageSize,
+    filter = filterQuery,
+    sort = sortQuery
+  ) => {
+    if (frostServerPort === null) return;
+    setLoading(true);
 
-  const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
-  const isDev = process.env.REACT_APP_IS_DEVELOPMENT === "true";
+    const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
+    const isDev = process.env.REACT_APP_IS_DEVELOPMENT === "true";
 
-  let url = isDev
-    ? `${backend_url}:${frostServerPort}/FROST-Server/v1.0/Sensors`
-    : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Sensors`;
+    let url = isDev
+      ? `${backend_url}:${frostServerPort}/FROST-Server/v1.0/Sensors`
+      : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Sensors`;
 
-  if (pageLinks[newPage]) {
-    url = pageLinks[newPage];
-  }
-
-  try {
-    const res = await axios.get(url, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      params: !pageLinks[newPage] && {
-        $top: newPageSize,
-        $skip: newPage * newPageSize,
-        $count: true,
-        ...(filter && { $filter: filter }),
-        ...(sort && { $orderby: sort }),
-      },
-    });
-
-    setSensors(res.data.value);
-    if (res.data["@iot.count"]) setTotalRows(res.data["@iot.count"]);
-    if (res.data["@iot.nextLink"]) {
-      setPageLinks((prev) => ({
-        ...prev,
-        [newPage + 1]: res.data["@iot.nextLink"],
-      }));
+    if (pageLinks[newPage]) {
+      url = pageLinks[newPage];
     }
-  } catch (err) {
-    toast.error("Error Getting Sensors");
-  } finally {
-    setLoading(false);
-  }
-};
+
+    try {
+      const res = await axios.get(url, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        params: !pageLinks[newPage] && {
+          $top: newPageSize,
+          $skip: newPage * newPageSize,
+          $count: true,
+          ...(filter && { $filter: filter }),
+          ...(sort && { $orderby: sort }),
+        },
+      });
+
+      setSensors(res.data.value);
+      if (res.data["@iot.count"]) setTotalRows(res.data["@iot.count"]);
+      if (res.data["@iot.nextLink"]) {
+        setPageLinks((prev) => ({
+          ...prev,
+          [newPage + 1]: res.data["@iot.nextLink"],
+        }));
+      }
+    } catch (err) {
+      toast.error("Error Getting Sensors");
+    } finally {
+      setLoading(false);
+    }
+  };
 
 
   const fetchFrostPort = async () => {
@@ -179,15 +179,15 @@ const [sensorToDelete, setSensorToDelete] = useState<any | null>(null);
       });
   };
 
- useEffect(() => {
-  ReactGA.event(GAactionsSensors);
+  useEffect(() => {
+    ReactGA.event(GAactionsSensors);
 
-  if (frostServerPort !== null) {
-    fetchSensors(page, pageSize);
-  } else {
-    fetchFrostPort();
-  }
-}, [frostServerPort]);
+    if (frostServerPort !== null) {
+      fetchSensors(page, pageSize);
+    } else {
+      fetchFrostPort();
+    }
+  }, [frostServerPort]);
 
   const openEditDialog = useCallback(
     (row: any) => {
@@ -227,7 +227,7 @@ const [sensorToDelete, setSensorToDelete] = useState<any | null>(null);
         {
           headers: {
             "Content-Type": "application/json",
-            Authorization: `${token}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );
@@ -321,16 +321,16 @@ const [sensorToDelete, setSensorToDelete] = useState<any | null>(null);
 
   // onChange 
   const handlePageChange = (newPage: number) => {
-  setPage(newPage);
-  fetchSensors(newPage, pageSize, filterQuery, sortQuery);
-};
+    setPage(newPage);
+    fetchSensors(newPage, pageSize, filterQuery, sortQuery);
+  };
 
-const handlePageSizeChange = (newPageSize: number) => {
-  setPage(0);
-  setPageSize(newPageSize);
-  setPageLinks({});
-  fetchSensors(0, newPageSize, filterQuery, sortQuery);
-};
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPage(0);
+    setPageSize(newPageSize);
+    setPageLinks({});
+    fetchSensors(0, newPageSize, filterQuery, sortQuery);
+  };
   return (
     <Dashboard>
       <ToastContainer position="bottom-right" autoClose={5000} theme="dark" />
@@ -372,30 +372,30 @@ const handlePageSizeChange = (newPageSize: number) => {
         </Button>
       )}
       <DataTableCardV2
-  title="Sensor Types"
-  description="This page lists all sensor types available in the system. 
+        title="Sensor Types"
+        description="This page lists all sensor types available in the system. 
 Each sensor defines how a measurement is made, including its metadata and description."
-  columnDefs={columnDefs}
-  rowData={sensors}
-  page={page}
-  pageSize={pageSize}
-  totalRows={totalRows}
-  loading={loading}
-  onPageChange={handlePageChange}
-  onPageSizeChange={handlePageSizeChange}
-  onFilterChange={(fq) => {
-    setFilterQuery(fq);
-    setPage(0);
-    setPageLinks({});
-    fetchSensors(0, pageSize, fq, sortQuery);
-  }}
-  onSortChange={(sq) => {
-    setSortQuery(sq);
-    setPage(0);
-    setPageLinks({});
-    fetchSensors(0, pageSize, filterQuery, sq);
-  }}
-/>
+        columnDefs={columnDefs}
+        rowData={sensors}
+        page={page}
+        pageSize={pageSize}
+        totalRows={totalRows}
+        loading={loading}
+        onPageChange={handlePageChange}
+        onPageSizeChange={handlePageSizeChange}
+        onFilterChange={(fq) => {
+          setFilterQuery(fq);
+          setPage(0);
+          setPageLinks({});
+          fetchSensors(0, pageSize, fq, sortQuery);
+        }}
+        onSortChange={(sq) => {
+          setSortQuery(sq);
+          setPage(0);
+          setPageLinks({});
+          fetchSensors(0, pageSize, filterQuery, sq);
+        }}
+      />
       <EntityFormModal
         open={editOpen}
         onClose={() => {
