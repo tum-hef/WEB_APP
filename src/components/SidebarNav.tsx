@@ -39,6 +39,7 @@ import PublicIcon from "@mui/icons-material/Public";
 import { toast } from "react-toastify";
 import { useIsOwner } from "../hooks/hooks";
 import InsightsIcon from "@mui/icons-material/Insights";
+import HistoryIcon from "@mui/icons-material/History";
 const baseScrollbar = css`
   background-color: ${(props) => props.theme.sidebar.background};
   border-right: 1px solid rgba(0, 0, 0, 0.12);
@@ -101,7 +102,7 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
   const token = keycloak?.token;
   const currentUrl = location.pathname;
   const { isOwner } = useIsOwner();
-   const [openDataSpace, setOpenDataSpace] = useState(false);
+  const [openDataSpace, setOpenDataSpace] = useState(false);
   const [openTraining, setOpenTraining] = useState(false);
   const [openFrostEntities, setOpenFrostEntities] = useState(false);
   const handleDataSpace = () => {
@@ -167,35 +168,35 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
       toast.error("Backend URL is missing.");
       return;
     }
-  
+
     const email: string | null =
       localStorage.getItem("selected_others") === "true"
         ? localStorage.getItem("user_email")
         : userInfo?.preferred_username || "";
     const group_id = localStorage.getItem("group_id");
-  
+
     if (!email || !group_id) {
       // toast.error("User email and group ID are required.");
       return;
     }
-  
+
     try {
       const response = await axios.get<ApiResponse>(
-    `${backend_url}/grafana`,
-    {
-      params: {
-        user_email: email,
-        group_id: group_id,
-      },
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`, // ✅ Include Keycloak token
-      },
-      validateStatus: (status) => true,
-    }
-  );
-  
-  
+        `${backend_url}/grafana`,
+        {
+          params: {
+            user_email: email,
+            group_id: group_id,
+          },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`, // ✅ Include Keycloak token
+          },
+          validateStatus: (status) => true,
+        }
+      );
+
+
       if (response.status === 200 && response.data.success) {
         setGrafanaPort(response.data.PORT!); // Assuming setGrafanaPort exists
       } else {
@@ -212,7 +213,7 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
     }
   };
 
- 
+
 
   const handleFrostEntities = () => {
     setOpenFrostEntities(!openFrostEntities);
@@ -261,22 +262,22 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
 
   useEffect(() => {
     const fetchDataAndServices = async () => {
-        const group_id = localStorage.getItem("group_id");
-    setGroup_id(group_id);
-   await getNodeRedPort();
-   await  getGrafanaPort()
+      const group_id = localStorage.getItem("group_id");
+      setGroup_id(group_id);
+      await getNodeRedPort();
+      await getGrafanaPort()
 
     }
 
-     fetchDataAndServices()
-    
-  
+    fetchDataAndServices()
+
+
   }, [nodeRedPort]);
 
   const handleLogout = () => {
     localStorage.clear();
     keycloak.logout({ redirectUri: window.location.origin }).then(() => {
-    }).catch((err:unknown) => console.error("Logout failed", err));
+    }).catch((err: unknown) => console.error("Logout failed", err));
   };
   const theme = useTheme();
   const matches = useMediaQuery(theme.breakpoints.up("md"));
@@ -555,213 +556,259 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
             </List>
           </Collapse>
 
-         {nodeRedPort && process.env.REACT_APP_NODERED_URL && (
-  <a
-    href={`https://${nodeRedPort}-${process.env.REACT_APP_NODERED_URL}`}
-    target="_blank"
-    rel="noopener noreferrer"
-    style={{
-      textDecoration: "none",
-      pointerEvents:
-        currentUrl === "/dashboard" ||
-        currentUrl === "/contact" ||
-        currentUrl === "/database/frost" ||
-        currentUrl === "/database/node_red" ||
-        currentUrl === "/database/web_app" ||
-        !isOwner
-          ? "none"
-          : "auto",
-      cursor:
-        currentUrl === "/dashboard" ||
-        currentUrl === "/contact" ||
-        currentUrl === "/database/frost" ||
-        currentUrl === "/database/node_red" ||
-        currentUrl === "/database/web_app" ||
-        !isOwner
-          ? "not-allowed"
-          : "pointer",
-    }}
-    onClick={(e) => {
-      if (
-        currentUrl === "/dashboard" ||
-        currentUrl === "/contact" ||
-        currentUrl === "/database/frost" ||
-        currentUrl === "/database/node_red" ||
-        currentUrl === "/database/web_app" ||
-        !isOwner
-      ) {
-        e.preventDefault();
-      }
-    }}
-  >
-    <ListItemButton
-      disabled={
-        (!isOwner ||
-          currentUrl === "/dashboard" ||
-          currentUrl === "/contact" ||
-          currentUrl === "/database/frost" ||
-          currentUrl === "/database/node_red" ||
-          currentUrl === "/database/web_app") &&
-        !group_id
-      }
-    >
-      <ListItemIcon>
-        <WorkspacesIcon
-          style={{
-            color:
-              !isOwner ||
-              currentUrl === "/dashboard" ||
-              currentUrl === "/contact" ||
-              currentUrl === "/database/frost" ||
-              currentUrl === "/database/node_red" ||
-              currentUrl === "/database/web_app"
-                ? "gray"
-                : "white",
-          }}
-        />
-      </ListItemIcon>
-      <ListItemText
-        primaryTypographyProps={{ fontSize: "18px" }}
-        style={{
-          color:
-            !isOwner ||
-            currentUrl === "/dashboard" ||
-            currentUrl === "/contact" ||
-            currentUrl === "/database/frost" ||
-            currentUrl === "/database/node_red" ||
-            currentUrl === "/database/web_app"
-              ? "gray"
-              : "white",
-        }}
-        primary={"Node RED"}
-      />
-    </ListItemButton>
-  </a>
-)}
+          {nodeRedPort && process.env.REACT_APP_NODERED_URL && (
+            <a
+              href={`https://${nodeRedPort}-${process.env.REACT_APP_NODERED_URL}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                textDecoration: "none",
+                pointerEvents:
+                  currentUrl === "/dashboard" ||
+                    currentUrl === "/contact" ||
+                    currentUrl === "/database/frost" ||
+                    currentUrl === "/database/node_red" ||
+                    currentUrl === "/database/web_app" ||
+                    !isOwner
+                    ? "none"
+                    : "auto",
+                cursor:
+                  currentUrl === "/dashboard" ||
+                    currentUrl === "/contact" ||
+                    currentUrl === "/database/frost" ||
+                    currentUrl === "/database/node_red" ||
+                    currentUrl === "/database/web_app" ||
+                    !isOwner
+                    ? "not-allowed"
+                    : "pointer",
+              }}
+              onClick={(e) => {
+                if (
+                  currentUrl === "/dashboard" ||
+                  currentUrl === "/contact" ||
+                  currentUrl === "/database/frost" ||
+                  currentUrl === "/database/node_red" ||
+                  currentUrl === "/database/web_app" ||
+                  !isOwner
+                ) {
+                  e.preventDefault();
+                }
+              }}
+            >
+              <ListItemButton
+                disabled={
+                  (!isOwner ||
+                    currentUrl === "/dashboard" ||
+                    currentUrl === "/contact" ||
+                    currentUrl === "/database/frost" ||
+                    currentUrl === "/database/node_red" ||
+                    currentUrl === "/database/web_app") &&
+                  !group_id
+                }
+              >
+                <ListItemIcon>
+                  <WorkspacesIcon
+                    style={{
+                      color:
+                        !isOwner ||
+                          currentUrl === "/dashboard" ||
+                          currentUrl === "/contact" ||
+                          currentUrl === "/database/frost" ||
+                          currentUrl === "/database/node_red" ||
+                          currentUrl === "/database/web_app"
+                          ? "gray"
+                          : "white",
+                    }}
+                  />
+                </ListItemIcon>
+                <ListItemText
+                  primaryTypographyProps={{ fontSize: "18px" }}
+                  style={{
+                    color:
+                      !isOwner ||
+                        currentUrl === "/dashboard" ||
+                        currentUrl === "/contact" ||
+                        currentUrl === "/database/frost" ||
+                        currentUrl === "/database/node_red" ||
+                        currentUrl === "/database/web_app"
+                        ? "gray"
+                        : "white",
+                  }}
+                  primary={"Node RED"}
+                />
+              </ListItemButton>
+            </a>
+          )}
 
-{grafanaPort && process.env.REACT_APP_GRAFANA_URL && (
-  <a
-    href={`https://${grafanaPort}-${process.env.REACT_APP_GRAFANA_URL}`}
-    target="_blank"
-    rel="noopener noreferrer"
-    style={{
-      textDecoration: "none",
-      pointerEvents:
-        currentUrl === "/dashboard" ||
-        currentUrl === "/contact" ||
-        currentUrl === "/database/frost" ||
-        currentUrl === "/database/node_red" ||
-        currentUrl === "/database/web_app"
-          ? "none"
-          : "auto",
-      cursor:
-        currentUrl === "/dashboard" ||
-        currentUrl === "/contact" ||
-        currentUrl === "/database/frost" ||
-        currentUrl === "/database/node_red" ||
-        currentUrl === "/database/web_app"
-          ? "not-allowed"
-          : "pointer",
-    }}
-    onClick={(e) => {
-      if (
-        currentUrl === "/dashboard" ||
-        currentUrl === "/contact" ||
-        currentUrl === "/database/frost" ||
-        currentUrl === "/database/node_red" ||
-        currentUrl === "/database/web_app"
-      ) {
-        e.preventDefault();
-      }
-    }}
-  >
-    <ListItemButton
-      disabled={
-        (currentUrl === "/dashboard" ||
-          currentUrl === "/contact" ||
-          currentUrl === "/database/frost" ||
-          currentUrl === "/database/node_red" ||
-          currentUrl === "/database/web_app") &&
-        !group_id
-      }
-    >
-      <ListItemIcon>
-        <InsightsIcon
-          style={{
-            color:
-              currentUrl === "/dashboard" ||
-              currentUrl === "/contact" ||
-              currentUrl === "/database/frost" ||
-              currentUrl === "/database/node_red" ||
-              currentUrl === "/database/web_app"
-                ? "gray"
-                : "white",
-          }}
-        />
-      </ListItemIcon>
-      <ListItemText
-        primaryTypographyProps={{ fontSize: "18px" }}
-        style={{
-          color:
-            currentUrl === "/dashboard" ||
-            currentUrl === "/contact" ||
-            currentUrl === "/database/frost" ||
-            currentUrl === "/database/node_red" ||
-            currentUrl === "/database/web_app"
-              ? "gray"
-              : "white",
-        }}
-        primary={"Grafana"}
-      />
-    </ListItemButton>
-  </a>
-)}
+          {grafanaPort && process.env.REACT_APP_GRAFANA_URL && (
+            <a
+              href={`https://${grafanaPort}-${process.env.REACT_APP_GRAFANA_URL}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                textDecoration: "none",
+                pointerEvents:
+                  currentUrl === "/dashboard" ||
+                    currentUrl === "/contact" ||
+                    currentUrl === "/database/frost" ||
+                    currentUrl === "/database/node_red" ||
+                    currentUrl === "/database/web_app"
+                    ? "none"
+                    : "auto",
+                cursor:
+                  currentUrl === "/dashboard" ||
+                    currentUrl === "/contact" ||
+                    currentUrl === "/database/frost" ||
+                    currentUrl === "/database/node_red" ||
+                    currentUrl === "/database/web_app"
+                    ? "not-allowed"
+                    : "pointer",
+              }}
+              onClick={(e) => {
+                if (
+                  currentUrl === "/dashboard" ||
+                  currentUrl === "/contact" ||
+                  currentUrl === "/database/frost" ||
+                  currentUrl === "/database/node_red" ||
+                  currentUrl === "/database/web_app"
+                ) {
+                  e.preventDefault();
+                }
+              }}
+            >
+              <ListItemButton
+                disabled={
+                  (currentUrl === "/dashboard" ||
+                    currentUrl === "/contact" ||
+                    currentUrl === "/database/frost" ||
+                    currentUrl === "/database/node_red" ||
+                    currentUrl === "/database/web_app") &&
+                  !group_id
+                }
+              >
+                <ListItemIcon>
+                  <InsightsIcon
+                    style={{
+                      color:
+                        currentUrl === "/dashboard" ||
+                          currentUrl === "/contact" ||
+                          currentUrl === "/database/frost" ||
+                          currentUrl === "/database/node_red" ||
+                          currentUrl === "/database/web_app"
+                          ? "gray"
+                          : "white",
+                    }}
+                  />
+                </ListItemIcon>
+                <ListItemText
+                  primaryTypographyProps={{ fontSize: "18px" }}
+                  style={{
+                    color:
+                      currentUrl === "/dashboard" ||
+                        currentUrl === "/contact" ||
+                        currentUrl === "/database/frost" ||
+                        currentUrl === "/database/node_red" ||
+                        currentUrl === "/database/web_app"
+                        ? "gray"
+                        : "white",
+                  }}
+                  primary={"Grafana"}
+                />
+              </ListItemButton>
+            </a>
+          )}
 
-<LinkCustom
-  to="/log_books"
-  onClick={(event) => {
-    if (
-      (currentUrl === "/dashboard" ||
-        currentUrl === "/contact" ||
-        currentUrl === "/database/frost" ||
-        currentUrl === "/database/node_red" ||
-        currentUrl === "/database/web_app") &&
-      !group_id
-    ) {
-      event.preventDefault();
-    }
-  }}
->
-  <ListItem key={"Log Book"} disablePadding>
-    <ListItemButton
-      selected={location.pathname === "/log_books"}
-      disabled={
-        (currentUrl === "/dashboard" ||
-          currentUrl === "/contact" ||
-          currentUrl === "/database/frost" ||
-          currentUrl === "/database/node_red" ||
-          currentUrl === "/database/web_app") &&
-        !group_id
-      }
-    >
-      <ListItemIcon>
-        <MenuBookIcon
-          style={{
-            color: "white",
-          }}
-        />
-      </ListItemIcon>
+          <LinkCustom
+            to="/log_books"
+            onClick={(event) => {
+              if (
+                (currentUrl === "/dashboard" ||
+                  currentUrl === "/contact" ||
+                  currentUrl === "/database/frost" ||
+                  currentUrl === "/database/node_red" ||
+                  currentUrl === "/database/web_app") &&
+                !group_id
+              ) {
+                event.preventDefault();
+              }
+            }}
+          >
+            <ListItem key={"Log Book"} disablePadding>
+              <ListItemButton
+                selected={location.pathname === "/log_books"}
+                disabled={
+                  (currentUrl === "/dashboard" ||
+                    currentUrl === "/contact" ||
+                    currentUrl === "/database/frost" ||
+                    currentUrl === "/database/node_red" ||
+                    currentUrl === "/database/web_app") &&
+                  !group_id
+                }
+              >
+                <ListItemIcon>
+                  <MenuBookIcon
+                    style={{
+                      color: "white",
+                    }}
+                  />
+                </ListItemIcon>
 
-      <ListItemText
-        primaryTypographyProps={{ fontSize: "18px" }}
-        style={{
-          color: "white",
-        }}
-        primary={"Log Book"}
-      />
-    </ListItemButton>
-  </ListItem>
-</LinkCustom>
+                <ListItemText
+                  primaryTypographyProps={{ fontSize: "18px" }}
+                  style={{
+                    color: "white",
+                  }}
+                  primary={"Log Book"}
+                />
+              </ListItemButton>
+            </ListItem>
+          </LinkCustom>
+
+          <LinkCustom
+            to="/audit_trail"
+            onClick={(event) => {
+              if (
+                (currentUrl === "/dashboard" ||
+                  currentUrl === "/contact" ||
+                  currentUrl === "/database/frost" ||
+                  currentUrl === "/database/node_red" ||
+                  currentUrl === "/database/web_app") &&
+                !group_id
+              ) {
+                event.preventDefault();
+              }
+            }}
+          >
+            <ListItem key={"Audit Trail"} disablePadding>
+              <ListItemButton
+                selected={location.pathname === "/audit_trail"}
+                disabled={
+                  (currentUrl === "/dashboard" ||
+                    currentUrl === "/contact" ||
+                    currentUrl === "/database/frost" ||
+                    currentUrl === "/database/node_red" ||
+                    currentUrl === "/database/web_app") &&
+                  !group_id
+                }
+              >
+                <ListItemIcon>
+                  <HistoryIcon
+                    style={{
+                      color: "white",
+                    }}
+                  />
+                </ListItemIcon>
+
+                <ListItemText
+                  primaryTypographyProps={{ fontSize: "18px" }}
+                  style={{
+                    color: "white",
+                  }}
+                  primary={"Audit Trail"}
+                />
+              </ListItemButton>
+            </ListItem>
+          </LinkCustom>
 
 
 
