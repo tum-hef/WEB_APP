@@ -8,6 +8,9 @@ import {
   CardContent,
   CardHeader,
   Typography,
+  Box,
+  ToggleButton,
+  ToggleButtonGroup,
 } from "@mui/material";
 import LinkCustom from "../../components/LinkCustom";
 import Dashboard from "../../components/DashboardComponent";
@@ -18,6 +21,7 @@ import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import DeleteForeverOutlinedIcon from "@mui/icons-material/DeleteForeverOutlined";
 import FolderSpecialIcon from "@mui/icons-material/FolderSpecial";
 import MapIcon from "@mui/icons-material/Map";
+import TableChartIcon from "@mui/icons-material/TableChart";
 import { useAppSelector, useIsOwner } from "../../hooks/hooks";
 import DataTableCardV2 from "../../components/DataGridServerSide";
 import EntityFormModal from "../../components/EntityFormModal";
@@ -29,6 +33,7 @@ const Devices = () => {
   const userInfo = keycloak?.idTokenParsed;
   const token = keycloak?.token;
 
+  const [viewMode, setViewMode] = useState<"table" | "map">("table");
   const [frostServerPort, setFrostServerPort] = useState<number | null>(null);
   const [devices, setDevices] = useState<any[]>([]);
   const [page, setPage] = useState(0);
@@ -386,61 +391,113 @@ const Devices = () => {
         <Typography color="text.primary">Devices</Typography>
       </Breadcrumbs>
 
-      {/* Create Button Above Card */}
-      {isOwner ? (
-        <LinkCustom to="/devices/store">
+      {/* Create Button and View Toggle Group */}
+      <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: "12px" }}>
+        {isOwner ? (
+          <LinkCustom to="/devices/store">
+            <Button
+              variant="contained"
+              color="primary"
+              sx={{
+                backgroundColor: "rgb(35, 48, 68)",
+                "&:hover": { backgroundColor: "rgb(26, 36, 51)" },
+              }}
+            >
+              Create
+            </Button>
+          </LinkCustom>
+        ) : (
           <Button
+            disabled
             variant="contained"
             color="primary"
             sx={{
-              mb: "12px",
               backgroundColor: "rgb(35, 48, 68)",
               "&:hover": { backgroundColor: "rgb(26, 36, 51)" },
             }}
           >
             Create
           </Button>
-        </LinkCustom>
-      ) : (
-        <Button
-          disabled
-          variant="contained"
-          color="primary"
+        )}
+
+        <ToggleButtonGroup
+          value={viewMode}
+          exclusive
+          onChange={(e, newView) => {
+            if (newView !== null) {
+              setViewMode(newView);
+            }
+          }}
+          aria-label="device view mode"
+          size="small"
           sx={{
-            mb: "12px",
-            backgroundColor: "rgb(35, 48, 68)",
-            "&:hover": { backgroundColor: "rgb(26, 36, 51)" },
+            backgroundColor: "#fff",
+            "& .MuiToggleButton-root": {
+              borderColor: "rgba(0, 0, 0, 0.12)",
+              color: "text.secondary",
+              "&.Mui-selected": {
+                color: "#fff",
+                backgroundColor: "rgb(35, 48, 68)",
+                "&:hover": {
+                  backgroundColor: "rgb(26, 36, 51)",
+                },
+              },
+            },
           }}
         >
-          Create
-        </Button>
-      )}
+          <ToggleButton value="table" aria-label="table view" sx={{ px: 2, display: "flex", gap: "6px" }}>
+            <TableChartIcon fontSize="small" />
+            <Typography variant="button" sx={{ textTransform: "none", fontWeight: 600 }}>Table</Typography>
+          </ToggleButton>
+          <ToggleButton value="map" aria-label="map view" sx={{ px: 2, display: "flex", gap: "6px" }}>
+            <MapIcon fontSize="small" />
+            <Typography variant="button" sx={{ textTransform: "none", fontWeight: 600 }}>Map</Typography>
+          </ToggleButton>
+        </ToggleButtonGroup>
+      </Box>
 
-      <DataTableCardV2
-        title="Devices"
-        description="This page lists all registered devices in your project. 
+      {viewMode === "table" ? (
+        <DataTableCardV2
+          title="Devices"
+          description="This page lists all registered devices in your project. 
 Each device can have one or more datastreams (e.g., temperature, humidity) that provide sensor observations."
-        columnDefs={columnDefs}
-        rowData={devices}
-        page={page}
-        pageSize={pageSize}
-        totalRows={totalRows}
-        loading={loading}
-        onPageChange={handlePageChange}
-        onPageSizeChange={handlePageSizeChange}
-        onFilterChange={(fq) => {
-          setFilterQuery(fq);
-          setPage(0);
-          setPageLinks({});
-          fetchThings(0, pageSize, fq, sortQuery);
-        }}
-        onSortChange={(sq) => {
-          setSortQuery(sq);
-          setPage(0);
-          setPageLinks({});
-          fetchThings(0, pageSize, filterQuery, sq);
-        }}
-      />
+          columnDefs={columnDefs}
+          rowData={devices}
+          page={page}
+          pageSize={pageSize}
+          totalRows={totalRows}
+          loading={loading}
+          onPageChange={handlePageChange}
+          onPageSizeChange={handlePageSizeChange}
+          onFilterChange={(fq) => {
+            setFilterQuery(fq);
+            setPage(0);
+            setPageLinks({});
+            fetchThings(0, pageSize, fq, sortQuery);
+          }}
+          onSortChange={(sq) => {
+            setSortQuery(sq);
+            setPage(0);
+            setPageLinks({});
+            fetchThings(0, pageSize, filterQuery, sq);
+          }}
+        />
+      ) : (
+        <Card elevation={1} sx={{ borderRadius: "8px" }}>
+          <CardHeader
+            title={
+              <Typography variant="h3" sx={{ fontWeight: 400 }}>
+                Devices Map
+              </Typography>
+            }
+          />
+          <CardContent sx={{ height: "600px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Typography variant="h5" color="text.secondary">
+              Map View Placeholder
+            </Typography>
+          </CardContent>
+        </Card>
+      )}
       <EntityFormModal
         open={editOpen}
         onClose={() => {
