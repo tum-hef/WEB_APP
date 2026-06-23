@@ -230,6 +230,9 @@ const Devices = () => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
+        params: {
+          ...(filterQuery && { $filter: filterQuery }),
+        },
       });
       setMapGeoJson(res.data);
     } catch (err) {
@@ -240,10 +243,10 @@ const Devices = () => {
   };
 
   useEffect(() => {
-    if (viewMode === "map" && frostServerPort !== null && !mapGeoJson) {
+    if (viewMode === "map" && frostServerPort !== null) {
       fetchGeoJson();
     }
-  }, [viewMode, frostServerPort]);
+  }, [viewMode, frostServerPort, filterQuery]);
 
   const openEditDialog = useCallback(
     (row: any) => {
