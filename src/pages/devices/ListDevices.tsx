@@ -24,7 +24,7 @@ import FolderSpecialIcon from "@mui/icons-material/FolderSpecial";
 import MapIcon from "@mui/icons-material/Map";
 import TableChartIcon from "@mui/icons-material/TableChart";
 import { useAppSelector, useIsOwner } from "../../hooks/hooks";
-import { MapContainer, TileLayer, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, useMap, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import DataTableCardV2 from "../../components/DataGridServerSide";
@@ -564,6 +564,43 @@ Each device can have one or more datastreams (e.g., temperature, humidity) that 
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
               {mapGeoJson && <MapBoundsFitter geojson={mapGeoJson} />}
+              {mapGeoJson && mapGeoJson.features && mapGeoJson.features.map((feature: any) => {
+                const coordinates = feature?.geometry?.coordinates;
+                const iotId = feature?.properties?.["@iot.id"];
+                const name = feature?.properties?.name;
+                const description = feature?.properties?.description;
+
+                if (!coordinates || coordinates.length < 2 || !iotId) return null;
+
+                const lat = coordinates[1];
+                const lng = coordinates[0];
+
+                return (
+                  <Marker
+                    key={iotId}
+                    position={[lat, lng]}
+                    icon={customMarkerIcon}
+                  >
+                    <Popup>
+                      <Box sx={{ p: 0.5, minWidth: 150 }}>
+                        <Typography variant="subtitle1" sx={{ fontWeight: "bold", mb: 0.5 }}>
+                          {name || `Device ${iotId}`}
+                        </Typography>
+                        {description && (
+                          <Typography variant="body2" color="textSecondary" sx={{ mb: 1, maxHeight: 80, overflowY: "auto" }}>
+                            {description}
+                          </Typography>
+                        )}
+                        <LinkCustom to={`/devices/${iotId}/datastreams`}>
+                          <Button size="small" variant="contained" fullWidth sx={{ textTransform: "none", fontSize: "0.75rem", backgroundColor: "rgb(35, 48, 68)", "&:hover": { backgroundColor: "rgb(26, 36, 51)" } }}>
+                            View Datastreams
+                          </Button>
+                        </LinkCustom>
+                      </Box>
+                    </Popup>
+                  </Marker>
+                );
+              })}
             </MapContainer>
             {mapLoading && (
               <Box
