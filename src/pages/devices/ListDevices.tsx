@@ -11,6 +11,7 @@ import {
   Box,
   ToggleButton,
   ToggleButtonGroup,
+  CircularProgress,
 } from "@mui/material";
 import LinkCustom from "../../components/LinkCustom";
 import Dashboard from "../../components/DashboardComponent";
@@ -23,13 +24,33 @@ import FolderSpecialIcon from "@mui/icons-material/FolderSpecial";
 import MapIcon from "@mui/icons-material/Map";
 import TableChartIcon from "@mui/icons-material/TableChart";
 import { useAppSelector, useIsOwner } from "../../hooks/hooks";
-import { MapContainer, TileLayer } from "react-leaflet";
+import { MapContainer, TileLayer, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import DataTableCardV2 from "../../components/DataGridServerSide";
 import EntityFormModal from "../../components/EntityFormModal";
 import ConfirmDeleteDialog from "../../components/ConfirmDeleteDialog";
 import { editDeviceValidationSchema } from "../../formik/validation_schema";
+
+const MapBoundsFitter = ({ geojson }: { geojson: any }) => {
+  const map = useMap();
+
+  useEffect(() => {
+    if (geojson && geojson.features && geojson.features.length > 0) {
+      try {
+        const geojsonLayer = L.geoJSON(geojson);
+        const bounds = geojsonLayer.getBounds();
+        if (bounds.isValid()) {
+          map.fitBounds(bounds, { padding: [50, 50] });
+        }
+      } catch (err) {
+        console.error("Error fitting bounds:", err);
+      }
+    }
+  }, [geojson, map]);
+
+  return null;
+};
 
 const Devices = () => {
   const { keycloak } = useKeycloak();
@@ -44,6 +65,8 @@ const Devices = () => {
   const [viewMode, setViewMode] = useState<"table" | "map">("table");
   const [frostServerPort, setFrostServerPort] = useState<number | null>(null);
   const [devices, setDevices] = useState<any[]>([]);
+  const [mapGeoJson, setMapGeoJson] = useState<any>(null);
+  const [mapLoading, setMapLoading] = useState(false);
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [totalRows, setTotalRows] = useState(0);
@@ -191,6 +214,36 @@ const Devices = () => {
       fetchFrostPort();
     }
   }, [frostServerPort]);
+
+  const fetchGeoJson = async () => {
+    if (frostServerPort === null) return;
+    setMapLoading(true);
+    const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
+    const isDev = process.env.REACT_APP_IS_DEVELOPMENT === "true";
+    let url = isDev
+      ? `${backend_url}:${frostServerPort}/FROST-Server/v1.0/Things?$expand=Locations&$format=geojson&$top=1000`
+      : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Things?$expand=Locations&$format=geojson&$top=1000`;
+
+    try {
+      const res = await axios.get(url, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setMapGeoJson(res.data);
+    } catch (err) {
+      console.error("Error fetching geojson:", err);
+    } finally {
+      setMapLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (viewMode === "map" && frostServerPort !== null && !mapGeoJson) {
+      fetchGeoJson();
+    }
+  }, [viewMode, frostServerPort]);
 
   const openEditDialog = useCallback(
     (row: any) => {
@@ -499,7 +552,7 @@ Each device can have one or more datastreams (e.g., temperature, humidity) that 
               </Typography>
             }
           />
-          <CardContent sx={{ height: "600px", display: "flex", flexDirection: "column", p: 0 }}>
+          <CardContent sx={{ height: "600px", display: "flex", flexDirection: "column", p: 0, position: "relative" }}>
             <MapContainer
               center={[48.137154, 11.576124]}
               zoom={12}
@@ -510,7 +563,23 @@ Each device can have one or more datastreams (e.g., temperature, humidity) that 
                 attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
+              {mapGeoJson && <MapBoundsFitter geojson={mapGeoJson} />}
             </MapContainer>
+            {mapLoading && (
+              <Box
+                sx={{
+                  position: "absolute",
+                  inset: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: "rgba(255,255,255,0.6)",
+                  zIndex: 1000,
+                }}
+              >
+                <CircularProgress size={48} />
+              </Box>
+            )}
           </CardContent>
         </Card>
       )}
