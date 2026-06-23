@@ -23,6 +23,9 @@ import FolderSpecialIcon from "@mui/icons-material/FolderSpecial";
 import MapIcon from "@mui/icons-material/Map";
 import TableChartIcon from "@mui/icons-material/TableChart";
 import { useAppSelector, useIsOwner } from "../../hooks/hooks";
+import { MapContainer, TileLayer } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 import DataTableCardV2 from "../../components/DataGridServerSide";
 import EntityFormModal from "../../components/EntityFormModal";
 import ConfirmDeleteDialog from "../../components/ConfirmDeleteDialog";
@@ -32,6 +35,11 @@ const Devices = () => {
   const { keycloak } = useKeycloak();
   const userInfo = keycloak?.idTokenParsed;
   const token = keycloak?.token;
+
+  const customMarkerIcon = new L.Icon({
+    iconUrl: require("../../assets/pinpoint.png"),
+    iconSize: [30, 30],
+  });
 
   const [viewMode, setViewMode] = useState<"table" | "map">("table");
   const [frostServerPort, setFrostServerPort] = useState<number | null>(null);
@@ -491,10 +499,18 @@ Each device can have one or more datastreams (e.g., temperature, humidity) that 
               </Typography>
             }
           />
-          <CardContent sx={{ height: "600px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <Typography variant="h5" color="text.secondary">
-              Map View Placeholder
-            </Typography>
+          <CardContent sx={{ height: "600px", display: "flex", flexDirection: "column", p: 0 }}>
+            <MapContainer
+              center={[48.137154, 11.576124]}
+              zoom={12}
+              scrollWheelZoom={true}
+              style={{ height: "100%", width: "100%", borderRadius: "0 0 8px 8px" }}
+            >
+              <TileLayer
+                attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+            </MapContainer>
           </CardContent>
         </Card>
       )}
