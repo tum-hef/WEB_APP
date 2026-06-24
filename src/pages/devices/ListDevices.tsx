@@ -8,6 +8,10 @@ import {
   CardContent,
   CardHeader,
   Typography,
+  Box,
+  ToggleButton,
+  ToggleButtonGroup,
+  CircularProgress,
 } from "@mui/material";
 import LinkCustom from "../../components/LinkCustom";
 import Dashboard from "../../components/DashboardComponent";
@@ -18,19 +22,116 @@ import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import DeleteForeverOutlinedIcon from "@mui/icons-material/DeleteForeverOutlined";
 import FolderSpecialIcon from "@mui/icons-material/FolderSpecial";
 import MapIcon from "@mui/icons-material/Map";
+import TableChartIcon from "@mui/icons-material/TableChart";
 import { useAppSelector, useIsOwner } from "../../hooks/hooks";
+import { MapContainer, TileLayer, useMap, Marker, Popup } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 import DataTableCardV2 from "../../components/DataGridServerSide";
 import EntityFormModal from "../../components/EntityFormModal";
 import ConfirmDeleteDialog from "../../components/ConfirmDeleteDialog";
 import { editDeviceValidationSchema } from "../../formik/validation_schema";
+import { LeafletProvider, useLeafletContext } from "@react-leaflet/core";
+import "leaflet.markercluster/dist/MarkerCluster.css";
+import "leaflet.markercluster/dist/MarkerCluster.Default.css";
+import "leaflet.markercluster";
+
+interface MarkerClusterGroupProps {
+  children: React.ReactNode;
+  [key: string]: any;
+}
+
+const MarkerClusterGroup = ({ children, ...props }: MarkerClusterGroupProps) => {
+  const context = useLeafletContext();
+
+  const clusterGroup = useMemo(() => {
+    return L.markerClusterGroup({
+      showCoverageOnHover: false,
+      spiderfyOnMaxZoom: true,
+      zoomToBoundsOnClick: true,
+      iconCreateFunction: (cluster) => {
+        const count = cluster.getChildCount();
+        return L.divIcon({
+          html: `<div class="custom-cluster-inner"><span>${count}</span></div>`,
+          className: "custom-cluster-marker",
+          iconSize: L.point(40, 40, true),
+        });
+      },
+      ...props,
+    });
+  }, []);
+
+  useEffect(() => {
+    const container = context.layerContainer || context.map;
+
+    const handleClusterClick = (a: any) => {
+      const bounds = a.layer.getBounds();
+      if (bounds.isValid() && bounds.getNorthEast().equals(bounds.getSouthWest())) {
+        a.layer.spiderfy();
+      }
+    };
+
+    clusterGroup.on("clusterclick", handleClusterClick);
+    container.addLayer(clusterGroup);
+
+    return () => {
+      clusterGroup.off("clusterclick", handleClusterClick);
+      container.removeLayer(clusterGroup);
+    };
+  }, [context, clusterGroup]);
+
+  return (
+    <LeafletProvider value={{ ...context, layerContainer: clusterGroup }}>
+      {children}
+    </LeafletProvider>
+  );
+};
+
+const MapBoundsFitter = ({ geojson }: { geojson: any }) => {
+  const map = useMap();
+
+  useEffect(() => {
+    if (geojson && geojson.features && geojson.features.length > 0) {
+      try {
+        const geojsonLayer = L.geoJSON(geojson);
+        const bounds = geojsonLayer.getBounds();
+        if (bounds.isValid()) {
+          map.fitBounds(bounds, { padding: [50, 50] });
+        }
+      } catch (err) {
+        console.error("Error fitting bounds:", err);
+      }
+    }
+  }, [geojson, map]);
+
+  return null;
+};
 
 const Devices = () => {
   const { keycloak } = useKeycloak();
   const userInfo = keycloak?.idTokenParsed;
   const token = keycloak?.token;
 
+  const customMarkerIcon = useMemo(() => {
+    return L.divIcon({
+      html: `
+        <div class="device-glow-marker">
+          <div class="device-glow-ring"></div>
+          <div class="device-glow-dot"></div>
+        </div>
+      `,
+      className: "device-marker-icon",
+      iconSize: [30, 30],
+      iconAnchor: [15, 15],
+      popupAnchor: [0, -15],
+    });
+  }, []);
+
+  const [viewMode, setViewMode] = useState<"table" | "map">("table");
   const [frostServerPort, setFrostServerPort] = useState<number | null>(null);
   const [devices, setDevices] = useState<any[]>([]);
+  const [mapGeoJson, setMapGeoJson] = useState<any>(null);
+  const [mapLoading, setMapLoading] = useState(false);
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [totalRows, setTotalRows] = useState(0);
@@ -179,6 +280,39 @@ const Devices = () => {
     }
   }, [frostServerPort]);
 
+  const fetchGeoJson = async () => {
+    if (frostServerPort === null) return;
+    setMapLoading(true);
+    const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
+    const isDev = process.env.REACT_APP_IS_DEVELOPMENT === "true";
+    let url = isDev
+      ? `${backend_url}:${frostServerPort}/FROST-Server/v1.0/Things?$expand=Locations&$format=geojson&$top=1000`
+      : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/Things?$expand=Locations&$format=geojson&$top=1000`;
+
+    try {
+      const res = await axios.get(url, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        params: {
+          ...(filterQuery && { $filter: filterQuery }),
+        },
+      });
+      setMapGeoJson(res.data);
+    } catch (err) {
+      console.error("Error fetching geojson:", err);
+    } finally {
+      setMapLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (viewMode === "map" && frostServerPort !== null) {
+      fetchGeoJson();
+    }
+  }, [viewMode, frostServerPort, filterQuery]);
+
   const openEditDialog = useCallback(
     (row: any) => {
       setEditingDeviceId(row?.["@iot.id"]);
@@ -217,7 +351,7 @@ const Devices = () => {
         {
           headers: {
             "Content-Type": "application/json",
-            Authorization: `${token}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );
@@ -386,61 +520,178 @@ const Devices = () => {
         <Typography color="text.primary">Devices</Typography>
       </Breadcrumbs>
 
-      {/* Create Button Above Card */}
-      {isOwner ? (
-        <LinkCustom to="/devices/store">
+      {/* Create Button and View Toggle Group */}
+      <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: "12px" }}>
+        {isOwner ? (
+          <LinkCustom to="/devices/store">
+            <Button
+              variant="contained"
+              color="primary"
+              sx={{
+                backgroundColor: "rgb(35, 48, 68)",
+                "&:hover": { backgroundColor: "rgb(26, 36, 51)" },
+              }}
+            >
+              Create
+            </Button>
+          </LinkCustom>
+        ) : (
           <Button
+            disabled
             variant="contained"
             color="primary"
             sx={{
-              mb: "12px",
               backgroundColor: "rgb(35, 48, 68)",
               "&:hover": { backgroundColor: "rgb(26, 36, 51)" },
             }}
           >
             Create
           </Button>
-        </LinkCustom>
-      ) : (
-        <Button
-          disabled
-          variant="contained"
-          color="primary"
+        )}
+
+        <ToggleButtonGroup
+          value={viewMode}
+          exclusive
+          onChange={(e, newView) => {
+            if (newView !== null) {
+              setViewMode(newView);
+            }
+          }}
+          aria-label="device view mode"
+          size="small"
           sx={{
-            mb: "12px",
-            backgroundColor: "rgb(35, 48, 68)",
-            "&:hover": { backgroundColor: "rgb(26, 36, 51)" },
+            backgroundColor: "#fff",
+            "& .MuiToggleButton-root": {
+              borderColor: "rgba(0, 0, 0, 0.12)",
+              color: "text.secondary",
+              "&.Mui-selected": {
+                color: "#fff",
+                backgroundColor: "rgb(35, 48, 68)",
+                "&:hover": {
+                  backgroundColor: "rgb(26, 36, 51)",
+                },
+              },
+            },
           }}
         >
-          Create
-        </Button>
-      )}
+          <ToggleButton value="table" aria-label="table view" sx={{ px: 2, display: "flex", gap: "6px" }}>
+            <TableChartIcon fontSize="small" />
+            <Typography variant="button" sx={{ textTransform: "none", fontWeight: 600 }}>Table</Typography>
+          </ToggleButton>
+          <ToggleButton value="map" aria-label="map view" sx={{ px: 2, display: "flex", gap: "6px" }}>
+            <MapIcon fontSize="small" />
+            <Typography variant="button" sx={{ textTransform: "none", fontWeight: 600 }}>Map</Typography>
+          </ToggleButton>
+        </ToggleButtonGroup>
+      </Box>
 
-      <DataTableCardV2
-        title="Devices"
-        description="This page lists all registered devices in your project. 
+      {viewMode === "table" ? (
+        <DataTableCardV2
+          title="Devices"
+          description="This page lists all registered devices in your project. 
 Each device can have one or more datastreams (e.g., temperature, humidity) that provide sensor observations."
-        columnDefs={columnDefs}
-        rowData={devices}
-        page={page}
-        pageSize={pageSize}
-        totalRows={totalRows}
-        loading={loading}
-        onPageChange={handlePageChange}
-        onPageSizeChange={handlePageSizeChange}
-        onFilterChange={(fq) => {
-          setFilterQuery(fq);
-          setPage(0);
-          setPageLinks({});
-          fetchThings(0, pageSize, fq, sortQuery);
-        }}
-        onSortChange={(sq) => {
-          setSortQuery(sq);
-          setPage(0);
-          setPageLinks({});
-          fetchThings(0, pageSize, filterQuery, sq);
-        }}
-      />
+          columnDefs={columnDefs}
+          rowData={devices}
+          page={page}
+          pageSize={pageSize}
+          totalRows={totalRows}
+          loading={loading}
+          onPageChange={handlePageChange}
+          onPageSizeChange={handlePageSizeChange}
+          onFilterChange={(fq) => {
+            setFilterQuery(fq);
+            setPage(0);
+            setPageLinks({});
+            fetchThings(0, pageSize, fq, sortQuery);
+          }}
+          onSortChange={(sq) => {
+            setSortQuery(sq);
+            setPage(0);
+            setPageLinks({});
+            fetchThings(0, pageSize, filterQuery, sq);
+          }}
+        />
+      ) : (
+        <Card elevation={1} sx={{ borderRadius: "8px" }}>
+          <CardHeader
+            title={
+              <Typography variant="h3" sx={{ fontWeight: 400 }}>
+                Devices Map
+              </Typography>
+            }
+          />
+          <CardContent sx={{ height: "600px", display: "flex", flexDirection: "column", p: 0, position: "relative" }}>
+            <MapContainer
+              center={[48.137154, 11.576124]}
+              zoom={12}
+              scrollWheelZoom={true}
+              style={{ height: "100%", width: "100%", borderRadius: "0 0 8px 8px" }}
+            >
+              <TileLayer
+                attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+              {mapGeoJson && <MapBoundsFitter geojson={mapGeoJson} />}
+              {mapGeoJson && mapGeoJson.features && (
+                <MarkerClusterGroup>
+                  {mapGeoJson.features.map((feature: any) => {
+                    const coordinates = feature?.geometry?.coordinates;
+                    const iotId = feature?.properties?.["@iot.id"];
+                    const name = feature?.properties?.name;
+                    const description = feature?.properties?.description;
+
+                    if (!coordinates || coordinates.length < 2 || !iotId) return null;
+
+                    const lat = coordinates[1];
+                    const lng = coordinates[0];
+
+                    return (
+                      <Marker
+                        key={iotId}
+                        position={[lat, lng]}
+                        icon={customMarkerIcon}
+                      >
+                        <Popup>
+                          <Box sx={{ p: 0.5, minWidth: 150 }}>
+                            <Typography variant="subtitle1" sx={{ fontWeight: "bold", mb: 0.5 }}>
+                              {name || `Device ${iotId}`}
+                            </Typography>
+                            {description && (
+                              <Typography variant="body2" color="textSecondary" sx={{ mb: 1, maxHeight: 80, overflowY: "auto" }}>
+                                {description}
+                              </Typography>
+                            )}
+                            <LinkCustom to={`/devices/${iotId}/datastreams`}>
+                              <Button size="small" variant="contained" fullWidth sx={{ textTransform: "none", fontSize: "0.75rem", backgroundColor: "rgb(35, 48, 68)", "&:hover": { backgroundColor: "rgb(26, 36, 51)" } }}>
+                                View Datastreams
+                              </Button>
+                            </LinkCustom>
+                          </Box>
+                        </Popup>
+                      </Marker>
+                    );
+                  })}
+                </MarkerClusterGroup>
+              )}
+            </MapContainer>
+            {mapLoading && (
+              <Box
+                sx={{
+                  position: "absolute",
+                  inset: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: "rgba(255,255,255,0.6)",
+                  zIndex: 1000,
+                }}
+              >
+                <CircularProgress size={48} />
+              </Box>
+            )}
+          </CardContent>
+        </Card>
+      )}
       <EntityFormModal
         open={editOpen}
         onClose={() => {

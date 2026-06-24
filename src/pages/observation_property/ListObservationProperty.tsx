@@ -27,13 +27,13 @@ const ListObservationProperty = () => {
   const [frostServerPort, setFrostServerPort] = useState<number | null>(null);
   const [observationProperty, setObservationProperty] = useState<any[]>([]);
   const [page, setPage] = useState(0);
-const [pageSize, setPageSize] = useState(10);
-const [totalRows, setTotalRows] = useState(0);
-const [pageLinks, setPageLinks] = useState<{ [key: number]: string }>({});
-const [loading, setLoading] = useState(false);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalRows, setTotalRows] = useState(0);
+  const [pageLinks, setPageLinks] = useState<{ [key: number]: string }>({});
+  const [loading, setLoading] = useState(false);
 
-const [filterQuery, setFilterQuery] = useState("");
-const [sortQuery, setSortQuery] = useState("");
+  const [filterQuery, setFilterQuery] = useState("");
+  const [sortQuery, setSortQuery] = useState("");
   const [editOpen, setEditOpen] = useState(false);
   const [editingObservedPropertyId, setEditingObservedPropertyId] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
@@ -118,54 +118,54 @@ const [sortQuery, setSortQuery] = useState("");
 
 
   const fetchObservationProperty = async (
-  newPage = 0,
-  newPageSize = pageSize,
-  filter = filterQuery,
-  sort = sortQuery
-) => {
-  if (frostServerPort === null) return;
-  setLoading(true);
+    newPage = 0,
+    newPageSize = pageSize,
+    filter = filterQuery,
+    sort = sortQuery
+  ) => {
+    if (frostServerPort === null) return;
+    setLoading(true);
 
-  const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
-  const isDev = process.env.REACT_APP_IS_DEVELOPMENT === "true";
+    const backend_url = process.env.REACT_APP_BACKEND_URL_ROOT;
+    const isDev = process.env.REACT_APP_IS_DEVELOPMENT === "true";
 
-  let url = isDev
-    ? `${backend_url}:${frostServerPort}/FROST-Server/v1.0/ObservedProperties`
-    : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/ObservedProperties`;
+    let url = isDev
+      ? `${backend_url}:${frostServerPort}/FROST-Server/v1.0/ObservedProperties`
+      : `https://${frostServerPort}-${process.env.REACT_APP_FROST_URL}/FROST-Server/v1.0/ObservedProperties`;
 
-  if (pageLinks[newPage]) {
-    url = pageLinks[newPage];
-  }
-
-  try {
-    const res = await axios.get(url, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      params: !pageLinks[newPage] && {
-        $top: newPageSize,
-        $skip: newPage * newPageSize,
-        $count: true,
-        ...(filter && { $filter: filter }),
-        ...(sort && { $orderby: sort }),
-      },
-    });
-
-    setObservationProperty(res.data.value);
-    if (res.data["@iot.count"]) setTotalRows(res.data["@iot.count"]);
-    if (res.data["@iot.nextLink"]) {
-      setPageLinks((prev) => ({
-        ...prev,
-        [newPage + 1]: res.data["@iot.nextLink"],
-      }));
+    if (pageLinks[newPage]) {
+      url = pageLinks[newPage];
     }
-  } catch (err) {
-    toast.error("Error Getting Measurement Property");
-  } finally {
-    setLoading(false);
-  }
-};
+
+    try {
+      const res = await axios.get(url, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        params: !pageLinks[newPage] && {
+          $top: newPageSize,
+          $skip: newPage * newPageSize,
+          $count: true,
+          ...(filter && { $filter: filter }),
+          ...(sort && { $orderby: sort }),
+        },
+      });
+
+      setObservationProperty(res.data.value);
+      if (res.data["@iot.count"]) setTotalRows(res.data["@iot.count"]);
+      if (res.data["@iot.nextLink"]) {
+        setPageLinks((prev) => ({
+          ...prev,
+          [newPage + 1]: res.data["@iot.nextLink"],
+        }));
+      }
+    } catch (err) {
+      toast.error("Error Getting Measurement Property");
+    } finally {
+      setLoading(false);
+    }
+  };
 
 
   const fetchFrostPort = async () => {
@@ -192,19 +192,19 @@ const [sortQuery, setSortQuery] = useState("");
       });
   };
 
- useEffect(() => {
-  ReactGA.event({
-    category: GAactionsObservationProperties.category,
-    action: GAactionsObservationProperties.action,
-    label: GAactionsObservationProperties.label,
-  });
+  useEffect(() => {
+    ReactGA.event({
+      category: GAactionsObservationProperties.category,
+      action: GAactionsObservationProperties.action,
+      label: GAactionsObservationProperties.label,
+    });
 
-  if (frostServerPort !== null) {
-    fetchObservationProperty(page, pageSize);
-  } else {
-    fetchFrostPort();
-  }
-}, [frostServerPort]);
+    if (frostServerPort !== null) {
+      fetchObservationProperty(page, pageSize);
+    } else {
+      fetchFrostPort();
+    }
+  }, [frostServerPort]);
 
 
   const openEditDialog = useCallback(
@@ -245,7 +245,7 @@ const [sortQuery, setSortQuery] = useState("");
         {
           headers: {
             "Content-Type": "application/json",
-            Authorization: `${token}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );
@@ -372,16 +372,16 @@ const [sortQuery, setSortQuery] = useState("");
   ], [canDelete, isOwner, openDeleteDialog, openEditDialog]);
 
   const handlePageChange = (newPage: number) => {
-  setPage(newPage);
-  fetchObservationProperty(newPage, pageSize, filterQuery, sortQuery);
-};
+    setPage(newPage);
+    fetchObservationProperty(newPage, pageSize, filterQuery, sortQuery);
+  };
 
-const handlePageSizeChange = (newPageSize: number) => {
-  setPage(0);
-  setPageSize(newPageSize);
-  setPageLinks({});
-  fetchObservationProperty(0, newPageSize, filterQuery, sortQuery);
-};
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPage(0);
+    setPageSize(newPageSize);
+    setPageLinks({});
+    fetchObservationProperty(0, newPageSize, filterQuery, sortQuery);
+  };
 
   return (
     <Dashboard>
@@ -423,32 +423,32 @@ const handlePageSizeChange = (newPageSize: number) => {
           Create
         </Button>
       )}
-     <DataTableCardV2
-  title="Measurement Property"
-  description="This page lists all measurement properties (observed properties) used by datastreams. 
+      <DataTableCardV2
+        title="Measurement Property"
+        description="This page lists all measurement properties (observed properties) used by datastreams. 
 A measurement property describes what is being measured, such as temperature, humidity, or pressure, 
 and may include a definition or reference for clarity and standardization."
-  columnDefs={columns}
-  rowData={observationProperty}
-  page={page}
-  pageSize={pageSize}
-  totalRows={totalRows}
-  loading={loading}
-  onPageChange={handlePageChange}
-  onPageSizeChange={handlePageSizeChange}
-  onFilterChange={(fq) => {
-    setFilterQuery(fq);
-    setPage(0);
-    setPageLinks({});
-    fetchObservationProperty(0, pageSize, fq, sortQuery);
-  }}
-  onSortChange={(sq) => {
-    setSortQuery(sq);
-    setPage(0);
-    setPageLinks({});
-    fetchObservationProperty(0, pageSize, filterQuery, sq);
-  }}
-/>
+        columnDefs={columns}
+        rowData={observationProperty}
+        page={page}
+        pageSize={pageSize}
+        totalRows={totalRows}
+        loading={loading}
+        onPageChange={handlePageChange}
+        onPageSizeChange={handlePageSizeChange}
+        onFilterChange={(fq) => {
+          setFilterQuery(fq);
+          setPage(0);
+          setPageLinks({});
+          fetchObservationProperty(0, pageSize, fq, sortQuery);
+        }}
+        onSortChange={(sq) => {
+          setSortQuery(sq);
+          setPage(0);
+          setPageLinks({});
+          fetchObservationProperty(0, pageSize, filterQuery, sq);
+        }}
+      />
       <EntityFormModal
         open={editOpen}
         onClose={() => {

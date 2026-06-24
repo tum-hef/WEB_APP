@@ -29,7 +29,7 @@ import ListClients from "../pages/ListClients";
 import StoreDevice from "../pages/devices/StoreDevice";
 import ListSensors from "../pages/sensors/ListSensors";
 import StoreSensor from "../pages/sensors/StoreSensor";
-import ListLocations from "../pages/location/ListLocation"; 
+import ListLocations from "../pages/location/ListLocation";
 import StoreLocation from "../pages/location/StoreLocation";
 import ListDatastream from "../pages/datastreams/ListDatastream";
 import ListObservationProperty from "../pages/observation_property/ListObservationProperty";
@@ -47,6 +47,8 @@ import ListDatastreamPerDevice from "../pages/devices/ListDatastreamPerDevice";
 import Observations from "../pages/devices/Observations";
 import ReactGA from "react-ga4";
 import ListLogBook from "../pages/logBooks/ListLogBooks";
+import ListAuditTrail from "../pages/audit_trails/ListAuditTrail";
+
 
 const styles = {
   container: {
@@ -98,7 +100,7 @@ const AppRouter = (props: any) => {
                 <Switch>
                   <Route exact path="/" component={HomePage} />
                   <Route exact path="/register" component={Register} />
-    
+
                   <PrivateRoute
                     exact
                     path="/dashboard"
@@ -140,7 +142,7 @@ const AppRouter = (props: any) => {
                     path="/devices/:device_id/datastreams/:id/observations"
                     component={Observations}
                   />
-                   <PrivateRoute
+                  <PrivateRoute
                     exact
                     path="/datastreams/:id/observations"
                     component={Observations}
@@ -162,8 +164,8 @@ const AppRouter = (props: any) => {
                     component={StoreLocation}
                   />
 
-                  
-                  
+
+
                   <PrivateRoute
                     exact
                     path="/locations/:id"
@@ -208,11 +210,16 @@ const AppRouter = (props: any) => {
                     exact
                     path="/observations"
                     component={ListObservations}
-                  />{" "} 
+                  />{" "}
                   <PrivateRoute
                     exact
                     path="/log_books"
                     component={ListLogBook}
+                  />
+                  <PrivateRoute
+                    exact
+                    path="/audit_trail"
+                    component={ListAuditTrail}
                   />
                   {/* <PrivateRoute
                     exact
