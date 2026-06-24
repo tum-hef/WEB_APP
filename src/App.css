@@ -127,3 +127,103 @@
 .ag-theme-material .ag-filter-apply-panel button.ag-filter-reset-button {
   background-color: #d32f2f !important;   /* red reset */
 }
+
+/* ==========================================
+   Leaflet Custom Map Marker & Cluster Styles
+   ========================================== */
+
+/* Custom Pulsing Markers */
+.device-marker-icon {
+  background: none !important;
+  border: none !important;
+  overflow: visible !important;
+}
+
+.device-glow-marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 24px;
+  height: 24px;
+}
+
+.device-glow-ring {
+  border: 3px solid rgba(0, 210, 255, 0.7);
+  background: rgba(0, 210, 255, 0.1);
+  border-radius: 50%;
+  height: 30px;
+  width: 30px;
+  position: absolute;
+  animation: marker-pulse 2s infinite ease-out;
+  box-shadow: 0 0 8px rgba(0, 210, 255, 0.5);
+}
+
+.device-glow-dot {
+  background: radial-gradient(circle, rgba(0, 210, 255, 1) 0%, rgba(0, 150, 255, 1) 100%);
+  border-radius: 50%;
+  height: 12px;
+  width: 12px;
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 6px rgba(0, 210, 255, 0.8), 0 2px 4px rgba(0, 0, 0, 0.3);
+  z-index: 2;
+  transition: transform 0.2s ease-in-out;
+}
+
+.device-glow-marker:hover .device-glow-dot {
+  transform: scale(1.3);
+}
+
+@keyframes marker-pulse {
+  0% {
+    transform: scale(0.5);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}
+
+/* Custom Marker Clusters */
+.custom-cluster-marker {
+  background: none !important;
+  border: none !important;
+  overflow: visible !important;
+}
+
+.custom-cluster-inner {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, rgb(35, 48, 68) 0%, rgb(20, 28, 40) 100%) !important;
+  border: 3px solid rgba(0, 210, 255, 0.8) !important;
+  border-radius: 50% !important;
+  color: #ffffff !important;
+  font-weight: bold !important;
+  font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif !important;
+  font-size: 14px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4), 0 0 10px rgba(0, 210, 255, 0.4) !important;
+  transition: all 0.3s ease !important;
+  box-sizing: border-box !important;
+}
+
+.custom-cluster-inner:hover {
+  transform: scale(1.1) !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5), 0 0 15px rgba(0, 210, 255, 0.6) !important;
+}
+
+/* Premium Leaflet Popup Styling */
+.leaflet-popup-content-wrapper {
+  background: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: blur(10px) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+.leaflet-popup-tip {
+  background: rgba(255, 255, 255, 0.95) !important;
+}

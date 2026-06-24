@@ -31,6 +31,61 @@ import DataTableCardV2 from "../../components/DataGridServerSide";
 import EntityFormModal from "../../components/EntityFormModal";
 import ConfirmDeleteDialog from "../../components/ConfirmDeleteDialog";
 import { editDeviceValidationSchema } from "../../formik/validation_schema";
+import { LeafletProvider, useLeafletContext } from "@react-leaflet/core";
+import "leaflet.markercluster/dist/MarkerCluster.css";
+import "leaflet.markercluster/dist/MarkerCluster.Default.css";
+import "leaflet.markercluster";
+
+interface MarkerClusterGroupProps {
+  children: React.ReactNode;
+  [key: string]: any;
+}
+
+const MarkerClusterGroup = ({ children, ...props }: MarkerClusterGroupProps) => {
+  const context = useLeafletContext();
+
+  const clusterGroup = useMemo(() => {
+    return L.markerClusterGroup({
+      showCoverageOnHover: false,
+      spiderfyOnMaxZoom: true,
+      zoomToBoundsOnClick: true,
+      iconCreateFunction: (cluster) => {
+        const count = cluster.getChildCount();
+        return L.divIcon({
+          html: `<div class="custom-cluster-inner"><span>${count}</span></div>`,
+          className: "custom-cluster-marker",
+          iconSize: L.point(40, 40, true),
+        });
+      },
+      ...props,
+    });
+  }, []);
+
+  useEffect(() => {
+    const container = context.layerContainer || context.map;
+
+    const handleClusterClick = (a: any) => {
+      const bounds = a.layer.getBounds();
+      if (bounds.isValid() && bounds.getNorthEast().equals(bounds.getSouthWest())) {
+        a.layer.spiderfy();
+      }
+    };
+
+    clusterGroup.on("clusterclick", handleClusterClick);
+    container.addLayer(clusterGroup);
+
+    return () => {
+      clusterGroup.off("clusterclick", handleClusterClick);
+      container.removeLayer(clusterGroup);
+    };
+  }, [context, clusterGroup]);
+
+  return (
+    <LeafletProvider value={{ ...context, layerContainer: clusterGroup }}>
+      {children}
+    </LeafletProvider>
+  );
+};
 
 const MapBoundsFitter = ({ geojson }: { geojson: any }) => {
   const map = useMap();
@@ -57,10 +112,20 @@ const Devices = () => {
   const userInfo = keycloak?.idTokenParsed;
   const token = keycloak?.token;
 
-  const customMarkerIcon = new L.Icon({
-    iconUrl: require("../../assets/pinpoint.png"),
-    iconSize: [30, 30],
-  });
+  const customMarkerIcon = useMemo(() => {
+    return L.divIcon({
+      html: `
+        <div class="device-glow-marker">
+          <div class="device-glow-ring"></div>
+          <div class="device-glow-dot"></div>
+        </div>
+      `,
+      className: "device-marker-icon",
+      iconSize: [30, 30],
+      iconAnchor: [15, 15],
+      popupAnchor: [0, -15],
+    });
+  }, []);
 
   const [viewMode, setViewMode] = useState<"table" | "map">("table");
   const [frostServerPort, setFrostServerPort] = useState<number | null>(null);
@@ -567,43 +632,47 @@ Each device can have one or more datastreams (e.g., temperature, humidity) that 
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
               {mapGeoJson && <MapBoundsFitter geojson={mapGeoJson} />}
-              {mapGeoJson && mapGeoJson.features && mapGeoJson.features.map((feature: any) => {
-                const coordinates = feature?.geometry?.coordinates;
-                const iotId = feature?.properties?.["@iot.id"];
-                const name = feature?.properties?.name;
-                const description = feature?.properties?.description;
+              {mapGeoJson && mapGeoJson.features && (
+                <MarkerClusterGroup>
+                  {mapGeoJson.features.map((feature: any) => {
+                    const coordinates = feature?.geometry?.coordinates;
+                    const iotId = feature?.properties?.["@iot.id"];
+                    const name = feature?.properties?.name;
+                    const description = feature?.properties?.description;
 
-                if (!coordinates || coordinates.length < 2 || !iotId) return null;
+                    if (!coordinates || coordinates.length < 2 || !iotId) return null;
 
-                const lat = coordinates[1];
-                const lng = coordinates[0];
+                    const lat = coordinates[1];
+                    const lng = coordinates[0];
 
-                return (
-                  <Marker
-                    key={iotId}
-                    position={[lat, lng]}
-                    icon={customMarkerIcon}
-                  >
-                    <Popup>
-                      <Box sx={{ p: 0.5, minWidth: 150 }}>
-                        <Typography variant="subtitle1" sx={{ fontWeight: "bold", mb: 0.5 }}>
-                          {name || `Device ${iotId}`}
-                        </Typography>
-                        {description && (
-                          <Typography variant="body2" color="textSecondary" sx={{ mb: 1, maxHeight: 80, overflowY: "auto" }}>
-                            {description}
-                          </Typography>
-                        )}
-                        <LinkCustom to={`/devices/${iotId}/datastreams`}>
-                          <Button size="small" variant="contained" fullWidth sx={{ textTransform: "none", fontSize: "0.75rem", backgroundColor: "rgb(35, 48, 68)", "&:hover": { backgroundColor: "rgb(26, 36, 51)" } }}>
-                            View Datastreams
-                          </Button>
-                        </LinkCustom>
-                      </Box>
-                    </Popup>
-                  </Marker>
-                );
-              })}
+                    return (
+                      <Marker
+                        key={iotId}
+                        position={[lat, lng]}
+                        icon={customMarkerIcon}
+                      >
+                        <Popup>
+                          <Box sx={{ p: 0.5, minWidth: 150 }}>
+                            <Typography variant="subtitle1" sx={{ fontWeight: "bold", mb: 0.5 }}>
+                              {name || `Device ${iotId}`}
+                            </Typography>
+                            {description && (
+                              <Typography variant="body2" color="textSecondary" sx={{ mb: 1, maxHeight: 80, overflowY: "auto" }}>
+                                {description}
+                              </Typography>
+                            )}
+                            <LinkCustom to={`/devices/${iotId}/datastreams`}>
+                              <Button size="small" variant="contained" fullWidth sx={{ textTransform: "none", fontSize: "0.75rem", backgroundColor: "rgb(35, 48, 68)", "&:hover": { backgroundColor: "rgb(26, 36, 51)" } }}>
+                                View Datastreams
+                              </Button>
+                            </LinkCustom>
+                          </Box>
+                        </Popup>
+                      </Marker>
+                    );
+                  })}
+                </MarkerClusterGroup>
+              )}
             </MapContainer>
             {mapLoading && (
               <Box
