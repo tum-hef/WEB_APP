@@ -49,6 +49,8 @@ const MarkerClusterGroup = ({ children, ...props }: MarkerClusterGroupProps) => 
       showCoverageOnHover: false,
       spiderfyOnMaxZoom: true,
       zoomToBoundsOnClick: true,
+      spiderLegPolylineOptions: { weight: 0, opacity: 0 },
+      maxClusterRadius: 120,
       iconCreateFunction: (cluster) => {
         const count = cluster.getChildCount();
         return L.divIcon({
@@ -63,6 +65,7 @@ const MarkerClusterGroup = ({ children, ...props }: MarkerClusterGroupProps) => 
 
   useEffect(() => {
     const container = context.layerContainer || context.map;
+    const map = context.map;
 
     const handleClusterClick = (a: any) => {
       const bounds = a.layer.getBounds();
@@ -74,9 +77,68 @@ const MarkerClusterGroup = ({ children, ...props }: MarkerClusterGroupProps) => 
     clusterGroup.on("clusterclick", handleClusterClick);
     container.addLayer(clusterGroup);
 
+    // Auto-re-spiderfy on zoom logic
+    let activeSpiderfiedMarker: any = null;
+    let isZooming = false;
+    let previousZoom = map ? map.getZoom() : 12;
+
+    const handleSpiderfied = (e: any) => {
+      if (e.markers && e.markers.length > 0) {
+        activeSpiderfiedMarker = e.markers[0];
+      }
+    };
+
+    const handleUnspiderfied = () => {
+      if (!isZooming) {
+        activeSpiderfiedMarker = null;
+      }
+    };
+
+    const handleZoomStart = () => {
+      isZooming = true;
+      if (map) {
+        previousZoom = map.getZoom();
+      }
+    };
+
+    const handleMoveEnd = () => {
+      if (!map) return;
+      if (isZooming) {
+        isZooming = false;
+        const currentZoom = map.getZoom();
+        if (currentZoom > previousZoom && activeSpiderfiedMarker) {
+          // Re-open (spiderfy) cluster only when zooming IN
+          setTimeout(() => {
+            if (!activeSpiderfiedMarker) return;
+            const parent = (clusterGroup as any).getVisibleParent(activeSpiderfiedMarker);
+            if (parent && parent.spiderfy) {
+              parent.spiderfy();
+            }
+          }, 50);
+        } else {
+          // Zoomed OUT: clear active marker reference so it stays closed
+          activeSpiderfiedMarker = null;
+        }
+      }
+    };
+
+    clusterGroup.on("spiderfied", handleSpiderfied);
+    clusterGroup.on("unspiderfied", handleUnspiderfied);
+
+    if (map) {
+      map.on("zoomstart", handleZoomStart);
+      map.on("moveend", handleMoveEnd);
+    }
+
     return () => {
       clusterGroup.off("clusterclick", handleClusterClick);
+      clusterGroup.off("spiderfied", handleSpiderfied);
+      clusterGroup.off("unspiderfied", handleUnspiderfied);
       container.removeLayer(clusterGroup);
+      if (map) {
+        map.off("zoomstart", handleZoomStart);
+        map.off("moveend", handleMoveEnd);
+      }
     };
   }, [context, clusterGroup]);
 
@@ -113,17 +175,11 @@ const Devices = () => {
   const token = keycloak?.token;
 
   const customMarkerIcon = useMemo(() => {
-    return L.divIcon({
-      html: `
-        <div class="device-glow-marker">
-          <div class="device-glow-ring"></div>
-          <div class="device-glow-dot"></div>
-        </div>
-      `,
-      className: "device-marker-icon",
+    return new L.Icon({
+      iconUrl: require("../../assets/pinpoint.png"),
       iconSize: [30, 30],
-      iconAnchor: [15, 15],
-      popupAnchor: [0, -15],
+      iconAnchor: [15, 30],
+      popupAnchor: [0, -30],
     });
   }, []);
 
@@ -624,12 +680,15 @@ Each device can have one or more datastreams (e.g., temperature, humidity) that 
             <MapContainer
               center={[48.137154, 11.576124]}
               zoom={12}
+              maxZoom={22}
               scrollWheelZoom={true}
               style={{ height: "100%", width: "100%", borderRadius: "0 0 8px 8px" }}
             >
               <TileLayer
                 attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                maxZoom={22}
+                maxNativeZoom={19}
               />
               {mapGeoJson && <MapBoundsFitter geojson={mapGeoJson} />}
               {mapGeoJson && mapGeoJson.features && (
