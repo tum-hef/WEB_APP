@@ -38,6 +38,7 @@ import StoreDatastream from "../pages/datastreams/StoreDatastream";
 import ListObservations from "../pages/observations/ListLocation";
 import FrostEntities from "../pages/QuickDataEntry";
 import FrostTraining from "../pages/training/Frost";
+import GrafanaTraining from "../pages/training/Grafana";
 import NodeRedTraining from "../pages/training/Node Red";
 import Contact from "../pages/Contact";
 import WebAppTraining from "../pages/training/WebApp";
@@ -230,6 +231,11 @@ const AppRouter = (props: any) => {
                     exact
                     path="/database/frost"
                     component={FrostTraining}
+                  />{" "}
+                  <Route
+                    exact
+                    path="/database/grafana"
+                    component={GrafanaTraining}
                   />{" "}
                   <Route
                     exact

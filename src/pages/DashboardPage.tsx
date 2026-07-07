@@ -19,6 +19,7 @@ import styled from "styled-components";
 import { useLocation, useParams } from "react-router-dom";
 import { NOTFOUND } from "./404";
 import PublicIcon from "@mui/icons-material/Public";
+import InsightsIcon from "@mui/icons-material/Insights";
 import CardDataSpace from "../components/CardDataSpace";
 import { useAppDispatch, useAppSelector, useIsOwner } from "../hooks/hooks";
 import { RootState } from "../store/store";
@@ -470,7 +471,7 @@ export default function DashboardPage() {
                     </Typography>
                   </Grid>
 
-                  <Grid item lg={4} sm={12} xl={4} xs={12}>
+                  <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
                     <CardDataSpace
                       redirection_path="database/frost"
                       card_name="Sensor Database"
@@ -484,7 +485,7 @@ export default function DashboardPage() {
                       }
                     />
                   </Grid>
-                  <Grid item lg={4} sm={12} xl={4} xs={12}>
+                  <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
                     <CardDataSpace
                       redirection_path="database/node_red"
                       card_name="Node RED"
@@ -498,7 +499,21 @@ export default function DashboardPage() {
                       }
                     />
                   </Grid>
-                  <Grid item lg={4} sm={12} xl={4} xs={12}>
+                  <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
+                    <CardDataSpace
+                      redirection_path="database/grafana"
+                      card_name="Grafana"
+                      Icon={
+                        <InsightsIcon
+                          style={{
+                            fontSize: 30,
+                            marginTop: "10px",
+                          }}
+                        />
+                      }
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
                     <CardDataSpace
                       redirection_path="database/web_app"
                       card_name="Web App"

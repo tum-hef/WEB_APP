@@ -949,6 +949,27 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ items }) => {
                   </ListItemButton>
                 </ListItem>
               </LinkCustom>{" "}
+              <LinkCustom to={`/database/grafana`}>
+                <ListItem key={"Grafana"} disablePadding>
+                  <ListItemButton selected={location.pathname === "/database/grafana"}>
+                    <ListItemIcon>
+                      <InsightsIcon
+                        style={{
+                          color: "white",
+                          marginLeft: "20px",
+                        }}
+                      />
+                    </ListItemIcon>
+                    <ListItemText
+                      style={{
+                        color: "white",
+                      }}
+                      primaryTypographyProps={{ fontSize: "18px" }}
+                      primary={"Grafana"}
+                    />
+                  </ListItemButton>
+                </ListItem>
+              </LinkCustom>{" "}
               <LinkCustom to={`/database/web_app`}>
                 <ListItem key={"Web App"} disablePadding>
                   <ListItemButton selected={location.pathname === "/database/web_app"}>

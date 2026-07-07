@@ -38,9 +38,14 @@ function TrainingCategories({ name, object, description }: any) {
                 boxShadow: "0px 0px 10px 0px rgba(0,0,0,0.2)",
               }}
             >
-              <Grid container alignContent={"center"} justifyContent={"center"} style={{
-                padding: "20px"
-              }}>
+              <Grid
+                container
+                alignContent={"center"}
+                justifyContent={"center"}
+                style={{
+                  padding: "20px",
+                }}
+              >
                 {item.image ? (
                   <img
                     src={`/images/${item.image}`}
